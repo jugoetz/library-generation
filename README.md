@@ -6,7 +6,13 @@ Tools needed to deal generate HTE compound libraries. Specialized on Synthetic F
 - **cheminventory-cleanup.py**: Prune the building blocks stored in cheminventory to remove duplicates,
 scarce, and impure material
   
-- **generatelibraryplan.py**: Take the building block list received from cheminventory_cleanup.ipynb and 
+- **inventorytosdf.py**: Take the building block list received from cheminventory_cleanup.py and amend it with
+additional information (e.g. MW, weigh-in). Gives sdf of building blocks and serializes DataFrame of mols to pickle
+  
+- **enumerate-library.py**: Take the pickled DataFrame from inventorytosdf.py and enumerate the corresponding
+  virtual library.
+  
+- **generatelibraryplan.py**: Take the building block list received from cheminventory_cleanup.py and 
 draw random combinations for every experiment to give a synthesis plan
   
 - **generateplatelayout.py**: Take the synthesis plan given by generatelibraryplan.py and generate the 

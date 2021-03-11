@@ -1,4 +1,7 @@
 /.idea
-/data/*
+/data/images
+/data/inputs
+/data/logs
+/data/outputs
 /.ipynb_checkpoints
 .DS_Store

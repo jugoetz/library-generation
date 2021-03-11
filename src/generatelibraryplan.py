@@ -1,0 +1,113 @@
+"""
+Generate a randomized Library Synthesis Plan for 50000 compounds.
+
+Input:
+    - inventory_compounds.csv: (Pruned) overview of the compounds for the synthesis.
+      Taken from cheminventory_cleanup.ipynb.
+
+Output:
+    - synthesis_plan.csv: List of experiments to be conducted for the synthesis of 50000 compounds.
+                            Every experiment consists of 6 plates (or 1920 wells). For all experiments, a list of
+                            the building blocks is given
+    - synthesis_plan.pkl: Serialized list of the syntheses
+    - compound_mapping.txt: Space-delimited table of the shorthand name for a compound (e.g. "M1") and the
+      longhand equivalent (e.g. Mon002)
+
+"""
+import random as rd
+import csv
+import pickle as pkl
+from pathlib import Path
+import pandas as pd
+
+
+DATA_DIR = Path('..', 'data').resolve()
+OUTPUT_DIR = DATA_DIR / 'outputs'
+
+"""seed randomizer for reproducible result"""
+seed = 42
+rd.seed(seed)
+
+"""experiment design parameters"""
+initiators_per_run = 16
+monomers_per_run = 12
+terminators_per_run = 10
+plates_per_run = 6
+compounds_per_plate = 320
+compounds_per_run = plates_per_run * compounds_per_plate
+total_runs = 26
+total_targets = compounds_per_run * total_runs  # is 49920
+
+"""import the building blocks from (processed) cheminventory export"""
+compounds = pd.read_csv(OUTPUT_DIR / 'inventory_compounds.csv')
+
+
+"""Add a mapping between shorthand and longhand names to the Dataframe"""
+initiator_shorts = [f'I{i + 1}' for i in range(len(compounds.loc[compounds['Category'] == 'I']))]
+monomer_shorts = [f'M{i + 1}' for i in range(len(compounds.loc[compounds['Category'] == 'M']))]
+terminator_shorts = [f'T{i + 1}' for i in range(len(compounds.loc[compounds['Category'] == 'T']))]
+
+compounds['shorts'] = ''
+compounds.loc[compounds['Category'] == 'I', ['shorts']] = initiator_shorts
+compounds.loc[compounds['Category'] == 'M', ['shorts']] = monomer_shorts
+compounds.loc[compounds['Category'] == 'T', ['shorts']] = terminator_shorts
+
+initiators = compounds['shorts'].loc[compounds['Category'] == 'I'].tolist()
+monomers = compounds['shorts'].loc[compounds['Category'] == 'M'].tolist()
+terminators = compounds['shorts'].loc[compounds['Category'] == 'T'].tolist()
+
+"""Print some information: average usage of each building block"""
+initiators_average = total_targets / len(initiators)
+monomers_average = total_targets / len(monomers)
+terminators_average = total_targets / len(terminators)
+print(f'Each initiator will be used in {initiators_average} reactions on average. '
+      f'At 192 reactions per run (6 plates), that equals using it in {initiators_average/monomers_per_run/terminators_per_run} runs')
+print(f'Each monomer will be used in {monomers_average} reactions on average. '
+      f'At 192 reactions per run (6 plates), that equals using it in {monomers_average/initiators_per_run/terminators_per_run} runs')
+print(f'Each terminator will be used in {terminators_average} reactions on average. '
+      f'At 192 reactions per run (6 plates), that equals using it in {terminators_average/monomers_per_run/initiators_per_run} runs')
+
+"""
+Randomize the building block lists.
+Ensure the number of building blocks is a multiple of the number that is used per run.
+"""
+initiators_number = len(initiators) // initiators_per_run * initiators_per_run
+monomers_number = len(monomers) // monomers_per_run * monomers_per_run
+terminators_number = len(terminators) // terminators_per_run * terminators_per_run
+initiators = rd.sample(initiators, k=initiators_number)
+monomers = rd.sample(monomers, k=monomers_number)
+terminators = rd.sample(terminators, k=terminators_number)
+print(f'Using I, M, T: {initiators_number, monomers_number, terminators_number}')
+
+"""split the randomized lists into portions of size <bb>_per_run"""
+initiator_sets = [initiators[i: i + initiators_per_run] for i in range(0, len(initiators), initiators_per_run)]
+monomers_sets = [monomers[i: i + monomers_per_run] for i in range(0, len(monomers), monomers_per_run)]
+terminators_sets = [terminators[i: i + terminators_per_run] for i in range(0, len(terminators), terminators_per_run)]
+
+"""generate all possible combinations of the building block sets"""
+product_set = [[i, m, t]
+               for i in initiator_sets
+               for m in monomers_sets
+               for t in terminators_sets
+               ]
+
+"""from the total product set, choose the desired number of combinations randomly"""
+synthesis_plan = rd.sample(product_set, k=total_runs)
+print(synthesis_plan)
+
+"""write the synthesis plan to csv and pickle"""
+with open(OUTPUT_DIR / 'synthesis_plan.csv', 'w') as file:  # CSV
+    writer = csv.writer(file)
+    counter = 1
+    for run in synthesis_plan:
+        writer.writerow([counter,])
+        for building_block in run:
+            writer.writerow(building_block)
+        counter += 1
+with open(OUTPUT_DIR / 'synthesis_plan.pkl', 'wb') as file:  # pickle
+    pkl.dump(synthesis_plan, file)
+
+"""write the mapping between short- and longhand names to txt-file"""
+with open(OUTPUT_DIR / 'compound_mapping.txt', 'w') as file:
+    for i, data in compounds[['shorts', 'Compound Name']].iterrows():
+        file.write(' '.join([data['shorts'], data['Compound Name']]) + '\n')

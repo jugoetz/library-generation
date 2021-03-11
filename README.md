@@ -10,7 +10,7 @@ scarce, and impure material
 additional information (e.g. MW, weigh-in). Gives sdf of building blocks and serializes DataFrame of mols to pickle
   
 - **enumerate-library.py**: Take the pickled DataFrame from inventorytosdf.py and enumerate the corresponding
-  virtual library.
+  virtual library. Save to sdf.
   
 - **generatelibraryplan.py**: Take the building block list received from cheminventory_cleanup.py and 
 draw random combinations for every experiment to give a synthesis plan

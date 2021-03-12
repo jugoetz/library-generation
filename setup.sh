@@ -11,7 +11,6 @@ echo "Starting setup..."
 mkdir -p data/images
 mkdir -p data/inputs
 mkdir -p data/logs
-mkdir -p data/manual_settings
 mkdir -p data/outputs/sdf
 mkdir -p data/outputs/target_plates
 

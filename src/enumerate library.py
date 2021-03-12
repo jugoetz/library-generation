@@ -1,23 +1,28 @@
 """
-### What does the Schrödinger workflow do?
-- Read in sdfs
-- MM
-- ionize at pH 7
-- desalt
-- generate tautomers
-- retain chirality as specified in input
-- reaction-based enumeration
+Enumerate combinatorial libraries and dump products to SDF.
+(This substitutes the Schrödinger workflow)
 
-### What does Yu's second script (SDFtoFormula) do?
-- Read in SDFs
-- Calculate molecular formula
-- write to file
+Inputs:
+    - library_constituents_dataframe.pkl: DataFrame of rdkit mol objects, output of inventorytosdf.py
 
-### What is the better rdkit/python equivalent to these?
-- take the df of mols (from pickle)
-- desalt
-- reaction enumeration
+Outputs:
+    - products_[A-G].sdf: SDF of products for all reagent combinations, sorted by type where A is the main (expected)
+      product and B - G are side products
 
+Actions:
+    - Read pickle of DataFrame
+    - Desalt + neutralize molecules. Neutralization only affects nitrogen cations
+    - Define reactions from reactionSMARTS
+    - Check if all input molecules are valid reactants + no duplicates
+    - Enumerate library
+    - Sanitize + rearrange products for output
+    - Output to SDF
+
+What is missing as opposed to Schrödinger workflow?
+    - MM optimization of building blocks (not necessary)
+    - ionization at pH 7 (for the building block set under consideration, N-neutralization gives the same result)
+    - tautomer generation (for the building block set under consideration, this is not necessary)
+    (all of the above would need to be done on the completed VL before attempting virtual screening)
 """
 
 from rdkit import Chem
@@ -28,8 +33,6 @@ import pandas as pd
 import warnings
 import string
 import itertools
-import contextlib
-import os
 
 
 def deprotonate_nitrogen(mol):
@@ -92,6 +95,24 @@ def check_unique_molecules(mols: list):
             duplicate_mol.append(i)
         uniq_mol[smi] = i
     return duplicate_mol
+
+
+def add_name_prop_to_mol(reactant1, reactant2, reactant3, product_library):
+    """
+    Add name properties to enumerated molecules. The cartesian enumeration strategy is (0,0,0), (1,0,0),... according
+    to the documentation. In reality I observe that the strategy is (0,0,0), (0,0,1),... which is used for assigning
+    names in this function
+    """
+    names = [f'{i.GetProp("_Name")} + {m.GetProp("_Name")} + {t.GetProp("_Name")}'
+             for i in reactant1
+             for m in reactant2
+             for t in reactant3
+             ]  # generate the names from reactant properties
+    if len(product_library) != len(names):  # check if the correct number of names was generated
+        raise ValueError(
+            f'Number of products ({len(product_library)}) does not fit number of inferred names ({len(names)})')
+    [p.SetProp('_Name', n) for p_list, n in zip(product_library, names) for p in p_list]  # assign the name property
+    return product_library
 
 
 """GLOBALS"""
@@ -190,29 +211,11 @@ product_generator_TH = EnumerateReaction(rxn_TH, (reactant_I, reactant_M, reacta
 product_list_ABT = list(product_generator_ABT)
 product_list_TH = list(product_generator_TH)
 
-
-def add_name_prop_to_mol(reactant1, reactant2, reactant3, product_library):
-    """
-    Add name properties to enumerated molecules. The cartesian enumeration strategy is (0,0,0), (1,0,0),... according
-    to the documentation. In reality I observe that the strategy is (0,0,0), (0,0,1),... which is used for assigning
-    names in this function
-    """
-    names = [f'{i.GetProp("_Name")} + {m.GetProp("_Name")} + {t.GetProp("_Name")}'
-             for i in reactant1
-             for m in reactant2
-             for t in reactant3
-             ]  # generate the names from reactant properties
-    if len(product_library) != len(names):  # check if the correct number of names was generated
-        raise ValueError(
-            f'Number of products ({len(product_library)}) does not fit number of inferred names ({len(names)})')
-    [p.SetProp('_Name', n) for p_list, n in zip(product_library, names) for p in p_list]  # assign the name property
-    return product_library
-
-
 product_list_ABT = add_name_prop_to_mol(reactant_I, reactant_M, reactant_ABT, product_list_ABT)
 product_list_TH = add_name_prop_to_mol(reactant_I, reactant_M, reactant_TH, product_list_TH)
-
 product_list = product_list_ABT + product_list_TH
+
+
 """Post-process the generated library"""
 [Chem.SanitizeMol(p) for p_list in product_list for p in p_list]  # Sanitize mols
 resorted_products = list(map(

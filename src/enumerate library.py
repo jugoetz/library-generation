@@ -26,7 +26,7 @@ What is missing as opposed to Schrödinger workflow?
 """
 
 from rdkit import Chem
-from rdkit.Chem import Draw, SaltRemover, AllChem, rdFMCS
+from rdkit.Chem import Draw, SaltRemover, AllChem
 from rdkit.Chem.SimpleEnum.Enumerator import EnumerateReaction
 from pathlib import Path
 import pandas as pd
@@ -120,8 +120,10 @@ DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
 DEBUG = 1
 
+
 """Import from pickle"""
 compounds = pd.read_pickle(OUTPUT_DIR / 'library_constituents_dataframe.pkl')
+
 
 """Desalt building blocks and deprotonate N"""
 # desalt the building block library
@@ -130,6 +132,7 @@ compounds['desalted'] = compounds.loc[:, 'mol'].apply(remover.StripMol)
 # neutralize ammoniums
 compounds.loc[:, 'desalted'].apply(deprotonate_nitrogen)
 compounds['desalted_SMILES'] = compounds.loc[:, 'desalted'].apply(Chem.MolToSmiles)
+
 
 """Define reactions"""
 # all 7 TerTH prods
@@ -152,9 +155,11 @@ if n_err_TH > 0:
 if n_err_ABT > 0:
     raise ValueError(f'Invalid reaction gave {n_err_ABT} errors in validation')
 
+
 """Control reactions visually"""
 Draw.ReactionToImage(rxn_TH)
 Draw.ReactionToImage(rxn_ABT)
+
 
 """define reagents"""
 all_KAT = compounds[compounds.loc[:, 'Category'].str.startswith('I')]
@@ -172,6 +177,7 @@ spiro = all_Spiro['desalted'].tolist()
 sub = all_Sub['desalted'].tolist()
 T_TH = all_TerTH['desalted'].tolist()
 T_ABT = all_TerABT['desalted'].tolist()
+
 
 """print reagent info"""
 print(f'KATs: {len(I)}')
@@ -194,6 +200,7 @@ print(f' - expected ABT (A) products (sub): {len(I) * len(sub) * len(T_ABT)}')
 
 check_reactants(rxn_TH, 'TH', all_KAT, all_Mon, all_TerTH)
 check_reactants(rxn_ABT, 'ABT', all_KAT, all_Mon, all_TerABT)
+
 
 """check uniqueness of building blocks"""
 duplicate_I = check_unique_molecules(I)

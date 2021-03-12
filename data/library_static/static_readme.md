@@ -7,5 +7,7 @@ All files are gzipped for storage space reasons (use gzip -d [file] to decompres
 
 Scripts should not write to this directory but may read from it.
 
-Currenty (12.03.2021), the library consists of 236,652 unique products from both TH and ABT reactions.
+### Library properties
+
+Currently (12.03.2021), the library consists of 236,652 unique products from both TH and ABT reactions.
 

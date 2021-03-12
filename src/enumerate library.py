@@ -181,8 +181,8 @@ duplicate_T = check_unique_molecules(T_TH + T_ABT)
 
 
 """run enumeration (consumes lots of RAM)"""
-reactant_I = I[0:2]
-reactant_M = M[0:2]
+reactant_I = I
+reactant_M = M
 reactant_ABT = T_ABT
 reactant_TH = T_TH
 product_generator_ABT = EnumerateReaction(rxn_ABT, (reactant_I, reactant_M, reactant_ABT), uniqueProductsOnly=True)

@@ -10,3 +10,6 @@ test_plate.to_csv('test.csv', save_volumes=True)
 empty_plate = plates.Plate384Echo()
 empty_plate.from_csv('test.csv', vol=10000)
 print(empty_plate)
+empty_dict = empty_plate.to_dict()
+assert type(empty_dict) is dict
+print(empty_dict)

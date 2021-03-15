@@ -381,6 +381,26 @@ class Plate:
                         volumes
                         )
 
+    def to_dict(self, include_volumes=False):
+        """
+        Convert plate to dictionary. Well identifiers are used as keys, a list of contents is used as values.
+        :param include_volumes: bool, toggles whether volumes should be included in the dictionary
+        :return: dict
+
+        Example returns:
+            include_volumes = False:
+                > {'A1': ['water', 'EtOH'], 'A2': []}
+            include_volumes = True
+                > {'A1': (['water', 'EtOH'], 1000), 'A2': ([], 0)}
+        """
+        dic = {}
+        if include_volumes is True:
+            for well in self.wells():
+                dic[well] = self.well(well)
+        else:
+            for well in self.wells():
+                dic[well] = self.compounds(well)
+        return dic
 
 class Plate96(Plate):
     def __init__(self, max_vol: int, dead_vol: int):

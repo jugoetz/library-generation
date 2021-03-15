@@ -31,7 +31,7 @@ DATA_DIR = Path('..', 'data').resolve()
 
 # import data
 file = DATA_DIR / 'inputs' / 'InventoryExport.xlsx'
-df = pd.read_excel(file)
+df = pd.read_excel(file, engine='openpyxl')
 
 # import manual exceptions
 with open(DATA_DIR / 'manual_settings' / 'exceptions.txt', 'r') as f:
@@ -107,7 +107,7 @@ df_compounds = df_compounds[['Compound Name', 'SMILES', 'MW [g/mol]', 'Category'
 # report data
 freq = df_compounds["Category"].value_counts()
 print(f'The Virtual Library contains {freq["I"]} Initiators, {freq["M"]} Monomers, {freq["T"]} Terminators.\n'
-      f'This results in a total of {freq["I"] * freq["M"] * freq["T"]:,} possible product_generator.')
+      f'This results in a total of {freq["I"] * freq["M"] * freq["T"]:,} possible products.')
 
 # save results
 df.to_csv(DATA_DIR / 'outputs' / 'inventory_containers.csv', index=False)

@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
 """
+DEPRECATION NOTICE:
+This script has been superseeded and should not be used any more.
+
+
+
 Generate the submission file for high-throughput MS of library compounds.
 
 Inputs:

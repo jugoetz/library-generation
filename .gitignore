@@ -1,7 +1,13 @@
+#Pycharm
 /.idea
+# Custom directories
 /data/images
 /data/inputs
 /data/logs
 /data/outputs
+# Jupyter
 /.ipynb_checkpoints
+# MacOS
 .DS_Store
+# Pickle
+*.pkl

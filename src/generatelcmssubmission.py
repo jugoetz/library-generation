@@ -179,10 +179,10 @@ if __name__ == '__main__':
                             if mol is not None:
                                 mol_props[mol.GetProp('_Name')] = [CalcExactMolWt(mol), CalcMolFormula(mol)]
                         mol_prop_dict[letter] = mol_props
-            with open('debug_mol_prp_dict.pkl', 'wb') as file:
+            with open(OUTPUT_DIR / 'debug_mol_prp_dict.pkl', 'wb') as file:
                 pkl.dump(mol_prop_dict, file)
 
-        with open('debug_mol_prp_dict.pkl', 'rb') as file:
+        with open(OUTPUT_DIR / 'debug_mol_prp_dict.pkl', 'rb') as file:
             mol_prop_dict = pkl.load(file)
 
         """Import identities (this can stay as is)"""

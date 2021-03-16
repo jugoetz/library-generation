@@ -20,8 +20,7 @@ Steps:
 """
 
 from rdkit import Chem
-from rdkit.Chem import Draw, SaltRemover, AllChem, FunctionalGroups, rdFMCS, DetectChemistryProblems, Descriptors
-from rdkit.Chem.SimpleEnum.Enumerator import EnumerateReaction
+from rdkit.Chem import Draw, Descriptors
 from rdkit.Chem.PropertyMol import PropertyMol
 from pathlib import Path
 import pandas as pd
@@ -32,6 +31,7 @@ DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
 
 """Generate a DataFrame with all relevant information from inventory data"""
+print('Importing inventory data...')
 compounds = pd.read_csv(OUTPUT_DIR / 'inventory_compounds.csv')  # read df from inventory data
 compounds['mol'] = compounds['SMILES'].apply(Chem.MolFromSmiles)  # generate rdkit mol objects
 compounds['mol'] = compounds['mol'].apply(PropertyMol)
@@ -42,6 +42,7 @@ compounds['weigh-in [mg] / 100 µL'] = compounds['MW_from_mol']\
     .apply(lambda x: round(x * 1e-4 * 0.05 * 1000, 2))  # calculate the weigh-in mass from MW from structure
 
 """Control: Check if ChemInventory MW and MW from structure align"""
+print('Verifying molecular weights...')
 for i, data in compounds.iterrows():
     if not math.isclose(data['MW [g/mol]'], data['MW_from_mol'], abs_tol=0.1):
         print('WARNING: Molecular weight for the following compound is not in agreement with the value in ChemInventory')
@@ -52,9 +53,11 @@ compounds.drop(columns=['MW [g/mol]'], inplace=True)  # we won't use this. Calcu
 
 """Generate outputs"""
 # output to Excel
+print('Generating Excel printout...')
 compounds.drop(columns=['mol', 'img'], inplace=False).to_excel(OUTPUT_DIR / 'inventory_compounds_extended.xlsx')
 
 # write the molecule images to files
+print('Generating molecule images...')
 for i, data in compounds.iterrows():
     with open(DATA_DIR / 'images' / ''.join([data.loc['Compound Name'], '.png']), 'wb') as file:
         data.loc['img'].save(file)
@@ -91,6 +94,7 @@ with open(DATA_DIR / 'images' / '_T.png', 'wb') as file:
     img_T.save(file)
 
 # output to SDF
+print('Generating SDFs...')
 with open(OUTPUT_DIR / 'sdf' / 'initiators.sdf', 'w') as file_i, \
         open(OUTPUT_DIR / 'sdf' / 'monomers.sdf', 'w') as file_m, \
         open(OUTPUT_DIR / 'sdf' / 'terminators.sdf', 'w') as file_t:
@@ -110,4 +114,7 @@ with open(OUTPUT_DIR / 'sdf' / 'initiators.sdf', 'w') as file_i, \
     writer_t.close()
 
 # dump df
+print('Generating pickle dump...')
 compounds.to_pickle(OUTPUT_DIR / 'library_constituents_dataframe.pkl')
+
+print('\nFinished. Exiting...')

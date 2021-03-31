@@ -17,7 +17,10 @@ draw random combinations for every experiment to give a synthesis plan
   
 - **generateplatelayout.py**: Take the synthesis plan given by generatelibraryplan.py and generate the 
 target plates for every experiment. 
+  
+- **generatelcmssubmission.py**: Take compound mapping, plate layout, and SDF files and generate the 
+  submission file for Mobias
 
 ### Next steps
 
-- from the target plate layouts, generate the analysis data for Mobias and the transfer files for Nexus
+- from the target plate layouts, generate the transfer files for Nexus

@@ -2,26 +2,19 @@
 Generate the submission file for high-throughput MS of library compounds.
 
 Inputs:
-  - Plate layout (csv-files, 'plate_layout_plateX.csv'):
-    One plate per file. Handles arbitrary number of plates/files. X must start at 1 and increase.
-  - Up to five product files (csv-files, 'A.csv'..'E.csv'):
-    1 product per row with ID and molecular formula as columns.
+  - Plate layout (csv-files, usually 'plate_layout_plateX.csv'):
+    One plate per file. Handles arbitrary number of plates/files. X may be any number.
+  - Compressed product SDF files (sdf.gz-files):
+    Must contain long name and mol object
   - Identity of compounds (txt-file):
     Space-delimited file with one compound per row.
-    Columns contain identifier (e.g. 'M1') used in the plate layout file
-    and the long name (e.g. 2-Pyr003_MT or 2-Pyr003) used in the product files
-  - Plate number (interactive):
-    Usually int, but str is allowed
+    Columns contain short name (e.g. 'M1') used in the plate layout file
+    and the long name (e.g. 2-Pyr003_MT or 2-Pyr003) used in the SDF files
 
 Output:
   - Submission file (output.csv):
     One well per row. Columns are the well identifier (e.g. 1-A,3)
     up to six molecular formulae for SynFerm product_generator A-E + internal standard
-
-WARNING:
-    The function remove_one_proton (which can be called optionally from prompt4) holds the hardcoded assumption
-    that Schrödinger fails to neutralize product C which thus has one proton in excess.
-
 """
 
 import pandas as pd
@@ -39,11 +32,16 @@ import numpy as np
 DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
 INPUT_DIR = DATA_DIR / 'inputs'
-EXP_DIR = OUTPUT_DIR / 'target_plates' / 'exp1'
+EXP_DIR = OUTPUT_DIR / 'target_plates' / 'test_plates'
 verbose = True
-USE_PICKLED_MOLPROPDICT = True
-USE_PICKLED_DF = True
-ADD_IS = 'y'
+USE_PICKLED_MOLPROPDICT = True  # choose this if script has been run before on the exp to not open sdf files again
+USE_PICKLED_DF = False  # this will skip most of the script (if it has been run before). Only for debugging
+ADD_IS = 'y'  # Was internal standard added to the plates?
+
+# PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
+PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
+COMPOUND_MAPPING = EXP_DIR / 'identity.txt'  # OUTPUT_DIR / 'compound_mapping.txt'
+SDF_DIR = DATA_DIR / 'library_static'
 
 
 def import_sm(file):
@@ -97,8 +95,8 @@ def get_long_name(row, dictionary):
     long = []
     for col in ['I', 'M', 'T']:
         if row[col] is None \
-                or row[col] == 'None'\
-                or row[col] == ''\
+                or row[col] == 'None' \
+                or row[col] == '' \
                 or row[col] == 'n/a':
             pass  # catch empty fields (this will usually happen)
         else:
@@ -137,13 +135,15 @@ def write_csv(df, file):
     """
     Generate formatted csv output for Mobias
     """
+
     def splitwell(df):
         plate = df['plate']
         well = df['well']
-        new = str(plate) + '-' + str(well)[0] + ',' + str(well)[1:]
+        new = f'P{str(plate)}-{str(well)[0]}-{str(well)[1:]}'
         return new
-    df['vial'] = df.loc[:, ['plate', 'well']].apply(splitwell, axis=1)
-    subset = ['vial',]
+
+    df['Vial'] = df.loc[:, ['plate', 'well']].apply(splitwell, axis=1)
+    subset = ['Vial', ]
     for s in df.columns:
         if s.endswith('_formula'):
             subset.append(s)
@@ -169,7 +169,7 @@ if __name__ == '__main__':
         if USE_PICKLED_MOLPROPDICT is False:
             """Generate mol suppliers to import from SDF"""
             mol_prop_dict = {}
-            for path, _, files in os.walk(DATA_DIR / 'library_static'):
+            for path, _, files in os.walk(SDF_DIR):
                 for f in files:
                     if f.startswith('product_') and f.endswith('.sdf.gz'):
                         letter = f.split('_')[1].split('.')[0]
@@ -186,14 +186,13 @@ if __name__ == '__main__':
             mol_prop_dict = pkl.load(file)
 
         """Import identities (this can stay as is)"""
-        starting_material_dict = import_sm(OUTPUT_DIR / 'compound_mapping.txt')
+        starting_material_dict = import_sm(COMPOUND_MAPPING)
 
         """Import plates as lists"""
         plates_dict = {}
-        plate_regex = re.compile('plate_layout_plate([0-9]+).csv')
         for path, _, files in os.walk(EXP_DIR):
             for f in files:
-                m = plate_regex.match(f)
+                m = PLATE_REGEX.match(f)
                 if m:
                     plate_dict = import_pl(Path(path, f))
                     plates_dict[m.group(1)] = plate_dict
@@ -236,13 +235,13 @@ if __name__ == '__main__':
 
         """add internal standard if user wishes"""
         internal_standard_y_n = ADD_IS
-        internalstandard_formula = "C20H21O4Cl"  # molecular formula of Fenofibrat
-        internalstandard_mass = 360.1128  # exact mass of Fenofibrat
+        internal_standard_formula = "C20H21O4Cl"  # molecular formula of Fenofibrat
+        internal_standard_mass = 360.1128  # exact mass of Fenofibrat
         if internal_standard_y_n == "y":
             df['IS_mass'] = np.nan
             df['IS_formula'] = ''
-            df.loc[df['long'] != '', 'IS_mass'] = internalstandard_mass
-            df.loc[df['long'] != '', 'IS_formula'] = internalstandard_formula
+            df.loc[df['long'] != '', 'IS_mass'] = internal_standard_mass
+            df.loc[df['long'] != '', 'IS_formula'] = internal_standard_formula
         else:
             print("You chose not to add internal standard.\n")
 

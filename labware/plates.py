@@ -114,11 +114,10 @@ class Plate:
 
     # TODO deprecate methods that are redundant with __get_span and __set_span
 
-
     def __get_row(self, row: int) -> Tuple[List, List]:
         row = [row, ]
         cmp, vol = self.__get_span(row, self.__indices()[1])
-        return cmp, vol
+        return cmp[0], vol[0]
 
     def __get_column(self, col: int):
         return [self._compounds[row][col] for row in range(self.n_rows)], [
@@ -203,13 +202,18 @@ class Plate:
         """Set well volume to zero and delete compounds"""
         row, col = self.__to_index(pos)
         self.__set_well(row, col, [], 0)
+    # TODO fill_span(start_well, end_well, cmp, vol) could superseed fill_row, fill_column and fill_block
 
-    def fill_row(self, row: str, compound: str, vol: int):
-        """Add single compound to all wells in a row"""
-        row += self.columns()[0]  # auxiliary column, no influence
-        row = self.__to_index(row)[0]
-        cmp_cur_list, vol_cur_list = self.__get_row(row)
-        self.__set_row(row, [cmp + [compound] for cmp in cmp_cur_list], [v + vol for v in vol_cur_list])
+    def fill_span(self, well_start: str, well_end: str, compound: str, vol: int):
+        """Add single compound to all wells in the rectangle spanned by well_start and well_end"""
+        row_start, col_start = self.__to_index(well_start)
+        row_end, col_end = self.__to_index(well_end)
+        rows = list(range(row_start, row_end + 1))
+        cols = list(range(col_start, col_end + 1))
+        cur_cmp, cur_vol = self.__get_span(rows, cols)
+        new_cmp = [[well + [compound] for well in row] for row in cur_cmp]
+        new_vol = [[well + vol for well in row] for row in cur_vol]
+        self.__set_span(rows, cols, new_cmp, new_vol)
 
     def fill_column(self, col: str, compound: str, vol: int):
         """Add single compound to all wells in a column"""
@@ -415,6 +419,12 @@ class Plate384(Plate):
 class Plate384Echo(Plate384):
     def __init__(self):
         super().__init__(max_vol=12000, dead_vol=2500)
+
+
+if __name__ == '__main__':
+    # debugging commands go here
+    pass
+
 
 
 

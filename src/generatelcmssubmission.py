@@ -24,7 +24,7 @@ from pathlib import Path
 import gzip
 from rdkit.Chem.rdmolfiles import ForwardSDMolSupplier
 from rdkit.Chem.rdMolDescriptors import CalcExactMolWt, CalcMolFormula
-from labware.plates import Plate384
+from labware.plates import Plate384, Plate96
 import pickle as pkl
 import numpy as np
 
@@ -32,12 +32,13 @@ import numpy as np
 DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
 INPUT_DIR = DATA_DIR / 'inputs'
-EXP_DIR = OUTPUT_DIR / 'target_plates' / 'test_plates'
 verbose = True
 USE_PICKLED_MOLPROPDICT = True  # choose this if script has been run before on the exp to not open sdf files again
 USE_PICKLED_DF = False  # this will skip most of the script (if it has been run before). Only for debugging
 ADD_IS = 'y'  # Was internal standard added to the plates?
 
+PLATE_SIZE = 384
+EXP_DIR = OUTPUT_DIR / 'target_plates' / 'test_plates_JG213'
 # PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
 PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
 COMPOUND_MAPPING = EXP_DIR / 'identity.txt'  # OUTPUT_DIR / 'compound_mapping.txt'
@@ -81,7 +82,12 @@ def import_pl(file):
     Create a dict of the form {'A1': ['I1', 'M1', 'T1']} that maps wells to shorthand names
     :return: dict
     """
-    p = Plate384(12000, 2500)
+    if PLATE_SIZE == 96:
+        p = Plate96(150000, 5000)
+    elif PLATE_SIZE == 384:
+        p = Plate384(12000, 2500)
+    else:
+        raise ValueError(f'Invalid plate size: {PLATE_SIZE}')
     p.from_csv(file)
     p_dict = p.to_dict()
     return p_dict

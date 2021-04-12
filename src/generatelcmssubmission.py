@@ -37,7 +37,7 @@ USE_PICKLED_MOLPROPDICT = True  # choose this if script has been run before on t
 USE_PICKLED_DF = False  # this will skip most of the script (if it has been run before). Only for debugging
 ADD_IS = 'y'  # Was internal standard added to the plates?
 
-PLATE_SIZE = 384
+PLATE_SIZE = 96
 EXP_DIR = OUTPUT_DIR / 'target_plates' / 'test_plates_JG213'
 # PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
 PLATE_REGEX = re.compile('test_JG([0-9]+).csv')

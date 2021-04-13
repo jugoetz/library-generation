@@ -36,6 +36,7 @@ verbose = True
 USE_PICKLED_MOLPROPDICT = True  # choose this if script has been run before on the exp to not open sdf files again
 USE_PICKLED_DF = False  # this will skip most of the script (if it has been run before). Only for debugging
 ADD_IS = 'y'  # Was internal standard added to the plates?
+MASS_OR_FORMULA = 'formula'  # ['mass'/'formula'] can output mass as a number or can give chemical formula
 
 PLATE_SIZE = 96
 EXP_DIR = OUTPUT_DIR / 'target_plates' / 'test_plates_JG213'
@@ -148,16 +149,22 @@ def write_csv(df, file):
         new = f'P{str(plate)}-{str(well)[0]}-{str(well)[1:]}'
         return new
 
+    if MASS_OR_FORMULA == 'mass':
+        suffix = '_mass'
+    elif MASS_OR_FORMULA == 'formula':
+        suffix = '_formula'
+    else:
+        raise ValueError(f'Invalid option {MASS_OR_FORMULA}')
     df['Vial'] = df.loc[:, ['plate', 'well']].apply(splitwell, axis=1)
     subset = ['Vial', ]
     for s in df.columns:
-        if s.endswith('_formula'):
+        if s.endswith(suffix):
             subset.append(s)
     subset_df = df.loc[df['long'] != '', subset]
     rename_dict = {}
     i = 1
     for column in subset_df.columns:
-        if column.endswith('_formula'):
+        if column.endswith(suffix):
             rename_dict[column] = f'SumF{i}'
             i += 1
     subset_df.rename(columns=rename_dict, inplace=True)

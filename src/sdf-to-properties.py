@@ -15,8 +15,8 @@ import pickle as pkl
 """GLOBALS"""
 DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
-OUTPUT_PICKLE = OUTPUT_DIR / 'static_mol_prop_dict.pkl'
 SDF_DIR = DATA_DIR / 'library_static'
+OUTPUT_PICKLE = SDF_DIR / 'static_mol_prop_dict.pkl'
 verbose = True
 
 

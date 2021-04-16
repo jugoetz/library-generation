@@ -21,27 +21,26 @@ import pandas as pd
 import re
 import os
 from pathlib import Path
-import gzip
-from rdkit.Chem.rdmolfiles import ForwardSDMolSupplier
 from labware.plates import Plate384, Plate96
 import pickle as pkl
 import numpy as np
 
 """GLOBALS"""
+# directories and files
 DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
 INPUT_DIR = DATA_DIR / 'inputs'
+SDF_DIR = DATA_DIR / 'library_static'
+EXP_DIR = OUTPUT_DIR / 'target_plates' / 'JG215'
+PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')  # PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
+COMPOUND_MAPPING = EXP_DIR / 'identity.txt'  # OUTPUT_DIR / 'compound_mapping.txt'
+# debug
 verbose = True
 USE_PICKLED_DF = False  # this will skip most of the script (if it has been run before). Only for debugging
+# output controls
 ADD_IS = 'y'  # Was internal standard added to the plates?
 MASS_OR_FORMULA = 'formula'  # ['mass'/'formula'] can output mass as a number or can give chemical formula
-
 PLATE_SIZE = 96
-EXP_DIR = OUTPUT_DIR / 'target_plates' / 'JG215'
-PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
-# PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
-COMPOUND_MAPPING = EXP_DIR / 'identity.txt'  # OUTPUT_DIR / 'compound_mapping.txt'
-SDF_DIR = DATA_DIR / 'library_static'
 
 
 def import_sm(file):
@@ -60,19 +59,6 @@ def import_sm(file):
             # remove any "_XX" suffixes from long names
             dictionary[columns[0]] = columns[1].split("_")[0]
     return dictionary
-
-
-def import_mol(file):
-    """
-    Import product mol from gzipped SDF. Return a generator that yields rdkit mol objects
-    :param file: str or Path-like
-    :return: generator
-    """
-    if str(file).endswith('.sdf.gz'):
-        supply = ForwardSDMolSupplier(gzip.open(file))
-    else:
-        raise ValueError(f'Invalid file "{file}". User must supply .sdf.gz file.')
-    return supply
 
 
 def import_pl(file):
@@ -177,7 +163,8 @@ def write_csv(df, file):
 
 if __name__ == '__main__':
     if USE_PICKLED_DF is False:
-        with open(OUTPUT_DIR / 'static_mol_prop_dict.pkl', 'rb') as file:
+        """Import Mass and Formula from pickle"""
+        with open(SDF_DIR / 'static_mol_prop_dict.pkl', 'rb') as file:
             mol_prop_dict = pkl.load(file)
 
         """Import identities (this can stay as is)"""

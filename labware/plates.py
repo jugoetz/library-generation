@@ -108,9 +108,9 @@ class Plate:
         except AssertionError:
             raise ValueError('Input shape not appropriate')
         # set all wells in the span
-        for row in rows:
-            for col in cols:
-                self.__set_well(row, col, compounds[row][col], volumes[row][col])
+        for r, row in enumerate(rows):
+            for c, col in enumerate(cols):
+                self.__set_well(row, col, compounds[r][c], volumes[r][c])  # We need the enumeration because row and col refere to the entire plate, but compounds and volumes only refer to the span, so using row and col raises IndexErrors
 
     # TODO deprecate methods that are redundant with __get_span and __set_span
 

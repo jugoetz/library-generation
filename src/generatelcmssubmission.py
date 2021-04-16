@@ -23,7 +23,6 @@ import os
 from pathlib import Path
 import gzip
 from rdkit.Chem.rdmolfiles import ForwardSDMolSupplier
-from rdkit.Chem.rdMolDescriptors import CalcExactMolWt, CalcMolFormula
 from labware.plates import Plate384, Plate96
 import pickle as pkl
 import numpy as np
@@ -33,15 +32,14 @@ DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
 INPUT_DIR = DATA_DIR / 'inputs'
 verbose = True
-USE_PICKLED_MOLPROPDICT = True  # choose this if script has been run before on the exp to not open sdf files again
 USE_PICKLED_DF = False  # this will skip most of the script (if it has been run before). Only for debugging
 ADD_IS = 'y'  # Was internal standard added to the plates?
 MASS_OR_FORMULA = 'formula'  # ['mass'/'formula'] can output mass as a number or can give chemical formula
 
 PLATE_SIZE = 96
-EXP_DIR = OUTPUT_DIR / 'target_plates' / 'test_plates_JG213'
-# PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
-PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
+EXP_DIR = OUTPUT_DIR / 'target_plates' / 'JG215'
+PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
+# PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
 COMPOUND_MAPPING = EXP_DIR / 'identity.txt'  # OUTPUT_DIR / 'compound_mapping.txt'
 SDF_DIR = DATA_DIR / 'library_static'
 
@@ -179,23 +177,7 @@ def write_csv(df, file):
 
 if __name__ == '__main__':
     if USE_PICKLED_DF is False:
-        if USE_PICKLED_MOLPROPDICT is False:
-            """Generate mol suppliers to import from SDF"""
-            mol_prop_dict = {}
-            for path, _, files in os.walk(SDF_DIR):
-                for f in files:
-                    if f.startswith('product_') and f.endswith('.sdf.gz'):
-                        letter = f.split('_')[1].split('.')[0]
-                        supplier = import_mol(Path(path, f))
-                        mol_props = {}
-                        for mol in supplier:
-                            if mol is not None:
-                                mol_props[mol.GetProp('_Name')] = [CalcExactMolWt(mol), CalcMolFormula(mol)]
-                        mol_prop_dict[letter] = mol_props
-            with open(OUTPUT_DIR / 'debug_mol_prp_dict.pkl', 'wb') as file:
-                pkl.dump(mol_prop_dict, file)
-
-        with open(OUTPUT_DIR / 'debug_mol_prp_dict.pkl', 'rb') as file:
+        with open(OUTPUT_DIR / 'static_mol_prop_dict.pkl', 'rb') as file:
             mol_prop_dict = pkl.load(file)
 
         """Import identities (this can stay as is)"""

@@ -30,9 +30,18 @@ from rdkit.Chem import Draw, SaltRemover, AllChem
 from rdkit.Chem.SimpleEnum.Enumerator import EnumerateReaction
 from pathlib import Path
 import pandas as pd
+import gzip
 import warnings
 import string
 import itertools
+import pickle as pkl
+
+
+"""GLOBALS"""
+DATA_DIR = Path('..', 'data').resolve()
+OUTPUT_DIR = DATA_DIR / 'outputs'
+DEBUG = 1
+POSTPROCESSING_ONLY = False
 
 
 def deprotonate_nitrogen(mol):
@@ -115,123 +124,158 @@ def add_name_prop_to_mol(reactant1, reactant2, reactant3, product_library):
     return product_library
 
 
-"""GLOBALS"""
-DATA_DIR = Path('..', 'data').resolve()
-OUTPUT_DIR = DATA_DIR / 'outputs'
-DEBUG = 1
+
+if POSTPROCESSING_ONLY is False:
+
+    """Import from pickle"""
+    compounds = pd.read_pickle(OUTPUT_DIR / 'library_constituents_dataframe.pkl')
 
 
-"""Import from pickle"""
-compounds = pd.read_pickle(OUTPUT_DIR / 'library_constituents_dataframe.pkl')
+    """Desalt building blocks and deprotonate N"""
+    # desalt the building block library
+    remover = SaltRemover.SaltRemover()
+    compounds['desalted'] = compounds.loc[:, 'mol'].apply(remover.StripMol)
+    # neutralize ammoniums
+    compounds.loc[:, 'desalted'].apply(deprotonate_nitrogen)
+    compounds['desalted_SMILES'] = compounds.loc[:, 'desalted'].apply(Chem.MolToSmiles)
 
 
-"""Desalt building blocks and deprotonate N"""
-# desalt the building block library
-remover = SaltRemover.SaltRemover()
-compounds['desalted'] = compounds.loc[:, 'mol'].apply(remover.StripMol)
-# neutralize ammoniums
-compounds.loc[:, 'desalted'].apply(deprotonate_nitrogen)
-compounds['desalted_SMILES'] = compounds.loc[:, 'desalted'].apply(Chem.MolToSmiles)
+    """Define reactions"""
+    # all 7 TerTH prods
+    rxn_TH = AllChem.ReactionFromSmarts(
+        # 'F[B-](F)(F)[#6](-[*:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#6:4]-[#6](=S)-[#7]-[#7]>>[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)-[#16]-1.[#6:4]-[#6]-1=[#7]-[#7]C([#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)([#16]-1)[#6](-[#8])=O.[#6:4]-[#6]-1=[#7]-[#7+]2=[#6](-[*:1])-[#7]-[#6:2]-[#6:3]C2([#16]-1)[#6](-[#8-])=O.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[*:1])-[#16]-1.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#6:4])-[#16]-1.[#8]-[#6](=O)-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#8]-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O'
+        'F[B-](F)(F)[#6](-[*:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#6:4]-[#6](=S)-[#7]-[#7]>>[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)-[#16]-1.[#6:4]-[#6]-1=[#7]-[#7]C([#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)([#16]-1)[#6](-[#8])=O.[#6:4]-[#6]-1=[#7]-[#7+]2=[#6](-[*:1])-[#7]-[#6:2]-[#6:3]C2([#16]-1)[#6](-[#8-])=O.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[*:1])-[#16]-1.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#6:4])-[#16]-1.[#8]-[#6](=O)-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#8]-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#16]-1)-[#6:3]=[#6:2]'
+    )
+
+    # all 7 TerABT prods
+    rxn_ABT = AllChem.ReactionFromSmarts(
+        # 'F[B-](F)(F)[#6](-[*:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]>>[*:1]-[#6](=O)-[#7]-[#6:2]-[#6:3]-c1nc2[c:4][c:5][c:6][c:7]c2s1.[#8]-[#6](=O)C1([#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)[#7]-c2[c:4][c:5][c:6][c:7]c2-[#16]1.[#8-]-[#6](=O)C12[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=[#7+]1-c1[c:4][c:5][c:6][c:7]c1-[#16]2.[*:1]-c1nc2[c:4][c:5][c:6][c:7]c2s1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]-[#16]-c1[c:7][c:6][c:5][c:4]c1-[#7].[#8]-[#6](=O)-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#8]-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O'
+
+        "F[B-](F)(F)[#6](-[*:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]>>[*:1]-[#6](=O)-[#7]-[#6:2]-[#6:3]-c1nc2[c:4][c:5][c:6][c:7]c2s1.[#8]-[#6](=O)C1([#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)[#7]-c2[c:4][c:5][c:6][c:7]c2-[#16]1.[#8-]-[#6](=O)C12[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=[#7+]1-c1[c:4][c:5][c:6][c:7]c1-[#16]2.[*:1]-c1nc2[c:4][c:5][c:6][c:7]c2s1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]-[#16]-c1[c:7][c:6][c:5][c:4]c1-[#7].[#8]-[#6](=O)-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#8]-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#6:2]=[#6;v4:3]-c1nc2[c:4][c:5][c:6][c:7]c2s1"
+    )
+    # prepare for visualization
+    AllChem.Compute2DCoordsForReaction(rxn_TH)
+    AllChem.Compute2DCoordsForReaction(rxn_ABT)
+    # prepare for enumeration
+    rxn_TH.Initialize()
+    rxn_ABT.Initialize()
+    n_warn_TH, n_err_TH = rxn_TH.Validate(silent=True)
+    n_warn_ABT, n_err_ABT = rxn_ABT.Validate(silent=True)
+    if n_err_TH > 0:
+        raise ValueError(f'Invalid reaction gave {n_err_TH} errors in validation')
+    if n_err_ABT > 0:
+        raise ValueError(f'Invalid reaction gave {n_err_ABT} errors in validation')
 
 
-"""Define reactions"""
-# all 7 TerTH prods
-rxn_TH = AllChem.ReactionFromSmarts(
-    'F[B-](F)(F)[#6](-[*:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#6:4]-[#6](=S)-[#7]-[#7]>>[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)-[#16]-1.[#6:4]-[#6]-1=[#7]-[#7]C([#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)([#16]-1)[#6](-[#8])=O.[#6:4]-[#6]-1=[#7]-[#7+]2=[#6](-[*:1])-[#7]-[#6:2]-[#6:3]C2([#16]-1)[#6](-[#8-])=O.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[*:1])-[#16]-1.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#6:4])-[#16]-1.[#8]-[#6](=O)-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#8]-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O')
-# all 7 TerABT prods
-rxn_ABT = AllChem.ReactionFromSmarts(
-    'F[B-](F)(F)[#6](-[*:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]>>[*:1]-[#6](=O)-[#7]-[#6:2]-[#6:3]-c1nc2[c:4][c:5][c:6][c:7]c2s1.[#8]-[#6](=O)C1([#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)[#7]-c2[c:4][c:5][c:6][c:7]c2-[#16]1.[#8-]-[#6](=O)C12[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=[#7+]1-c1[c:4][c:5][c:6][c:7]c1-[#16]2.[*:1]-c1nc2[c:4][c:5][c:6][c:7]c2s1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]-[#16]-c1[c:7][c:6][c:5][c:4]c1-[#7].[#8]-[#6](=O)-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#8]-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O')
-# prepare for visualization
-AllChem.Compute2DCoordsForReaction(rxn_TH)
-AllChem.Compute2DCoordsForReaction(rxn_ABT)
-# prepare for enumeration
-rxn_TH.Initialize()
-rxn_ABT.Initialize()
-n_warn_TH, n_err_TH = rxn_TH.Validate(silent=True)
-n_warn_ABT, n_err_ABT = rxn_ABT.Validate(silent=True)
-if n_err_TH > 0:
-    raise ValueError(f'Invalid reaction gave {n_err_TH} errors in validation')
-if n_err_ABT > 0:
-    raise ValueError(f'Invalid reaction gave {n_err_ABT} errors in validation')
+    """Control reactions visually"""
+    Draw.ReactionToImage(rxn_TH)
+    Draw.ReactionToImage(rxn_ABT)
 
 
-"""Control reactions visually"""
-Draw.ReactionToImage(rxn_TH)
-Draw.ReactionToImage(rxn_ABT)
+    """define reagents"""
+    all_KAT = compounds[compounds.loc[:, 'Category'].str.startswith('I')]
+    all_Mon = compounds[compounds.loc[:, 'Category'].str.startswith('M')]
+    all_Spiro = compounds[compounds.loc[:, 'Compound Name'].str.startswith('Spiro')]
+    all_Fused = compounds[compounds.loc[:, 'Compound Name'].str.startswith('Fused')]
+    all_Sub = compounds[compounds.loc[:, 'Compound Name'].str.startswith('Mon')]
+    all_TerTH = compounds[compounds.loc[:, 'Compound Name'].str.startswith('TerTH')]
+    all_TerABT = compounds[compounds.loc[:, 'Compound Name'].str.startswith('TerABT')]
+
+    I = all_KAT['desalted'].tolist()
+    M = all_Mon['desalted'].tolist()
+    fused = all_Fused['desalted'].tolist()
+    spiro = all_Spiro['desalted'].tolist()
+    sub = all_Sub['desalted'].tolist()
+    T_TH = all_TerTH['desalted'].tolist()
+    T_ABT = all_TerABT['desalted'].tolist()
 
 
-"""define reagents"""
-all_KAT = compounds[compounds.loc[:, 'Category'].str.startswith('I')]
-all_Mon = compounds[compounds.loc[:, 'Category'].str.startswith('M')]
-all_Spiro = compounds[compounds.loc[:, 'Compound Name'].str.startswith('Spiro')]
-all_Fused = compounds[compounds.loc[:, 'Compound Name'].str.startswith('Fused')]
-all_Sub = compounds[compounds.loc[:, 'Compound Name'].str.startswith('Mon')]
-all_TerTH = compounds[compounds.loc[:, 'Compound Name'].str.startswith('TerTH')]
-all_TerABT = compounds[compounds.loc[:, 'Compound Name'].str.startswith('TerABT')]
+    """print reagent info"""
+    print(f'KATs: {len(I)}')
+    print(f'Mons: {len(M)}')
+    print(f' - Spiro: {len(spiro)}')
+    print(f' - Fused: {len(fused)}')
+    print(f' - Sub: {len(sub)}')
+    print(f'TerTHs: {len(T_TH)}')
+    print(f'TerABTs: {len(T_ABT)}')
+    print()
+    print(f'expected TH (A) products: {len(I) * len(M) * len(T_TH)}')
+    print(f' - expected TH (A) products (spiro): {len(I) * len(spiro) * len(T_TH)}')
+    print(f' - expected TH (A) products (fused): {len(I) * len(fused) * len(T_TH)}')
+    print(f' - expected TH (A) products (sub): {len(I) * len(sub) * len(T_TH)}')
+    print()
+    print(f'expected ABT (A) products: {len(I) * len(M) * len(T_ABT)}')
+    print(f' - expected ABT (A) products (spiro): {len(I) * len(spiro) * len(T_ABT)}')
+    print(f' - expected ABT (A) products (fused): {len(I) * len(fused) * len(T_ABT)}')
+    print(f' - expected ABT (A) products (sub): {len(I) * len(sub) * len(T_ABT)}')
 
-I = all_KAT['desalted'].tolist()
-M = all_Mon['desalted'].tolist()
-fused = all_Fused['desalted'].tolist()
-spiro = all_Spiro['desalted'].tolist()
-sub = all_Sub['desalted'].tolist()
-T_TH = all_TerTH['desalted'].tolist()
-T_ABT = all_TerABT['desalted'].tolist()
-
-
-"""print reagent info"""
-print(f'KATs: {len(I)}')
-print(f'Mons: {len(M)}')
-print(f' - Spiro: {len(spiro)}')
-print(f' - Fused: {len(fused)}')
-print(f' - Sub: {len(sub)}')
-print(f'TerTHs: {len(T_TH)}')
-print(f'TerABTs: {len(T_ABT)}')
-print()
-print(f'expected TH (A) products: {len(I) * len(M) * len(T_TH)}')
-print(f' - expected TH (A) products (spiro): {len(I) * len(spiro) * len(T_TH)}')
-print(f' - expected TH (A) products (fused): {len(I) * len(fused) * len(T_TH)}')
-print(f' - expected TH (A) products (sub): {len(I) * len(sub) * len(T_TH)}')
-print()
-print(f'expected ABT (A) products: {len(I) * len(M) * len(T_ABT)}')
-print(f' - expected ABT (A) products (spiro): {len(I) * len(spiro) * len(T_ABT)}')
-print(f' - expected ABT (A) products (fused): {len(I) * len(fused) * len(T_ABT)}')
-print(f' - expected ABT (A) products (sub): {len(I) * len(sub) * len(T_ABT)}')
-
-check_reactants(rxn_TH, 'TH', all_KAT, all_Mon, all_TerTH)
-check_reactants(rxn_ABT, 'ABT', all_KAT, all_Mon, all_TerABT)
+    check_reactants(rxn_TH, 'TH', all_KAT, all_Mon, all_TerTH)
+    check_reactants(rxn_ABT, 'ABT', all_KAT, all_Mon, all_TerABT)
 
 
-"""check uniqueness of building blocks"""
-duplicate_I = check_unique_molecules(I)
-duplicate_M = check_unique_molecules(M)
-duplicate_T = check_unique_molecules(T_TH + T_ABT)
+    """check uniqueness of building blocks"""
+    duplicate_I = check_unique_molecules(I)
+    duplicate_M = check_unique_molecules(M)
+    duplicate_T = check_unique_molecules(T_TH + T_ABT)
 
 
-"""run enumeration (consumes lots of RAM)"""
-reactant_I = I
-reactant_M = M
-reactant_ABT = T_ABT
-reactant_TH = T_TH
-product_generator_ABT = EnumerateReaction(rxn_ABT, (reactant_I, reactant_M, reactant_ABT), uniqueProductsOnly=True)
-product_generator_TH = EnumerateReaction(rxn_TH, (reactant_I, reactant_M, reactant_TH), uniqueProductsOnly=True)
-product_list_ABT = list(product_generator_ABT)
-product_list_TH = list(product_generator_TH)
+    """run enumeration (consumes lots of RAM)"""
+    reactant_I = I
+    reactant_M = M
+    reactant_ABT = T_ABT
+    reactant_TH = T_TH
+    product_generator_ABT = EnumerateReaction(rxn_ABT, (reactant_I, reactant_M, reactant_ABT), uniqueProductsOnly=True)
+    product_generator_TH = EnumerateReaction(rxn_TH, (reactant_I, reactant_M, reactant_TH), uniqueProductsOnly=True)
+    product_list_ABT = list(product_generator_ABT)
+    product_list_TH = list(product_generator_TH)
 
-product_list_ABT = add_name_prop_to_mol(reactant_I, reactant_M, reactant_ABT, product_list_ABT)
-product_list_TH = add_name_prop_to_mol(reactant_I, reactant_M, reactant_TH, product_list_TH)
-product_list = product_list_ABT + product_list_TH
+    product_list_ABT = add_name_prop_to_mol(reactant_I, reactant_M, reactant_ABT, product_list_ABT)
+    product_list_TH = add_name_prop_to_mol(reactant_I, reactant_M, reactant_TH, product_list_TH)
+    product_list = product_list_ABT + product_list_TH
 
+    """Pickle the library, just in case postprocessing fails."""
+    with open(OUTPUT_DIR / 'sdf' / 'product_list_unprocessed.pkl', 'wb') as file:
+        pkl.dump(product_list, file)
+
+"""Reuse the pickled library if the option is set"""
+if POSTPROCESSING_ONLY is True:
+    print('Loading product list from pickle...')
+    with open(OUTPUT_DIR / 'sdf' / 'product_list_unprocessed.pkl', 'rb') as file:
+        product_list = pkl.load(file)
+    print('Finished loading.')
 
 """Post-process the generated library"""
-[Chem.SanitizeMol(p) for p_list in product_list for p in p_list]  # Sanitize mols
+# sanitize mols. We don't use a list comprehension to be able to catch exceptions
+errors = []
+for i, p_list in enumerate(product_list):
+    for j, p in enumerate(p_list):
+        try:
+            Chem.SanitizeMol(p)
+        except:
+            # if Sanitization throws exception, replace the molecule with water.
+            # we need to take a little detour as p_list is a tuple.
+            product_list[i] = (p_list[0],
+                               p_list[1],
+                               p_list[2],
+                               p_list[3],
+                               p_list[4],
+                               p_list[5],
+                               p_list[6],
+                               Chem.MolFromSmiles('O'),  # this is the one we want to replace
+                               )
+
+
 resorted_products = list(map(
     list, itertools.zip_longest(*product_list, fillvalue=None)))  # "transposes" the list of lists
 
 
 """Write sdf files. One file per product type."""
 for p, s in zip(resorted_products, string.ascii_uppercase):
-    with open(OUTPUT_DIR / 'sdf' / f'product_{s}.sdf', 'w') as file:
+    print(f'Saving products {s}...')
+    with gzip.open(OUTPUT_DIR / 'sdf' / f'product_{s}.sdf.gz', 'wt') as file:
         writer = Chem.SDWriter(file)
-        [writer.write(mol) for mol in p]
+        for mol in p:
+            writer.write(mol)
+
         writer.close()
     print(f'Products {s} were saved to SDF')

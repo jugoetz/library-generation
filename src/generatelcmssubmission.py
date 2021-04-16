@@ -23,6 +23,8 @@ import os
 from pathlib import Path
 from labware.plates import Plate384, Plate96
 import pickle as pkl
+import json
+import gzip
 import numpy as np
 
 """GLOBALS"""
@@ -164,8 +166,8 @@ def write_csv(df, file):
 if __name__ == '__main__':
     if USE_PICKLED_DF is False:
         """Import Mass and Formula from pickle"""
-        with open(SDF_DIR / 'static_mol_prop_dict.pkl', 'rb') as file:
-            mol_prop_dict = pkl.load(file)
+        with gzip.open(SDF_DIR / 'static_mol_prop_dict.json.gz', 'rt', encoding='ascii') as zipfile:
+            mol_prop_dict = json.load(zipfile)
 
         """Import identities (this can stay as is)"""
         starting_material_dict = import_sm(COMPOUND_MAPPING)

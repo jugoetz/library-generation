@@ -19,7 +19,7 @@ INPUT_DIR = DATA_DIR / 'inputs'
 EXP_DIR = OUTPUT_DIR / 'target_plates' / 'test_plates_JG213'
 DEBUG = True
 NORMALIZATION_CONSTANT = 6.0
-results_file = EXP_DIR / 'BMII001981_Skript-Results Auswertung Variante C.csv'
+results_file = EXP_DIR / 'BMII001985_Skript-Results_Variante_B_Lock_322.csv'
 
 well_position_file = EXP_DIR / 'SampleTable_JG213.xls'
 norm = 'IS'
@@ -52,7 +52,8 @@ def calculate_yield(dict_df, method='IS'):
 
 
 def plot_heatmap(df, measurement_number, method, filename):
-    plt.figure(figsize=(7.5, 5))
+    plt.figure(figsize=(7.5, 5))  # this size works for 96 wells plates
+    # plt.figure(figsize=(15,10))  # this size (maybe) works for 384 well plates
     axs = sns.heatmap(df * 100,
                       vmin=0,
                       vmax=100,

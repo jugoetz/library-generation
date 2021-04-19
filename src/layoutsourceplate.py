@@ -4,7 +4,7 @@ From an (ORDERED!) list of building blocks, generate source plate layouts for Ec
 Inputs:
     - synthesis_plan.json: JSON of a list of experiments. Every experiment contains 1 list for every of the
       3 building blocks. The type of the list must be List[List[str], List[str], List[str]].
-      Typically this is the output of gneratelibraryplan.py
+      Typically this is the output of generatelibraryplan.py
 
 Outputs:
     - (In folders exp{nr.}): source plate layout files source_plate_layout.csv: 1 file per folder,

@@ -343,13 +343,15 @@ class Plate:
         target plate will be initialized to this volume
         WARNING: Compounds / volumes in self will be overwritten.
         """
-        if isinstance(file, Path): # convert any Path to str
+        # TODO make this infer whether we need 96 or 384 (or1536?) from supplied data
+        # TODO it would be better not to have this as a class method, so that it can return a Plate. (like pd.read_csv())
+        if isinstance(file, Path):  # convert any Path to str
             file = str(file.resolve())
 
         vol_file = file.strip('.csv') + '_volumes.csv'
         """parse files"""
         parsed = []
-        with open(file, 'r') as csv_file: # compound file
+        with open(file, 'r') as csv_file:  # compound file
             reader = csv.reader(csv_file)
             content = [row for row in reader]
         col_str = content.pop(0)  # the first line must be column names

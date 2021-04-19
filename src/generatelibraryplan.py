@@ -9,14 +9,14 @@ Output:
     - synthesis_plan.csv: List of experiments to be conducted for the synthesis of 50000 compounds.
                             Every experiment consists of 6 plates (or 1920 wells). For all experiments, a list of
                             the building blocks is given
-    - synthesis_plan.pkl: Serialized list of the syntheses
+    - synthesis_plan.json: Serialized list of the syntheses
     - compound_mapping.txt: Space-delimited table of the shorthand name for a compound (e.g. "M1") and the
       longhand equivalent (e.g. Mon002)
 
 """
 import random as rd
 import csv
-import pickle as pkl
+import json
 from pathlib import Path
 import pandas as pd
 
@@ -118,7 +118,7 @@ with open(OUTPUT_DIR / 'randomization.log', 'w') as file:
     for t in set(terminators_all) - set(terminators):
         file.write(f'{t}\n')
 
-"""write the synthesis plan to csv and pickle"""
+"""write the synthesis plan to csv and json"""
 with open(OUTPUT_DIR / 'synthesis_plan.csv', 'w') as file:  # CSV
     writer = csv.writer(file)
     counter = 1
@@ -127,8 +127,9 @@ with open(OUTPUT_DIR / 'synthesis_plan.csv', 'w') as file:  # CSV
         for building_block in run:
             writer.writerow(building_block)
         counter += 1
-with open(OUTPUT_DIR / 'synthesis_plan.pkl', 'wb') as file:  # pickle
-    pkl.dump(synthesis_plan, file)
+
+with open(OUTPUT_DIR / 'synthesis_plan.json', 'w') as file:  # json
+    json.dump(synthesis_plan, file)
 
 """write the mapping between short- and longhand names to txt-file"""
 compounds.sort_values(by='Category', inplace=True, kind='mergesort')

@@ -20,6 +20,7 @@ import pickle as pkl
 from pathlib import Path
 import pandas as pd
 
+
 DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
 
@@ -59,11 +60,11 @@ initiators_average = total_targets / len(initiators_all)
 monomers_average = total_targets / len(monomers_all)
 terminators_average = total_targets / len(terminators_all)
 print(f'Each initiator will be used in {initiators_average} reactions on average. '
-      f'At 192 reactions per run (6 plates), that equals using it in {initiators_average / monomers_per_run / terminators_per_run} runs')
+      f'At 1920 reactions per run (6 plates), that equals using it in {initiators_average / monomers_per_run / terminators_per_run} runs')
 print(f'Each monomer will be used in {monomers_average} reactions on average. '
-      f'At 192 reactions per run (6 plates), that equals using it in {monomers_average / initiators_per_run / terminators_per_run} runs')
+      f'At 1920 reactions per run (6 plates), that equals using it in {monomers_average / initiators_per_run / terminators_per_run} runs')
 print(f'Each terminator will be used in {terminators_average} reactions on average. '
-      f'At 192 reactions per run (6 plates), that equals using it in {terminators_average / monomers_per_run / initiators_per_run} runs')
+      f'At 1920 reactions per run (6 plates), that equals using it in {terminators_average / monomers_per_run / initiators_per_run} runs')
 
 """
 Randomize the building block lists.

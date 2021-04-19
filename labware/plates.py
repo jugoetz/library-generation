@@ -2,6 +2,7 @@ import string
 from typing import Tuple, List, Optional, Union
 import csv
 from pathlib import Path
+from deprecated import deprecated
 
 
 class Plate:
@@ -110,15 +111,18 @@ class Plate:
         # set all wells in the span
         for r, row in enumerate(rows):
             for c, col in enumerate(cols):
-                self.__set_well(row, col, compounds[r][c], volumes[r][c])  # We need the enumeration because row and col refere to the entire plate, but compounds and volumes only refer to the span, so using row and col raises IndexErrors
+                self.__set_well(row, col, compounds[r][c], volumes[r][
+                    c])  # We need the enumeration because row and col refer to the entire plate, but compounds and volumes only refer to the span, so using row and col raises IndexErrors
 
     # TODO deprecate methods that are redundant with __get_span and __set_span
 
+    @deprecated(reason='Use __get_span() instead')
     def __get_row(self, row: int) -> Tuple[List, List]:
         row = [row, ]
         cmp, vol = self.__get_span(row, self.__indices()[1])
         return cmp[0], vol[0]
 
+    @deprecated(reason='Use __get_span() instead')
     def __get_column(self, col: int):
         return [self._compounds[row][col] for row in range(self.n_rows)], [
             self._volume[row][col] for row in range(self.n_rows)]
@@ -130,18 +134,17 @@ class Plate:
         else:
             return True
 
+    @deprecated(reason='Use __set_span() instead')
     def __set_row(self, row: int, compounds: List[list], vol: List[int]):
         for col in range(self.n_cols):
             self.__set_well(row, col, compounds[col], vol[col])
 
+    @deprecated(reason='Use __set_span() instead')
     def __set_column(self, col: int, compounds: List[list], vol: List[int]):
         for row in range(self.n_rows):
             self.__set_well(row, col, compounds[row], vol[row])
 
-    def test(self):
-        print(self.__get_span([0, 1, 2], [0, 1])[0])
-        print(self.__get_span([0, 1, 2], [0, 1])[1])
-
+    @deprecated(reason='Use __set_span() instead')
     def __set_plate(self, compounds: list, vol: int):
         for row in range(self.n_rows):
             for col in range(self.n_cols):
@@ -226,14 +229,14 @@ class Plate:
         new_vol = [[0 for well in row] for row in cur_vol]
         self.__set_span(rows, cols, new_cmp, new_vol)
 
-    def fill_column(self, col: str, compound: str, vol: int):
+    def fill_column(self, col: str, compound: str, vol: int):  # TODO rewrite to use span logic
         """Add single compound to all wells in a column"""
         col = self.rows()[0] + col  # auxiliary row, no influence
         col = self.__to_index(col)[1]
         cmp_cur_list, vol_cur_list = self.__get_column(col)
         self.__set_column(col, [cmp + [compound] for cmp in cmp_cur_list], [v + vol for v in vol_cur_list])
 
-    def fill_block(self, rows: Tuple[str], cols: Tuple[str], compound: str, vol: int):
+    def fill_block(self, rows: Tuple[str], cols: Tuple[str], compound: str, vol: int):  # TODO rewrite to use span logic
         """Add single compound to all wells in a block that spans one or more rows and one or more columns"""
         for row_str in rows:
             for col_str in cols:

@@ -215,6 +215,17 @@ class Plate:
         new_vol = [[well + vol for well in row] for row in cur_vol]
         self.__set_span(rows, cols, new_cmp, new_vol)
 
+    def empty_span(self, well_start: str, well_end: str):
+        """Set volume to 0 and delete compounds in all wells in the rectangle spanned by well_start and well_end"""
+        row_start, col_start = self.__to_index(well_start)
+        row_end, col_end = self.__to_index(well_end)
+        rows = list(range(row_start, row_end + 1))
+        cols = list(range(col_start, col_end + 1))
+        cur_cmp, cur_vol = self.__get_span(rows, cols)
+        new_cmp = [[[] for well in row] for row in cur_cmp]
+        new_vol = [[0 for well in row] for row in cur_vol]
+        self.__set_span(rows, cols, new_cmp, new_vol)
+
     def fill_column(self, col: str, compound: str, vol: int):
         """Add single compound to all wells in a column"""
         col = self.rows()[0] + col  # auxiliary row, no influence

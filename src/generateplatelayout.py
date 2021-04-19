@@ -2,26 +2,24 @@
 From a list of building blocks, generate target plate layouts that provide all possible combinations.
 
 Inputs:
-    - synthesis_plan.pkl: Pickle of a list of experiments. Every experiment contains 1 list for every of the
+    - synthesis_plan.json: JSON of a list of experiments. Every experiment contains 1 list for every of the
       3 building blocks. The type of the list must be List[List[str], List[str], List[str]].
-      Typically this is the output of generatelibraryplan.py
+      Typically this is the output of gneratelibraryplan.py
 
 Outputs:
     - Folders exp{nr.} containing plate layout files: The number of folders equals len(input list)
 """
-
-
-import pickle as pkl
+import json
 from pathlib import Path
 from labware.plates import Plate384Echo
 from copy import deepcopy
 
-
 DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
 
-with open(OUTPUT_DIR / 'synthesis_plan.pkl', 'rb') as file:
-    synthesis_plan = pkl.load(file)
+with open(OUTPUT_DIR / 'synthesis_plan.json', 'r') as file:
+    synthesis_plan = json.load(file)
+
 for exp_nr, exp in enumerate(synthesis_plan):
     print(f'{exp_nr}  |  {exp}')
 

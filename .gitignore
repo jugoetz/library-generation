@@ -5,6 +5,7 @@
 /data/inputs
 /data/logs
 /data/outputs
+/data/util
 # Jupyter
 /.ipynb_checkpoints
 # MacOS

@@ -7,6 +7,7 @@ OUTPUT_DIR = DATA_DIR / 'outputs'
 INPUT_DIR = DATA_DIR / 'inputs'
 SDF_DIR = DATA_DIR / 'library_static'
 DB_PATH = DATA_DIR / 'db' / '50k_project.db'
+DB_STATIC_DIR = DATA_DIR / 'db' / 'static'
 SUBMISSION_FORM_TEMPLATE = DATA_DIR / 'util' / 'BMIIyyyyyy-SampleTable_JGxxx.xls'
 EXP_NR = 'JG216'  # this will change frequently
 EXP_DIR = OUTPUT_DIR / 'target_plates' / EXP_NR

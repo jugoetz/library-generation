@@ -6,10 +6,17 @@ Inputs:
     One plate per file. Handles arbitrary number of plates/files. X may be any number.
   - Compressed product SDF files (sdf.gz-files):
     Must contain long name and mol object
+    RECENTLY CHANGED TO
+    either the mol_prop_dict prepared from sdf_to_properties
+        OR
+    an SQLite DB of the virtuallibrary
+
   - Identity of compounds (txt-file):
     Space-delimited file with one compound per row.
     Columns contain short name (e.g. 'M1') used in the plate layout file
     and the long name (e.g. 2-Pyr003_MT or 2-Pyr003) used in the SDF files
+
+
 
 Output:
   - Submission file (output.csv):
@@ -26,6 +33,8 @@ import pickle as pkl
 import json
 import gzip
 import numpy as np
+import sqlite3 as sql
+from copy import deepcopy
 
 """GLOBALS"""
 # directories and files
@@ -33,16 +42,22 @@ DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
 INPUT_DIR = DATA_DIR / 'inputs'
 SDF_DIR = DATA_DIR / 'library_static'
-EXP_DIR = OUTPUT_DIR / 'target_plates' / 'JG215'
-PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')  # PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
-COMPOUND_MAPPING = EXP_DIR / 'identity.txt'  # OUTPUT_DIR / 'compound_mapping.txt'
+EXP_DIR = OUTPUT_DIR / 'target_plates' / 'JG216'
+# PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
+PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
+# COMPOUND_MAPPING = EXP_DIR / 'identity.txt'
+COMPOUND_MAPPING = OUTPUT_DIR / 'compound_mapping.txt'
 # debug
 verbose = True
 USE_PICKLED_DF = False  # this will skip most of the script (if it has been run before). Only for debugging
 # output controls
+PROP_SOURCE = 'db'  # ['db' / 'dict'] where to look up molecular formula or mass. dict only gives expected product props, db also has deprotection products
 ADD_IS = 'y'  # Was internal standard added to the plates?
+IS_FORMULA = "C20H21O4Cl"  # molecular formula of Fenofibrat
+IS_MASS = 360.1128  # monoisotopic mass of Fenofibrat
 MASS_OR_FORMULA = 'formula'  # ['mass'/'formula'] can output mass as a number or can give chemical formula
-PLATE_SIZE = 96
+PLATE_SIZE = 384
+DB_PATH = DATA_DIR / 'db' / '50k_project.db'
 
 
 def import_sm(file):
@@ -101,6 +116,44 @@ def get_long_name(row, dictionary):
     return ' + '.join(long)
 
 
+def get_prop_from_db(dbpath):
+    """
+    Get mass and formula from sqlite database. If there are additional formulae/masses in a designated column with _alt
+    suffix, get those, too.
+    Return a dictionary of all compounds in the db
+    Final dictionary structure:
+    {'Al036 + Mon003 + TerTH011: {'A': ('C5H8O', 210.21321), 'B'...}}
+    if additional masses are present in DB:
+    {'Al036 + Mon003 + TerTH011: {'A': ('C5H8O', 210.21321), 'B'..., 'A_2': ('C3H6O',150.3525), 'A_3': ('C3H5O',140.1251),}}
+    consequently these will always be true:
+    len(prop_dict) = number of unique long_names in db
+    len(prop_dict[X]) = 8 if no protecting group, else 8 + number of deprotection combinations
+    :param dbpath: str or path-like
+    :return: dict
+    """
+    con = sql.connect(dbpath)
+    cur = con.cursor()
+    prop_dict = {}
+    for row in cur.execute(
+            'SELECT id, long_name, type, molecular_formula_1, molecular_formula_alt, lcms_mass_1, lcms_mass_alt FROM virtuallibrary').fetchall():
+        if not row[1] in prop_dict:  # if we have not encountered this long name before, make a dictionary as the entry
+            prop_dict[row[1]] = {}
+        prop_dict[row[1]][row[2]] = (row[3], row[5])  # these are the "standard" formula and mass
+        if row[4] is not None:  # if alternate masses are present
+            for i, (f, m) in enumerate(zip(row[4].split(','), row[6].split(','))):
+                prop_dict[row[1]][f'{row[2]}_{i + 2}'] = (f, m)
+    con.close()
+    """reorder mol_prop_dict so that letters are in the outer level and long_names in the inner. Lets keep this out for now and try to find a better way"""
+    # m_prop_dict = {}
+    # for long, val in prop_dict.items():
+    #     for letter, value in val.items():
+    #         try:
+    #             m_prop_dict[letter][long] = value
+    #         except KeyError:
+    #             m_prop_dict[letter] = {long: value}
+    return prop_dict
+
+
 def get_prop(long_name, mol_props, prop):
     """
     Get mass and formula of a molecule identified by long_name from the mol_props dictionary.
@@ -124,15 +177,24 @@ def get_prop(long_name, mol_props, prop):
     return mass
 
 
+def add_is(df):
+    df['IS_mass'] = np.nan
+    df['IS_formula'] = ''
+    df.loc[df['long'] != '', 'IS_mass'] = IS_MASS
+    df.loc[df['long'] != '', 'IS_formula'] = IS_FORMULA
+    return df
+
+
 def write_csv(df, file):
     """
     Generate formatted csv output for Mobias
     """
 
+    # TODO this may only take one plate (it does, but need to change how it is called)
     def splitwell(df):
         plate = df['plate']
         well = df['well']
-        new = f'P{str(plate)}-{str(well)[0]}-{str(well)[1:]}'
+        new = f'Py-{str(well)[0]}-{str(well)[1:]}'
         return new
 
     if MASS_OR_FORMULA == 'mass':
@@ -142,18 +204,47 @@ def write_csv(df, file):
     else:
         raise ValueError(f'Invalid option {MASS_OR_FORMULA}')
     df['Vial'] = df.loc[:, ['plate', 'well']].apply(splitwell, axis=1)
+    # drop any row were all masses are np.nan
+    df.dropna(axis=0, how='all', subset=[col for col in df.columns if col.endswith('mass') and col != 'IS_mass'],
+              inplace=True)
     subset = ['Vial', ]
     for s in df.columns:
         if s.endswith(suffix):
             subset.append(s)
-    subset_df = df.loc[df['long'] != '', subset]
+    subset_df = df.loc[df['long'] != '', subset]  # remove columns with no long name set
+    # define rename dict for column renaming.
+    # should always map product A_x -> SumF1 ... H_x -> SumF8, IS -> SumF9
     rename_dict = {}
-    i = 1
     for column in subset_df.columns:
-        if column.endswith(suffix):
-            rename_dict[column] = f'SumF{i}'
-            i += 1
+        if column.startswith('A'):
+            rename_dict[column] = 'SumF1'
+        elif column.startswith('B'):
+            rename_dict[column] = 'SumF2'
+        elif column.startswith('C'):
+            rename_dict[column] = 'SumF3'
+        elif column.startswith('D'):
+            rename_dict[column] = 'SumF4'
+        elif column.startswith('E'):
+            rename_dict[column] = 'SumF5'
+        elif column.startswith('F'):
+            rename_dict[column] = 'SumF6'
+        elif column.startswith('G'):
+            rename_dict[column] = 'SumF7'
+        elif column.startswith('H'):
+            rename_dict[column] = 'SumF8'
+        elif column.startswith('IS'):
+            rename_dict[column] = 'SumF9'
+
     subset_df.rename(columns=rename_dict, inplace=True)
+    # sometimes we might not have all columns (since the products don't exist). In that case add the missing ones and fill with empty values
+    necessary_columns = [f'SumF{i + 1}' for i in range(9)]
+    for col in necessary_columns:
+        if col not in subset_df.columns:
+            subset_df[col] = ''
+    subset_df.replace('n/a', '',
+                      inplace=True)  # we have n/a strings where enumeration has not given a product. Replace them with empty string.
+    # finally, resort the dataframe columns
+    subset_df = subset_df[['Vial', 'SumF1', 'SumF2', 'SumF3', 'SumF4', 'SumF5', 'SumF6', 'SumF7', 'SumF8', 'SumF9', ]]
     subset_df.to_csv(file, index=False)
     return
 
@@ -165,11 +256,17 @@ def write_csv(df, file):
 
 if __name__ == '__main__':
     if USE_PICKLED_DF is False:
-        """Import Mass and Formula from pickle"""
-        with gzip.open(SDF_DIR / 'static_mol_prop_dict.json.gz', 'rt', encoding='ascii') as zipfile:
-            mol_prop_dict = json.load(zipfile)
+        if PROP_SOURCE == 'dict':
+            """Import Mass and Formula from json"""
+            with gzip.open(SDF_DIR / 'static_mol_prop_dict.json.gz', 'rt', encoding='ascii') as zipfile:
+                mol_prop_dict = json.load(zipfile)
+        elif PROP_SOURCE == 'db':
+            """Import Mass and Formula from DB"""
+            mol_prop_dict = get_prop_from_db(DB_PATH)
+        else:
+            raise ValueError(f'Invalid PROP_SOURCE {PROP_SOURCE}')
 
-        """Import identities (this can stay as is)"""
+        """Import identities"""
         starting_material_dict = import_sm(COMPOUND_MAPPING)
 
         """Import plates as lists"""
@@ -212,30 +309,81 @@ if __name__ == '__main__':
             for i, data in df.iterrows():
                 print(f'Plate {data["plate"]}, Well {data["well"]}, Product: {data["long"]}')
 
-        """Add molecular formulae and exact masses to dataframe"""
-        for letter, mol_props in sorted(mol_prop_dict.items()):
-            df[f'{letter}_mass'] = df['long'].apply(get_prop, mol_props=mol_props, prop='mass')
-            df[f'{letter}_formula'] = df['long'].apply(get_prop, mol_props=mol_props, prop='formula')
+        """
+        Add molecular formulae and exact masses to dataframe
+        mol_prop_dict looks a little different dependign on the source so for now, we will go with two ways to read it
+        """
+        if PROP_SOURCE == 'dict':
+            for letter, mol_props in sorted(mol_prop_dict.items()):
+                df[f'{letter}_mass'] = df['long'].apply(get_prop, mol_props=mol_props, prop='mass')
+                df[f'{letter}_formula'] = df['long'].apply(get_prop, mol_props=mol_props, prop='formula')
+        elif PROP_SOURCE == 'db':
+            # select the subportion of the prop-dict that we need (for this specific plate)
+            needed_dict = {k: v for k, v in mol_prop_dict.items() if k in df['long'].values}
+            # find how many different submission forms we will need
+            # Here's how this works: We only need look at products A and E since they are candidates for the
+            # maximum number of combinations. Everything else will have equal or less.
+            # We go through the keys in the inner dict-level, only take unique ones starting with A, resp. D. The length
+            # of this set corresponds to the maximum number of combinations and thus submission forms
+
+            combinations_A = len(set([key for v in needed_dict.values() for key in v.keys() if key.startswith('A')]))
+            combinations_D = len(set([key for v in needed_dict.values() for key in v.keys() if key.startswith('D')]))
+            combinations = max(combinations_A, combinations_D)
+            # now we add everything to dataframes
+            dfs = []
+            for i in range(combinations):
+                index = i + 1
+                dfs.append(deepcopy(df))
+                df_this = dfs[i]
+                for long_name, type_dict in needed_dict.items():
+                    for letter, mol_props in type_dict.items():
+                        if index == 1 and letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
+                            # if the columns are not yet present, fill them with placeholder values
+                            if f'{letter}_mass' not in df_this.columns:
+                                df_this[f'{letter}_mass'] = np.nan
+                            if f'{letter}_formula' not in df_this.columns:
+                                df_this[f'{letter}_formula'] = ''
+                            df_this.loc[df_this['long'] == long_name, f'{letter}_mass'] = mol_props[1]
+                            df_this.loc[df_this['long'] == long_name, f'{letter}_formula'] = mol_props[0]
+                        if letter.endswith(str(index)):
+                            # if the columns are not yet present, fill them with placeholder values
+                            if f'{letter}_mass' not in df_this.columns:
+                                df_this[f'{letter}_mass'] = np.nan
+                            if f'{letter}_formula' not in df_this.columns:
+                                df_this[f'{letter}_formula'] = ''
+                            df_this.loc[df_this['long'] == long_name, f'{letter}_mass'] = mol_props[1]
+                            df_this.loc[df_this['long'] == long_name, f'{letter}_formula'] = mol_props[0]
 
         """add internal standard if user wishes"""
-        internal_standard_y_n = ADD_IS
-        internal_standard_formula = "C20H21O4Cl"  # molecular formula of Fenofibrat
-        internal_standard_mass = 360.1128  # exact mass of Fenofibrat
-        if internal_standard_y_n == "y":
-            df['IS_mass'] = np.nan
-            df['IS_formula'] = ''
-            df.loc[df['long'] != '', 'IS_mass'] = internal_standard_mass
-            df.loc[df['long'] != '', 'IS_formula'] = internal_standard_formula
+        if ADD_IS == "y":
+            if PROP_SOURCE == 'dict':
+                add_is(df)
+            elif PROP_SOURCE == 'db':
+                for df in dfs:
+                    add_is(df)
         else:
             print("You chose not to add internal standard.\n")
 
         """Output to pickle"""
-        with open(EXP_DIR / 'dataframe.pkl', 'wb') as file:
-            pkl.dump(df, file)
-
-    with open(EXP_DIR / 'dataframe.pkl', 'rb') as file:
-        df = pkl.load(file)
-    output_file = EXP_DIR / 'mobias_submission.csv'
-    write_csv(df, output_file)
-    print(f'Data was written to "{output_file}".')
+        if PROP_SOURCE == 'dict':
+            with open(EXP_DIR / 'dataframe.pkl', 'wb') as file:
+                pkl.dump(df, file)
+        elif PROP_SOURCE == 'db':
+            with open(EXP_DIR / 'dataframes.pkl', 'wb') as file:
+                pkl.dump(dfs, file)
+    if PROP_SOURCE == 'dict':
+        with open(EXP_DIR / 'dataframe.pkl', 'rb') as file:
+            df = pkl.load(file)
+    elif PROP_SOURCE == 'db':
+        with open(EXP_DIR / 'dataframes.pkl', 'rb') as file:
+            dfs = pkl.load(file)
+    if PROP_SOURCE == 'dict':
+        output_file = EXP_DIR / 'mobias_submission.csv'
+        write_csv(df, output_file)
+        print(f'Data was written to "{output_file}".')
+    elif PROP_SOURCE == 'db':
+        for i, df in enumerate(dfs):
+            output_file = EXP_DIR / f'mobias_submission_{i + 1}.csv'
+            write_csv(df, output_file)
+            print(f'Data was written to "{output_file}".')
     print('End of script. Exiting...')

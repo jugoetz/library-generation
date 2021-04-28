@@ -26,8 +26,7 @@ Outputs:
 
 import pandas as pd
 from pathlib import Path
-
-DATA_DIR = Path('..', 'data').resolve()
+from config import *
 
 # import data
 file = DATA_DIR / 'inputs' / 'InventoryExport.xlsx'

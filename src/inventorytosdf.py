@@ -37,6 +37,7 @@ compounds['mol'] = compounds['SMILES'].apply(Chem.MolFromSmiles)  # generate rdk
 compounds['mol'] = compounds['mol'].apply(PropertyMol)
 compounds.apply(lambda x: x['mol'].SetProp('_Name', x['Compound Name']), axis=1)  # add the name to mol for later saving to sdf
 compounds['img'] = compounds['mol'].apply(Draw.MolToImage)  # generate molecule images
+compounds['exact mass'] = compounds['mol'].apply(Descriptors.ExactMolWt)
 compounds['MW_from_mol'] = compounds['mol'].apply(Descriptors.MolWt)
 compounds['weigh-in [mg] / 100 µL'] = compounds['MW_from_mol']\
     .apply(lambda x: round(x * 1e-4 * 0.05 * 1000, 2))  # calculate the weigh-in mass from MW from structure

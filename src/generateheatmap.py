@@ -16,12 +16,12 @@ from pathlib import Path
 DATA_DIR = Path('..', 'data').resolve()
 OUTPUT_DIR = DATA_DIR / 'outputs'
 INPUT_DIR = DATA_DIR / 'inputs'
-EXP_DIR = OUTPUT_DIR / 'target_plates' / 'test_plates_JG213'
+EXP_DIR = OUTPUT_DIR / 'target_plates' / 'JG213-3'
 DEBUG = True
 NORMALIZATION_CONSTANT = 6.0
 results_file = EXP_DIR / 'BMII001985_Skript-Results_Variante_B_Lock_322.csv'
 
-well_position_file = EXP_DIR / 'SampleTable_JG213.xls'
+well_position_file = EXP_DIR / 'SampleTable_JG213-rev2.xls'
 norm = 'IS'
 IS_compound_number = 8
 with open(EXP_DIR / 'notebook_nr.txt') as file:

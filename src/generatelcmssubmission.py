@@ -251,7 +251,7 @@ if __name__ == '__main__':
             raise ValueError(f'Invalid PROP_SOURCE {PROP_SOURCE}')
 
         """Import identities"""
-        starting_material_dict = import_sm(COMPOUND_MAPPING)
+        starting_material_dict = import_sm(COMPOUND_MAPPING_PATH)
 
         """Import plates as lists"""
         plates_dict = {}

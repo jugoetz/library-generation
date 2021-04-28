@@ -94,6 +94,7 @@ if __name__ == '__main__':
                                        "SumF6 Area",
                                        "SumF7 Area",
                                        "SumF8 Area",
+                                       "SumF9 Area"
                                        "BPC Area",
                                        ]]
         print(results_df_clean)

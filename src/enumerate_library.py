@@ -35,12 +35,10 @@ import warnings
 import string
 import itertools
 import pickle as pkl
+from config import *
 
 
 """GLOBALS"""
-DATA_DIR = Path('..', 'data').resolve()
-OUTPUT_DIR = DATA_DIR / 'outputs'
-DEBUG = 1
 POSTPROCESSING_ONLY = False
 
 

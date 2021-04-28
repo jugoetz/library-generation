@@ -25,10 +25,7 @@ from rdkit.Chem.PropertyMol import PropertyMol
 from pathlib import Path
 import pandas as pd
 import math
-
-
-DATA_DIR = Path('..', 'data').resolve()
-OUTPUT_DIR = DATA_DIR / 'outputs'
+from config import *
 
 """Generate a DataFrame with all relevant information from inventory data"""
 print('Importing inventory data...')

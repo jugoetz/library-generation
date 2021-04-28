@@ -13,9 +13,7 @@ import json
 from pathlib import Path
 from labware.plates import Plate384Echo
 from copy import deepcopy
-
-DATA_DIR = Path('..', 'data').resolve()
-OUTPUT_DIR = DATA_DIR / 'outputs'
+from config import *
 
 with open(OUTPUT_DIR / 'synthesis_plan.json', 'r') as file:
     synthesis_plan = json.load(file)

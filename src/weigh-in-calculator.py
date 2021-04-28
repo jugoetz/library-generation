@@ -5,21 +5,11 @@ import json
 import re
 import os
 import xlsxwriter
+from config import *
 
 """
 Right now has many hardcoded assumptions that make it useful only for the 50 k project.
 """
-
-
-"""GLOBALS"""
-# directories and files
-DATA_DIR = Path('..', 'data').resolve()
-OUTPUT_DIR = DATA_DIR / 'outputs'
-INPUT_DIR = DATA_DIR / 'inputs'
-EXP_DIR = OUTPUT_DIR / 'target_plates' / 'exp1'
-# PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
-PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
-COMPOUND_MAPPING = OUTPUT_DIR / 'compound_mapping.txt'
 
 
 with open(OUTPUT_DIR / 'library_constituents_dataframe.pkl', 'rb') as file:

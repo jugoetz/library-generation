@@ -15,14 +15,10 @@ import gzip
 from rdkit.Chem.rdmolfiles import ForwardSDMolSupplier
 from rdkit.Chem.rdMolDescriptors import CalcExactMolWt, CalcMolFormula
 import json
-
+from config import *
 
 """GLOBALS"""
-DATA_DIR = Path('..', 'data').resolve()
-OUTPUT_DIR = DATA_DIR / 'outputs'
-SDF_DIR = DATA_DIR / 'library_static'
 OUTPUT_JSON = SDF_DIR / 'static_mol_prop_dict.json.gz'
-verbose = True
 
 
 def import_mol(file):

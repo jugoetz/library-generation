@@ -35,29 +35,13 @@ import gzip
 import numpy as np
 import sqlite3 as sql
 from copy import deepcopy
+from config import *
 
 """GLOBALS"""
-# directories and files
-DATA_DIR = Path('..', 'data').resolve()
-OUTPUT_DIR = DATA_DIR / 'outputs'
-INPUT_DIR = DATA_DIR / 'inputs'
-SDF_DIR = DATA_DIR / 'library_static'
-EXP_DIR = OUTPUT_DIR / 'target_plates' / 'JG216'
-# PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
-PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
-# COMPOUND_MAPPING = EXP_DIR / 'identity.txt'
-COMPOUND_MAPPING = OUTPUT_DIR / 'compound_mapping.txt'
 # debug
-verbose = True
 USE_PICKLED_DF = False  # this will skip most of the script (if it has been run before). Only for debugging
 # output controls
 PROP_SOURCE = 'db'  # ['db' / 'dict'] where to look up molecular formula or mass. dict only gives expected product props, db also has deprotection products
-ADD_IS = 'y'  # Was internal standard added to the plates?
-IS_FORMULA = "C20H21O4Cl"  # molecular formula of Fenofibrat
-IS_MASS = 360.1128  # monoisotopic mass of Fenofibrat
-MASS_OR_FORMULA = 'formula'  # ['mass'/'formula'] can output mass as a number or can give chemical formula
-PLATE_SIZE = 384
-DB_PATH = DATA_DIR / 'db' / '50k_project.db'
 
 
 def import_sm(file):

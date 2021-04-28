@@ -19,10 +19,7 @@ import csv
 import json
 from pathlib import Path
 import pandas as pd
-
-
-DATA_DIR = Path('..', 'data').resolve()
-OUTPUT_DIR = DATA_DIR / 'outputs'
+from config import *
 
 """seed randomizer for reproducible result"""
 seed = 42

@@ -25,11 +25,10 @@ Outputs:
 """
 
 import pandas as pd
-from pathlib import Path
 from config import *
 
 # import data
-file = DATA_DIR / 'inputs' / 'InventoryExport.xlsx'
+file = INPUT_DIR / 'InventoryExport.xlsx'
 df = pd.read_excel(file, engine='openpyxl')
 
 # import manual exceptions
@@ -109,5 +108,5 @@ print(f'The Virtual Library contains {freq["I"]} Initiators, {freq["M"]} Monomer
       f'This results in a total of {freq["I"] * freq["M"] * freq["T"]:,} possible products.')
 
 # save results
-df.to_csv(DATA_DIR / 'outputs' / 'inventory_containers.csv', index=False)
-df_compounds.to_csv(DATA_DIR / 'outputs' / 'inventory_compounds.csv', index=False)
+df.to_csv(BB_DIR / 'inventory_containers.csv', index=False)
+df_compounds.to_csv(BB_DIR / 'inventory_compounds.csv', index=False)

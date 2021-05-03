@@ -3,13 +3,16 @@ from pathlib import Path
 
 # directories and files
 DATA_DIR = Path('..', 'data').resolve()
-OUTPUT_DIR = DATA_DIR / 'outputs'
 INPUT_DIR = DATA_DIR / 'inputs'
-SDF_DIR = DATA_DIR / 'library_static'
+BB_DIR = DATA_DIR / 'buildingblocks'
+LIB_STATIC_DIR = DATA_DIR / 'library_static'
+LIB_SDF_DIR = DATA_DIR / 'library_sdf'
+LIB_INFO_DIR = DATA_DIR / 'library_info'
+LOG_DIR = DATA_DIR / 'logs'
 DB_PATH = DATA_DIR / 'db' / '50k_project.db'
 SUBMISSION_FORM_TEMPLATE = DATA_DIR / 'util' / 'BMIIyyyyyy-SampleTable_JGxxx.xls'
 EXP_NR = 'JG216'  # this will change frequently
-EXP_DIR = OUTPUT_DIR / 'target_plates' / EXP_NR
+EXP_DIR = DATA_DIR / 'plates' / EXP_NR
 
 # debugging
 DEBUG = 1
@@ -17,7 +20,7 @@ verbose = True
 
 # Library things
 # COMPOUND_MAPPING_PATH = EXP_DIR / 'identity.txt'
-COMPOUND_MAPPING_PATH = OUTPUT_DIR / 'compound_mapping.txt'
+COMPOUND_MAPPING_PATH = DATA_DIR / 'buildingblocks' / 'compound_mapping.txt'
 # PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
 PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
 

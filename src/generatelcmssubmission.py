@@ -25,9 +25,7 @@ Output:
 """
 
 import pandas as pd
-import re
 import os
-from pathlib import Path
 from labware.plates import Plate384, Plate96
 import pickle as pkl
 import json
@@ -176,7 +174,6 @@ def write_csv(df, file):
 
     # TODO this may only take one plate (it does, but need to change how it is called)
     def splitwell(df):
-        plate = df['plate']
         well = df['well']
         new = f'Py-{str(well)[0]}-{str(well)[1:]}'
         return new
@@ -242,7 +239,7 @@ if __name__ == '__main__':
     if USE_PICKLED_DF is False:
         if PROP_SOURCE == 'dict':
             """Import Mass and Formula from json"""
-            with gzip.open(SDF_DIR / 'static_mol_prop_dict.json.gz', 'rt', encoding='ascii') as zipfile:
+            with gzip.open(LIB_STATIC_DIR / 'static_mol_prop_dict.json.gz', 'rt', encoding='ascii') as zipfile:
                 mol_prop_dict = json.load(zipfile)
         elif PROP_SOURCE == 'db':
             """Import Mass and Formula from DB"""

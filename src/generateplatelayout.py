@@ -10,12 +10,11 @@ Outputs:
     - Folders exp{nr.} containing plate layout files: The number of folders equals len(input list)
 """
 import json
-from pathlib import Path
 from labware.plates import Plate384Echo
 from copy import deepcopy
 from config import *
 
-with open(OUTPUT_DIR / 'synthesis_plan.json', 'r') as file:
+with open(LIB_INFO_DIR / 'synthesis_plan.json', 'r') as file:
     synthesis_plan = json.load(file)
 
 for exp_nr, exp in enumerate(synthesis_plan):
@@ -71,7 +70,7 @@ for exp_nr, exp in enumerate(synthesis_plan):
     if len(set(products)) != len(products):
         print(f'WARNING: Duplicate product_generator detected')
 
-    exp_dir = OUTPUT_DIR / 'target_plates' / f'exp{exp_nr + 1}'
+    exp_dir = DATA_DIR / 'plates' / f'exp{exp_nr + 1}'
     exp_dir.mkdir(exist_ok=True)
     # print plates to csv files
     for i, p in enumerate(plates):

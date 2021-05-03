@@ -17,7 +17,6 @@ Output:
 import random as rd
 import csv
 import json
-from pathlib import Path
 import pandas as pd
 from config import *
 
@@ -36,7 +35,7 @@ total_runs = 26
 total_targets = compounds_per_run * total_runs  # is 49920
 
 """import the building blocks from (processed) cheminventory export"""
-compounds = pd.read_csv(OUTPUT_DIR / 'inventory_compounds.csv')
+compounds = pd.read_csv(BB_DIR / 'inventory_compounds.csv')
 
 """Add a mapping between shorthand and longhand names to the Dataframe"""
 initiator_shorts = [f'I{i + 1}' for i in range(len(compounds.loc[compounds['Category'] == 'I']))]
@@ -95,7 +94,7 @@ synthesis_plan = rd.sample(product_set, k=total_runs)
 print(f'Synthesis plan:\n{synthesis_plan}')
 
 """write a log about used and unused building blocks (originating from random selection)"""
-with open(OUTPUT_DIR / 'randomization.log', 'w') as file:
+with open(LOG_DIR / 'randomization.log', 'w') as file:
     file.write('Used initiators\n')
     for i in initiators:
         file.write(f'{i}\n')
@@ -116,7 +115,7 @@ with open(OUTPUT_DIR / 'randomization.log', 'w') as file:
         file.write(f'{t}\n')
 
 """write the synthesis plan to csv and json"""
-with open(OUTPUT_DIR / 'synthesis_plan.csv', 'w') as file:  # CSV
+with open(LIB_INFO_DIR / 'synthesis_plan.csv', 'w') as file:  # CSV
     writer = csv.writer(file)
     counter = 1
     for run in synthesis_plan:
@@ -125,11 +124,11 @@ with open(OUTPUT_DIR / 'synthesis_plan.csv', 'w') as file:  # CSV
             writer.writerow(building_block)
         counter += 1
 
-with open(OUTPUT_DIR / 'synthesis_plan.json', 'w') as file:  # json
+with open(LIB_INFO_DIR / 'synthesis_plan.json', 'w') as file:  # json
     json.dump(synthesis_plan, file)
 
 """write the mapping between short- and longhand names to txt-file"""
 compounds.sort_values(by='Category', inplace=True, kind='mergesort')
-with open(OUTPUT_DIR / 'compound_mapping.txt', 'w') as file:
+with open(BB_DIR / 'compound_mapping.txt', 'w') as file:
     for i, data in compounds[['shorts', 'Compound Name']].iterrows():
         file.write(' '.join([data['shorts'], data['Compound Name']]) + '\n')

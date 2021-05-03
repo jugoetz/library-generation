@@ -1,9 +1,5 @@
-from labware.plates import Plate96, Plate384
-from pathlib import Path
 import pickle as pkl
 import json
-import re
-import os
 import xlsxwriter
 from config import *
 
@@ -12,14 +8,14 @@ Right now has many hardcoded assumptions that make it useful only for the 50 k p
 """
 
 
-with open(OUTPUT_DIR / 'library_constituents_dataframe.pkl', 'rb') as file:
+with open(LIB_INFO_DIR / 'library_constituents_dataframe.pkl', 'rb') as file:
     df = pkl.load(file)
 
-with open(OUTPUT_DIR / 'synthesis_plan.json', 'r') as file:
+with open(LIB_INFO_DIR / 'synthesis_plan.json', 'r') as file:
     synthesis_plan = json.load(file)
 
 mapping = {}
-with open(OUTPUT_DIR / 'compound_mapping.txt', 'r') as file:
+with open(BB_DIR / 'compound_mapping.txt', 'r') as file:
     for l in file.readlines():
         mapping[l.split()[0]] = l.split()[1]
 

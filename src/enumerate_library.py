@@ -28,7 +28,6 @@ What is missing as opposed to Schrödinger workflow?
 from rdkit import Chem
 from rdkit.Chem import Draw, SaltRemover, AllChem
 from rdkit.Chem.SimpleEnum.Enumerator import EnumerateReaction
-from pathlib import Path
 import pandas as pd
 import gzip
 import warnings
@@ -126,7 +125,7 @@ def add_name_prop_to_mol(reactant1, reactant2, reactant3, product_library):
 if POSTPROCESSING_ONLY is False:
 
     """Import from pickle"""
-    compounds = pd.read_pickle(OUTPUT_DIR / 'library_constituents_dataframe.pkl')
+    compounds = pd.read_pickle(LIB_INFO_DIR / 'library_constituents_dataframe.pkl')
 
 
     """Desalt building blocks and deprotonate N"""
@@ -232,13 +231,13 @@ if POSTPROCESSING_ONLY is False:
     product_list = product_list_ABT + product_list_TH
 
     """Pickle the library, just in case postprocessing fails."""
-    with open(OUTPUT_DIR / 'sdf' / 'product_list_unprocessed.pkl', 'wb') as file:
+    with open(LIB_SDF_DIR / 'product_list_unprocessed.pkl', 'wb') as file:
         pkl.dump(product_list, file)
 
 """Reuse the pickled library if the option is set"""
 if POSTPROCESSING_ONLY is True:
     print('Loading product list from pickle...')
-    with open(OUTPUT_DIR / 'sdf' / 'product_list_unprocessed.pkl', 'rb') as file:
+    with open(LIB_SDF_DIR / 'product_list_unprocessed.pkl', 'rb') as file:
         product_list = pkl.load(file)
     print('Finished loading.')
 
@@ -270,10 +269,9 @@ resorted_products = list(map(
 """Write sdf files. One file per product type."""
 for p, s in zip(resorted_products, string.ascii_uppercase):
     print(f'Saving products {s}...')
-    with gzip.open(OUTPUT_DIR / 'sdf' / f'product_{s}.sdf.gz', 'wt') as file:
-        writer = Chem.SDWriter(file)
-        for mol in p:
-            writer.write(mol)
+    with gzip.open(LIB_SDF_DIR / f'product_{s}.sdf.gz', 'wt') as file:
+        with Chem.SDWriter(file) as writer:
+            for mol in p:
+                writer.write(mol)
 
-        writer.close()
     print(f'Products {s} were saved to SDF')

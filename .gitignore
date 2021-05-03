@@ -1,12 +1,8 @@
 #Pycharm
 /.idea
 # Custom directories
-/data/images
-/data/inputs
-/data/logs
-/data/outputs
-/data/util
-/data/db
+/data/*
+!library_static/
 # Jupyter
 /.ipynb_checkpoints
 # MacOS

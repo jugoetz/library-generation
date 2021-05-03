@@ -11,13 +11,10 @@ Outputs:
     the number of folders equals len(input list)
 """
 import json
-import pickle as pkl
-from pathlib import Path
 from labware.plates import Plate384
-from copy import deepcopy
 from config import *
 
-with open(OUTPUT_DIR / 'synthesis_plan.json', 'r') as file:
+with open(LIB_INFO_DIR / 'synthesis_plan.json', 'r') as file:
     synthesis_plan = json.load(file)
 
 for exp_nr, exp in enumerate(synthesis_plan):
@@ -68,6 +65,6 @@ for exp_nr, exp in enumerate(synthesis_plan):
 
     print(source_plate)
 
-    exp_dir = OUTPUT_DIR / 'target_plates' / f'exp{exp_nr + 1}'
+    exp_dir = DATA_DIR / 'plates' / f'exp{exp_nr + 1}'
     # print plates to csv files
     source_plate.to_csv(exp_dir / f'source_plate_layout.csv', save_volumes=True)

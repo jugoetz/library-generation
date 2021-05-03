@@ -10,7 +10,6 @@ Needs to be rerun after changes to the static VL.
 """
 
 import os
-from pathlib import Path
 import gzip
 from rdkit.Chem.rdmolfiles import ForwardSDMolSupplier
 from rdkit.Chem.rdMolDescriptors import CalcExactMolWt, CalcMolFormula
@@ -18,7 +17,7 @@ import json
 from config import *
 
 """GLOBALS"""
-OUTPUT_JSON = SDF_DIR / 'static_mol_prop_dict.json.gz'
+OUTPUT_JSON = LIB_STATIC_DIR / 'static_mol_prop_dict.json.gz'
 
 
 def import_mol(file):
@@ -43,14 +42,14 @@ if __name__ == '__main__':
     mol_prop_dict = {} # will hold the data
     files_to_process = []  # a helper to follow progress
 
-    for path, _, files in os.walk(SDF_DIR):
+    for path, _, files in os.walk(LIB_STATIC_DIR):
         # find which files we are interested in
         for f in files:
             if f.startswith('product_') and f.endswith('.sdf.gz'):
                 files_to_process.append(f)
         # extract data from those files
         for i, f in enumerate(files_to_process):
-            print(f'Now converting file {f}... [{i+1}/{len(files_to_process)}]')
+            print(f'Now converting file {f}... [{i + 1}/{len(files_to_process)}]')
             letter = f.split('_')[1].split('.')[0]
             supplier = import_mol(Path(path, f))
             mol_props = {}

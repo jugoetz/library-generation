@@ -10,11 +10,9 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import sys
-from pathlib import Path
 from config import *
 
 """GLOBALS"""
-EXP_DIR = OUTPUT_DIR / 'target_plates' / 'JG213-3'
 DEBUG = True
 NORMALIZATION_CONSTANT = 6.0
 results_file = EXP_DIR / 'BMII001985_Skript-Results_Variante_B_Lock_322.csv'

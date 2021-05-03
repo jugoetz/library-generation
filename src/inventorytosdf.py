@@ -22,14 +22,13 @@ Steps:
 from rdkit import Chem
 from rdkit.Chem import Draw, Descriptors
 from rdkit.Chem.PropertyMol import PropertyMol
-from pathlib import Path
 import pandas as pd
 import math
 from config import *
 
 """Generate a DataFrame with all relevant information from inventory data"""
 print('Importing inventory data...')
-compounds = pd.read_csv(OUTPUT_DIR / 'inventory_compounds.csv')  # read df from inventory data
+compounds = pd.read_csv(BB_DIR / 'inventory_compounds.csv')  # read df from inventory data
 compounds['mol'] = compounds['SMILES'].apply(Chem.MolFromSmiles)  # generate rdkit mol objects
 compounds['mol'] = compounds['mol'].apply(PropertyMol)
 compounds.apply(lambda x: x['mol'].SetProp('_Name', x['Compound Name']), axis=1)  # add the name to mol for later saving to sdf
@@ -52,7 +51,7 @@ compounds.drop(columns=['MW [g/mol]'], inplace=True)  # we won't use this. Calcu
 """Generate outputs"""
 # output to Excel
 print('Generating Excel printout...')
-compounds.drop(columns=['mol', 'img'], inplace=False).to_excel(OUTPUT_DIR / 'inventory_compounds_extended.xlsx')
+compounds.drop(columns=['mol', 'img'], inplace=False).to_excel(BB_DIR / 'inventory_compounds_extended.xlsx')
 
 # write the molecule images to files
 print('Generating molecule images...')
@@ -93,9 +92,9 @@ with open(DATA_DIR / 'images' / '_T.png', 'wb') as file:
 
 # output to SDF
 print('Generating SDFs...')
-with open(OUTPUT_DIR / 'sdf' / 'initiators.sdf', 'w') as file_i, \
-        open(OUTPUT_DIR / 'sdf' / 'monomers.sdf', 'w') as file_m, \
-        open(OUTPUT_DIR / 'sdf' / 'terminators.sdf', 'w') as file_t:
+with open(LIB_SDF_DIR / 'initiators.sdf', 'w') as file_i, \
+        open(LIB_SDF_DIR / 'monomers.sdf', 'w') as file_m, \
+        open(LIB_SDF_DIR / 'terminators.sdf', 'w') as file_t:
     writer_i = Chem.SDWriter(file_i)
     writer_m = Chem.SDWriter(file_m)
     writer_t = Chem.SDWriter(file_t)
@@ -113,6 +112,6 @@ with open(OUTPUT_DIR / 'sdf' / 'initiators.sdf', 'w') as file_i, \
 
 # dump df
 print('Generating pickle dump...')
-compounds.to_pickle(OUTPUT_DIR / 'library_constituents_dataframe.pkl')
+compounds.to_pickle(LIB_INFO_DIR / 'library_constituents_dataframe.pkl')
 
 print('\nFinished. Exiting...')

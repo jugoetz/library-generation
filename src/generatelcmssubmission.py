@@ -192,40 +192,27 @@ def write_csv(df, file):
     for s in df.columns:
         if s.endswith(suffix):
             subset.append(s)
-    subset_df = df.loc[df['long'] != '', subset]  # remove columns with no long name set
+    subset_df = df.loc[df['long'] != '', subset]  # remove columns with no long name set (those are emtpy wells e.g. A1)
     # define rename dict for column renaming.
     # should always map product A_x -> SumF1 ... H_x -> SumF8, IS -> SumF9
     rename_dict = {}
+    counter = 1
     for column in subset_df.columns:
-        if column.startswith('A'):
-            rename_dict[column] = 'SumF1'
-        elif column.startswith('B'):
-            rename_dict[column] = 'SumF2'
-        elif column.startswith('C'):
-            rename_dict[column] = 'SumF3'
-        elif column.startswith('D'):
-            rename_dict[column] = 'SumF4'
-        elif column.startswith('E'):
-            rename_dict[column] = 'SumF5'
-        elif column.startswith('F'):
-            rename_dict[column] = 'SumF6'
-        elif column.startswith('G'):
-            rename_dict[column] = 'SumF7'
-        elif column.startswith('H'):
-            rename_dict[column] = 'SumF8'
-        elif column.startswith('IS'):
-            rename_dict[column] = 'SumF9'
+        if column.endswith(suffix):
+            rename_dict[column] = f'SumF{counter}'
+            counter += 1
 
     subset_df.rename(columns=rename_dict, inplace=True)
-    # sometimes we might not have all columns (since the products don't exist). In that case add the missing ones and fill with empty values
-    necessary_columns = [f'SumF{i + 1}' for i in range(9)]
-    for col in necessary_columns:
-        if col not in subset_df.columns:
-            subset_df[col] = ''
+    with open(EXP_DIR / 'compound_alternative_mass_dict.json', 'w') as jsonfile:
+        json.dump(rename_dict, jsonfile)  # save this
+
     subset_df.replace('n/a', '',
                       inplace=True)  # we have n/a strings where enumeration has not given a product. Replace them with empty string.
-    # finally, resort the dataframe columns
-    subset_df = subset_df[['Vial', 'SumF1', 'SumF2', 'SumF3', 'SumF4', 'SumF5', 'SumF6', 'SumF7', 'SumF8', 'SumF9', ]]
+    # finally, resort the dataframe columns so that vial is in front and SumFx ascending
+    cols = subset_df.columns.tolist()
+    cols.remove('Vial')
+    reordered_columns = ['Vial'] + sorted(cols, key=lambda x: int(x.strip('SumF')))
+    subset_df = subset_df[reordered_columns]
     subset_df.to_csv(file, index=False)
     return
 
@@ -312,6 +299,7 @@ if __name__ == '__main__':
             combinations = max(combinations_A, combinations_D)
             # now we add everything to dataframes
             dfs = []
+            # here we generate all those de-PG variants of the expected products
             for i in range(combinations):
                 index = i + 1
                 dfs.append(deepcopy(df))
@@ -334,14 +322,18 @@ if __name__ == '__main__':
                                 df_this[f'{letter}_formula'] = ''
                             df_this.loc[df_this['long'] == long_name, f'{letter}_mass'] = mol_props[1]
                             df_this.loc[df_this['long'] == long_name, f'{letter}_formula'] = mol_props[0]
+        """from the individual dataframes for different -PG product sets, we form one big dataframe and drop the na columns"""
+        df = dfs[0]
+        for i in dfs[1:]:
+            df = pd.merge(df, i, how='left')
 
         """add internal standard if user wishes"""
         if ADD_IS == "y":
             if PROP_SOURCE == 'dict':
                 add_is(df)
             elif PROP_SOURCE == 'db':
-                for df in dfs:
-                    add_is(df)
+                # for df in dfs:
+                add_is(df)
         else:
             print("You chose not to add internal standard.\n")
 
@@ -363,8 +355,7 @@ if __name__ == '__main__':
         write_csv(df, output_file)
         print(f'Data was written to "{output_file}".')
     elif PROP_SOURCE == 'db':
-        for i, df in enumerate(dfs):
-            output_file = EXP_DIR / f'mobias_submission_{i + 1}.csv'
-            write_csv(df, output_file)
-            print(f'Data was written to "{output_file}".')
+        output_file = EXP_DIR / 'mobias_submission_big_new.csv'
+        write_csv(df, output_file)
+        print(f'Data was written to "{output_file}".')
     print('End of script. Exiting...')

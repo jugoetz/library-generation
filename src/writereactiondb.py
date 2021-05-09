@@ -32,14 +32,6 @@ def copy_data(i, m, t, exp_nr, plate_nr, well, lab_journal_number, synthesis_dat
     return
 
 
-def enter_lcms_ratios(lab_journal_number, well, ratio_a, ratio_b, ratio_c, ratio_d, ratio_e, ratio_f, ratio_g, ratio_h):
-    cur.execute(
-        'UPDATE main.experiments SET product_A_lcms_ratio = ?, product_B_lcms_ratio = ?, product_C_lcms_ratio = ?, product_D_lcms_ratio = ?, product_E_lcms_ratio = ?, product_F_lcms_ratio = ?, product_G_lcms_ratio = ?, product_H_lcms_ratio = ? WHERE lab_journal_number = ? AND well = ?;',
-        (ratio_a, ratio_b, ratio_c, ratio_d, ratio_e, ratio_f, ratio_g, ratio_h, lab_journal_number, well))
-    con.commit()
-    return
-
-
 if __name__ == '__main__':
     # control variables
     experiment_number = 1

@@ -19,7 +19,7 @@ EXP_DIR = PLATES_DIR / EXP_NR
 
 # debugging
 DEBUG = 1
-verbose = True
+VERBOSE = True
 
 # Library things
 # COMPOUND_MAPPING_PATH = EXP_DIR / 'identity.txt'

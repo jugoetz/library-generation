@@ -246,7 +246,7 @@ if __name__ == '__main__':
                     plate_dict = import_pl(Path(path, f))
                     plates_dict[m.group(1)] = plate_dict
 
-        if verbose:
+        if VERBOSE:
             # print the input values for double checking
             print("########## INPUT VALUES ###########\n")
             for k, v in mol_prop_dict.items():
@@ -273,7 +273,7 @@ if __name__ == '__main__':
         """Translate product names from shorthand to long names (e.g. 'Al002 + Mon001 + TerTH010')"""
         df['long'] = df.loc[:, ['I', 'M', 'T']].apply(get_long_name, axis=1, dictionary=starting_material_dict)
 
-        if verbose:
+        if VERBOSE:
             for i, data in df.iterrows():
                 print(f'Plate {data["plate"]}, Well {data["well"]}, Product: {data["long"]}')
 

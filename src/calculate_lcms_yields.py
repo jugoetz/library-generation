@@ -1,3 +1,15 @@
+"""
+Go from raw lcms analysis results (i.e. peak areas) to a yield metric (i.e. peak area / IS area for every compound).
+
+We start with a DB table 'lcms':
+id | synthesis id  | [lcms compounds] | [lcms areas]
+
+We go to a DB table 'lcms yields':
+id (foreign key from lcms table) | SumF.. | type (e.g. A) | SMILES (or better: id of the product in a different table)
+# TODO what is the best way here? mulitple entries per experiment with
+# TODO looks like I need a products table
+"""
+
 import json
 import sqlite3
 import re
@@ -88,7 +100,7 @@ def calculate_lcms_yields(db_path, exp_dir):
     Main function. Import lcms raw results from DB, apply evaluation logic (e.g. assign lcms peaks to products), and
     write results to DB table lcms_yields
     """
-    # TODO everything below here should move to a different file and import from the lcms DB table
+    #
     results_df = import_lcms_unprocessed_data()
     results_dict = split_products_into_dataframes(results_df, exp_dir)
 

@@ -1,7 +1,7 @@
 import sqlite3
 from config import *
 from datetime import datetime
-from generatelcmssubmission import import_pl
+from db_retrieval.generatelcmssubmission import import_pl
 import os
 
 con = sqlite3.connect(DB_PATH)
@@ -34,16 +34,16 @@ def copy_data(i, m, t, exp_nr, plate_nr, well, lab_journal_number, synthesis_dat
 
 if __name__ == '__main__':
     # control variables
-    experiment_number = 1
-    synthesis_date = datetime(2021, 4, 27).timestamp()
+    experiment_number = 2
+    synthesis_date = datetime(2021, 5, 11).timestamp()
 
     plate_nr_to_labj_nr = {
-        '1': 'JG216',
-        '2': 'JG217',
-        '3': 'JG218',
-        '4': 'JG219',
-        '5': 'JG220',
-        '6': 'JG221',
+        '1': 'JG222',
+        '2': 'JG223',
+        '3': 'JG224',
+        '4': 'JG225',
+        '5': 'JG226',
+        '6': 'JG227',
     }
     plates_dict = {}
     for path, _, files in os.walk(PLATES_DIR / f'exp{experiment_number}'):
@@ -59,3 +59,4 @@ if __name__ == '__main__':
             if type(content) is list and len(content) == 3:
                 copy_data(content[0], content[1], content[2], experiment_number, plate_number, well, labj_nr,
                           synthesis_date)
+    con.close()

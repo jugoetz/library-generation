@@ -5,6 +5,7 @@ from config import *
 
 """
 Right now has many hardcoded assumptions that make it useful only for the 50 k project.
+Note that this works on exp{x}, not JGxxx, so this exp_nr needs to be an experiment nr not a lab journal nuber
 """
 
 

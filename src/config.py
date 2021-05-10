@@ -9,12 +9,13 @@ LIB_STATIC_DIR = DATA_DIR / 'library_static'
 LIB_SDF_DIR = DATA_DIR / 'library_sdf'
 LIB_INFO_DIR = DATA_DIR / 'library_info'
 LOG_DIR = DATA_DIR / 'logs'
+PLATES_DIR = DATA_DIR / 'plates'
 DB_PATH = DATA_DIR / 'db' / '50k_project.db'
 SUBMISSION_FORM_TEMPLATE = DATA_DIR / 'util' / 'BMIIyyyyyy-SampleTable_JGxxx.xls'
 ###################
-EXP_NR = 'JG216'  # this will change frequently
+EXP_NR = 'JG221'  # this will change frequently
 ###################
-PLATES_DIR = DATA_DIR / 'plates'
+
 EXP_DIR = PLATES_DIR / EXP_NR
 
 # debugging

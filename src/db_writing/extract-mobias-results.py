@@ -9,11 +9,15 @@ import numpy as np
 import re
 
 """GLOBALS"""
-# TODO having these is not ideal. Better to read them from DB or infer them from os.walk
-results_file_path = EXP_DIR / 'BMII001987_Skript-Results_protecting-groups.csv'
-submission_file = EXP_DIR / 'BMIIyyyyyy-SampleTable_JG216-big.xls'
-with open(EXP_DIR / 'notebook_nr.txt') as file:
-    LCMS_number = file.read().strip('\n').strip()
+# TODO having these is not ideal. Better to read them from DB or infer them from os.walk or maybe get from sys argv
+LCMS_number = 'JG217'
+exp_dir = PLATES_DIR / LCMS_number
+results_file_path = exp_dir / 'BMII001988_Skript-Results.csv'
+submission_file = exp_dir / f'BMIIyyyyyy-SampleTable_{LCMS_number}.xls'
+# with open(exp_dir / 'notebook_nr.txt') as file:
+#     LCMS_number = file.read().strip('\n').strip()
+
+"""If the program raises KeyError: 'Sample ID', the commas in mobias output are the culprit"""
 
 
 def import_lcms_results(path):
@@ -105,10 +109,13 @@ def save_mobias_data_to_db(df, db_path, exp_nr):
     con.commit()
     for i, row in df.iterrows():
         well = f'{row["row"]}{row["column"]}'
-        synthesis_id = \
-            cur.execute('SELECT id FROM experiments WHERE lab_journal_number = ? AND well = ?;',
-                        (exp_nr, well)).fetchone()[
-                0]
+        try:
+            synthesis_id = \
+                cur.execute('SELECT id FROM experiments WHERE lab_journal_number = ? AND well = ?;',
+                            (exp_nr, well)).fetchone()[
+                    0]
+        except TypeError:
+            raise LookupError(f'No entry in database for lab journal number {exp_nr} and well {well}')
         compounds, areas = [], []
         for index, value in row.iteritems():
             if index.endswith('Area'):
@@ -133,4 +140,4 @@ def extract_mobias_results(path, db_path, exp_nr, mobias_input):
 
 
 if __name__ == '__main__':
-    extract_mobias_results(results_file_path, DB_PATH, EXP_NR, submission_file)
+    extract_mobias_results(results_file_path, DB_PATH, LCMS_number, submission_file)

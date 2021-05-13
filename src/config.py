@@ -13,7 +13,7 @@ PLATES_DIR = DATA_DIR / 'plates'
 DB_PATH = DATA_DIR / 'db' / '50k_project.db'
 SUBMISSION_FORM_TEMPLATE = DATA_DIR / 'util' / 'BMIIyyyyyy-SampleTable_JGxxx.xls'
 ###################
-EXP_NR = 'JG221'  # this will change frequently
+EXP_NR = 'JG228'  # this will change frequently
 ###################
 
 EXP_DIR = PLATES_DIR / EXP_NR

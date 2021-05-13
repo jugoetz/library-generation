@@ -9,7 +9,10 @@ from config import *
 import sqlite3
 import numpy as np
 
-NORMALIZATION_CONSTANT = 6.0
+exp_nr = 'JG217'
+exp_dir = PLATES_DIR / exp_nr
+normalization_constant = 6.0
+plate_size = 384
 
 
 def read_yields_from_database(db_path, labjournal_nr):
@@ -130,4 +133,4 @@ def plot_experiment_heatmap_from_database(db_path, exp_nr, exp_dir, normalizatio
 
 
 if __name__ == '__main__':
-    plot_experiment_heatmap_from_database(DB_PATH, EXP_NR, EXP_DIR, NORMALIZATION_CONSTANT, PLATE_SIZE)
+    plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, normalization_constant, plate_size)

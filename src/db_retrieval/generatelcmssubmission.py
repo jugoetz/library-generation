@@ -355,7 +355,7 @@ if __name__ == '__main__':
         write_csv(df, output_file)
         print(f'Data was written to "{output_file}".')
     elif PROP_SOURCE == 'db':
-        output_file = EXP_DIR / 'mobias_submission_pg.csv'
+        output_file = EXP_DIR / 'mobias_submission.csv'
         write_csv(df, output_file)
         print(f'Data was written to "{output_file}".')
     print('End of script. Exiting...')

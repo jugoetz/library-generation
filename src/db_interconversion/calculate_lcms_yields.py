@@ -12,9 +12,45 @@ id (foreign key from lcms table) | SumF.. | type (e.g. A) | SMILES (or better: i
 
 import json
 import sqlite3
-import re
 import pandas as pd
 from config import *
+
+exp_nr = 'JG221'
+exp_dir = PLATES_DIR / exp_nr
+
+
+def import_lcms_unprocessed_data(db_cur, exp_nr):
+    # TODO this is a terrible but working solution
+    # for now, we do this for a certain synthesis id. we could also do it for the entire DB
+    res = db_cur.execute(
+        'SELECT synthesis_id, lcms_compounds, lcms_areas FROM lcms WHERE synthesis_id IN (SELECT id FROM experiments WHERE lab_journal_number = ?);',
+        (exp_nr,)).fetchall()
+    # for now, we produce a df to exchange our data. Other formats might be more efficient.
+    first_res = [
+        [int(res[0][0])] + [float(i.strip('[').strip(']')) for i in res[0][2].split(',')]]  # TODO horrible parsing
+    first_header = ['synthesis_id'] + [i.split("'")[1] for i in res[0][1].split(
+        ',')]  # TODO this is a ridiculousy breakable way to parse that string
+    df = pd.DataFrame(data=first_res, columns=first_header)
+    # now that we have the df, we iterate all further results.
+    for result in res[1:]:
+        columns = ['synthesis_id'] + [i.split("'")[1] for i in result[1].split(',')]  # again, the parsing is horrible
+        values = [[int(result[0])] + [float(i.strip('[').strip(']')) for i in result[2].split(',')]]
+        df_temp = pd.DataFrame(data=values, columns=columns)
+        df = df.append(df_temp)
+        # for c,v in zip(columns, values)
+    # we need to get the plate, row, column values for the experiment db
+    synthesis_ids = df['synthesis_id'].tolist()
+    res = db_cur.execute(
+        f'SELECT id, plate_nr, well FROM main.experiments WHERE id IN ({",".join(["?"] * len(synthesis_ids))})',
+        synthesis_ids).fetchall()
+
+    res = [[r[0], r[1], r[2][0], r[2][1:]] for r in res]
+    # rows = [w[0] for w in wells]
+    # columns = [w[1:] for w in wells]
+    # entries = [[i, p, r, c] for i,p,r,c in zip(ids, plates, rows, columns)]
+    df_well = pd.DataFrame(columns=['synthesis_id', 'plate', 'row', 'column'], data=res)
+    df = df.join(df_well.set_index('synthesis_id'), on='synthesis_id', how='inner')
+    return df
 
 
 def split_products_into_dataframes(df, exp_dir):
@@ -37,6 +73,9 @@ def split_products_into_dataframes(df, exp_dir):
     # Generate dataframe for IS TODO bad idea to do this here. Isolate into its own method
     with open(exp_dir / 'compound_alternative_mass_dict.json', 'r') as jfile:
         side_product_dict = json.load(jfile)
+    # TODO remove this as soon as we are only using PG stuff
+    # side_product_dict = {"A_formula": "SumF1", "B_formula": "SumF2", "C_formula": "SumF3", "D_formula": "SumF4", "E_formula": "SumF5", "F_formula": "SumF6", "G_formula": "SumF7", "H_formula": "SumF8", "IS_formula": "SumF9"}
+
     IS_compound_number = int(side_product_dict['IS_formula'].strip('SumF'))
     df_dict['IS'] = df_dict[IS_compound_number]
     del df_dict[IS_compound_number]
@@ -54,7 +93,7 @@ def calculate_yield(dict_df):
     return dict_df
 
 
-def save_to_db(dict_df, db_path):
+def save_to_db(dict_df, db_path, exp_nr):
     # TODO this has too many functions. Isolate addition part.
     con = sqlite3.connect(db_path)
     cur = con.cursor()
@@ -81,35 +120,37 @@ def save_to_db(dict_df, db_path):
     for k, v in side_product_associations.items():
         product_yields = add([dict_df[int(val.strip('SumF'))] for val in v])
         print(product_yields)
-        for i, data in product_yields.iterrows():
+        for i, data in product_yields.iterrows():  # TODO should not write to exp db but have its own lcms yields thing
             cur.execute(
                 f'UPDATE main.experiments SET product_{k}_lcms_ratio = ? WHERE lab_journal_number = ? AND well = ?;',
-                (data['yield'], EXP_NR, f'{data["row"]}{data["column"]}'))
+                (data['yield'], exp_nr, f'{data["row"]}{data["column"]}'))
         con.commit()
     con.close()
     return
 
 
-def import_lcms_unprocessed_data():
-    df = pd.DataFrame
-    return df
-
-
-def calculate_lcms_yields(db_path, exp_dir):
+def calculate_lcms_yields(db_path, exp_dir, exp_nr):
     """
     Main function. Import lcms raw results from DB, apply evaluation logic (e.g. assign lcms peaks to products), and
     write results to DB table lcms_yields
+    What's part of the evaluation logic:
+    - Identify the IS peak area
+    - Identify and discard BPC area
+    - Normalize all other peaks by diving by IS peak area
+    - Map LCMS output names (e.g. SumF1 to the product that is detected. This should be identified with an experiment product (e.g. Prod F - 2 Boc) AND an actual SMILES)
     """
-    #
-    results_df = import_lcms_unprocessed_data()
+    con = sqlite3.connect(DB_PATH)
+    cur = con.cursor()
+    results_df = import_lcms_unprocessed_data(cur, exp_nr)
     results_dict = split_products_into_dataframes(results_df, exp_dir)
 
     # calculate yields from areas
     yields = calculate_yield(results_dict)
 
     # save yields
-    save_to_db(yields, db_path)
+    save_to_db(yields, db_path, exp_nr)
+    con.close()
 
 
 if __name__ == '__main__':
-    calculate_lcms_yields(DB_PATH, EXP_DIR)
+    calculate_lcms_yields(DB_PATH, exp_dir, exp_nr)

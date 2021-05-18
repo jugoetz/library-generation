@@ -2,7 +2,8 @@ import re
 from pathlib import Path
 
 # directories and files
-DATA_DIR = Path('..', 'data').resolve()
+DATA_DIR = Path(
+    '/Users/julian/PycharmProjects/library-generation/data').resolve()  # TODO find a better way to write this path as relative
 INPUT_DIR = DATA_DIR / 'inputs'
 BB_DIR = DATA_DIR / 'buildingblocks'
 LIB_STATIC_DIR = DATA_DIR / 'library_static'

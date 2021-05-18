@@ -10,10 +10,11 @@ import re
 
 """GLOBALS"""
 # TODO having these is not ideal. Better to read them from DB or infer them from os.walk or maybe get from sys argv
-LCMS_number = 'JG217'
+#  mind that this will currently not overwrite but add if this LCMS was previously run through the script.
+LCMS_number = 'JG221'
 exp_dir = PLATES_DIR / LCMS_number
-results_file_path = exp_dir / 'BMII001988_Skript-Results.csv'
-submission_file = exp_dir / f'BMIIyyyyyy-SampleTable_{LCMS_number}.xls'
+results_file_path = exp_dir / 'BMII001992_Skript-Results_pg.csv'
+submission_file = exp_dir / f'BMIIyyyyyy-SampleTable_{LCMS_number}_pg.xls'
 # with open(exp_dir / 'notebook_nr.txt') as file:
 #     LCMS_number = file.read().strip('\n').strip()
 
@@ -95,6 +96,7 @@ def save_mobias_data_to_db(df, db_path, exp_nr):
     The data is split into one column for identities (SumF1 etc.) and one for areas (e.g. 36574.000).
     Both columns contain str-representations of lists. compounds[0] corresponds to area[0]
     """
+    # TODO currently, we don't overwrite, so watch out for duplicates
     con = sqlite3.connect(db_path)
     con.execute('PRAGMA foreign_keys = 1')
     cur = con.cursor()

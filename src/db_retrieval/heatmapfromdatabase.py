@@ -9,9 +9,9 @@ from config import *
 import sqlite3
 import numpy as np
 
-exp_nr = 'JG217'
+exp_nr = 'JG221'
 exp_dir = PLATES_DIR / exp_nr
-normalization_constant = 6.0
+normalization_constant = 3.0
 plate_size = 384
 
 
@@ -56,7 +56,7 @@ def get_plot(df, product_type, ax=None):
                 vmax=100,
                 annot=True,
                 cbar=False,
-                cmap=sns.cubehelix_palette(8),
+                cmap=sns.cubehelix_palette(as_cmap=True),
                 fmt=".1f",
                 square=True,
                 ax=ax

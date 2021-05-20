@@ -6,8 +6,8 @@ Inputs:
     - library_constituents_dataframe.pkl: DataFrame of rdkit mol objects, output of inventorytosdf.py
 
 Outputs:
-    - products_[A-G].sdf: SDF of products for all reagent combinations, sorted by type where A is the main (expected)
-      product and B - G are side products
+    - products_[A-H].sdf: SDF of products for all reagent combinations, sorted by type where A is the main (expected)
+      product and all others are side products
 
 Actions:
     - Read pickle of DataFrame
@@ -18,11 +18,12 @@ Actions:
     - Sanitize + rearrange products for output
     - Output to SDF
 
-What is missing as opposed to Schrödinger workflow?
-    - MM optimization of building blocks (not necessary)
-    - ionization at pH 7 (for the building block set under consideration, N-neutralization gives the same result)
-    - tautomer generation (for the building block set under consideration, this is not necessary)
-    (all of the above would need to be done on the completed VL before attempting virtual screening)
+TODO to have this use database instead:
+ - import reactants from building block db table
+ (- potentially this will make some cleanup operations unnecessary)
+ - import reactions from a reaction db table
+ - output products to the VL db table
+
 """
 
 from rdkit import Chem
@@ -38,7 +39,7 @@ from config import *
 
 
 """GLOBALS"""
-POSTPROCESSING_ONLY = False
+POSTPROCESSING_ONLY = True
 
 
 def deprotonate_nitrogen(mol):
@@ -138,18 +139,16 @@ if POSTPROCESSING_ONLY is False:
 
 
     """Define reactions"""
-    # all 7 TerTH prods
+    # all 8 TerTH prods
     rxn_TH = AllChem.ReactionFromSmarts(
-        # 'F[B-](F)(F)[#6](-[*:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#6:4]-[#6](=S)-[#7]-[#7]>>[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)-[#16]-1.[#6:4]-[#6]-1=[#7]-[#7]C([#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)([#16]-1)[#6](-[#8])=O.[#6:4]-[#6]-1=[#7]-[#7+]2=[#6](-[*:1])-[#7]-[#6:2]-[#6:3]C2([#16]-1)[#6](-[#8-])=O.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[*:1])-[#16]-1.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#6:4])-[#16]-1.[#8]-[#6](=O)-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#8]-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O'
         'F[B-](F)(F)[#6](-[*:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#6:4]-[#6](=S)-[#7]-[#7]>>[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)-[#16]-1.[#6:4]-[#6]-1=[#7]-[#7]C([#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)([#16]-1)[#6](-[#8])=O.[#6:4]-[#6]-1=[#7]-[#7+]2=[#6](-[*:1])-[#7]-[#6:2]-[#6:3]C2([#16]-1)[#6](-[#8-])=O.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[*:1])-[#16]-1.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#6:4])-[#16]-1.[#8]-[#6](=O)-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#8]-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#6:4]-[#6]-1=[#7]-[#7]=[#6](-[#16]-1)-[#6:3]=[#6:2]'
     )
 
-    # all 7 TerABT prods
+    # all 8 TerABT prods
     rxn_ABT = AllChem.ReactionFromSmarts(
-        # 'F[B-](F)(F)[#6](-[*:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]>>[*:1]-[#6](=O)-[#7]-[#6:2]-[#6:3]-c1nc2[c:4][c:5][c:6][c:7]c2s1.[#8]-[#6](=O)C1([#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)[#7]-c2[c:4][c:5][c:6][c:7]c2-[#16]1.[#8-]-[#6](=O)C12[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=[#7+]1-c1[c:4][c:5][c:6][c:7]c1-[#16]2.[*:1]-c1nc2[c:4][c:5][c:6][c:7]c2s1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]-[#16]-c1[c:7][c:6][c:5][c:4]c1-[#7].[#8]-[#6](=O)-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#8]-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O'
-
         "F[B-](F)(F)[#6](-[*:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]>>[*:1]-[#6](=O)-[#7]-[#6:2]-[#6:3]-c1nc2[c:4][c:5][c:6][c:7]c2s1.[#8]-[#6](=O)C1([#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O)[#7]-c2[c:4][c:5][c:6][c:7]c2-[#16]1.[#8-]-[#6](=O)C12[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=[#7+]1-c1[c:4][c:5][c:6][c:7]c1-[#16]2.[*:1]-c1nc2[c:4][c:5][c:6][c:7]c2s1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]-[#16]-c1[c:7][c:6][c:5][c:4]c1-[#7].[#8]-[#6](=O)-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#8]-[#6](=O)-[#6:3]-[#6:2]-[#7]-[#6](-[*:1])=O.[#6:2]=[#6;v4:3]-c1nc2[c:4][c:5][c:6][c:7]c2s1"
     )
+
     # prepare for visualization
     AllChem.Compute2DCoordsForReaction(rxn_TH)
     AllChem.Compute2DCoordsForReaction(rxn_ABT)
@@ -246,20 +245,28 @@ if POSTPROCESSING_ONLY is True:
 errors = []
 for i, p_list in enumerate(product_list):
     for j, p in enumerate(p_list):
+        problems = Chem.DetectChemistryProblems(p)
+        if len(problems) > 0:
+            if problems[0].GetType() == 'AtomValenceException':
+                atom_idx = problems[0].GetAtomIdx()
+                p.GetAtomWithIdx(atom_idx).SetNumExplicitHs(0)
         try:
             Chem.SanitizeMol(p)
         except:
             # if Sanitization throws exception, replace the molecule with water.
             # we need to take a little detour as p_list is a tuple.
-            product_list[i] = (p_list[0],
-                               p_list[1],
-                               p_list[2],
-                               p_list[3],
-                               p_list[4],
-                               p_list[5],
-                               p_list[6],
-                               Chem.MolFromSmiles('O'),  # this is the one we want to replace
-                               )
+            temp_list = list(p_list)
+            temp_list[j] = Chem.MolFromSmiles('O')  # water acts as a placeholder
+            product_list[i] = tuple(temp_list)
+            # product_list[i] = (p_list[0],
+            #                    p_list[1],
+            #                    p_list[2],
+            #                    p_list[3],
+            #                    p_list[4],
+            #                    p_list[5],
+            #                    p_list[6],
+            #                    Chem.MolFromSmiles('O'),  # this is the one we want to replace
+            #                    )
 
 
 resorted_products = list(map(
@@ -270,8 +277,9 @@ resorted_products = list(map(
 for p, s in zip(resorted_products, string.ascii_uppercase):
     print(f'Saving products {s}...')
     with gzip.open(LIB_SDF_DIR / f'product_{s}.sdf.gz', 'wt') as file:
-        with Chem.SDWriter(file) as writer:
-            for mol in p:
-                writer.write(mol)
+        writer = Chem.SDWriter(file)
+        for mol in p:
+            writer.write(mol)
+        writer.close()
 
     print(f'Products {s} were saved to SDF')

@@ -7,7 +7,7 @@ Inputs:
       Typically this is the output of generatelibraryplan.py
 
 Outputs:
-    - (In folders exp{nr.}): source plate layout files source_plate_layout.csv: 1 file per folder,
+    - (In folders exp{nr.}): source plate layout files source_plate_layout_echo.csv: 1 file per folder,
     the number of folders equals len(input list)
 """
 import json
@@ -67,4 +67,4 @@ for exp_nr, exp in enumerate(synthesis_plan):
 
     exp_dir = DATA_DIR / 'plates' / f'exp{exp_nr + 1}'
     # print plates to csv files
-    source_plate.to_csv(exp_dir / f'source_plate_layout.csv', save_volumes=True)
+    source_plate.to_csv(exp_dir / f'source_plate_layout_echo.csv', save_volumes=True)

@@ -11,10 +11,11 @@ import re
 """GLOBALS"""
 # TODO having these is not ideal. Better to read them from DB or infer them from os.walk or maybe get from sys argv
 #  mind that this will currently not overwrite but add if this LCMS was previously run through the script.
-LCMS_number = 'JG221'
+LCMS_number = 'JG227'
+del EXP_NR
 exp_dir = PLATES_DIR / LCMS_number
-results_file_path = exp_dir / 'BMII001992_Skript-Results_pg.csv'
-submission_file = exp_dir / f'BMIIyyyyyy-SampleTable_{LCMS_number}_pg.xls'
+results_file_path = exp_dir / 'BMII002051_Skript-Results.csv'
+submission_file = exp_dir / f'BMIIyyyyyy-SampleTable_{LCMS_number}.xls'
 # with open(exp_dir / 'notebook_nr.txt') as file:
 #     LCMS_number = file.read().strip('\n').strip()
 
@@ -117,7 +118,8 @@ def save_mobias_data_to_db(df, db_path, exp_nr):
                             (exp_nr, well)).fetchone()[
                     0]
         except TypeError:
-            raise LookupError(f'No entry in database for lab journal number {exp_nr} and well {well}')
+            raise LookupError(
+                f'No entry in database table "experiments" for lab journal number {exp_nr} and well {well}')
         compounds, areas = [], []
         for index, value in row.iteritems():
             if index.endswith('Area'):

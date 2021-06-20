@@ -1,5 +1,5 @@
 import string
-from typing import Tuple, List, Optional, Union
+from typing import Tuple, List, Optional, Union, Generator
 import csv
 from pathlib import Path
 from deprecated import deprecated
@@ -182,11 +182,18 @@ class Plate:
         return tuple(self.__from_index(row_idx, col_idx)
                      for row_idx in range(self.n_rows) for col_idx in range(self.n_cols))
 
-    def fill_well(self, pos: str, compound: str, vol: int):
+    def fill_well(self, pos: str, compound: Union[str, list], vol: int):
         """Add single compound to well"""
         row, col = self.__to_index(pos)
         cmp_cur, vol_cur = self.__get_well(row, col)
-        self.__set_well(row, col, cmp_cur + [compound], vol_cur + vol)
+        if type(compound) is str:
+            compound = [compound]  # turn into list
+        self.__set_well(row, col, cmp_cur + compound, vol_cur + vol)
+
+    def set_well(self, pos: str, compounds: List[str], vol: int):
+        """Set well content, overwriting any previous content"""
+        row, col = self.__to_index(pos)
+        self.__set_well(row, col, compounds, vol)
 
     def consume_well(self, pos: str, vol: int, force=False):
         """
@@ -242,9 +249,9 @@ class Plate:
             for col_str in cols:
                 self.fill_well(row_str + col_str, compound, vol)
 
-    def fill_plate(self, compounds: str, vol: int):
+    def fill_plate(self, compound: str, vol: int):
         """Fill all wells of a plate with identical compound and volume"""
-        self.__set_plate([compounds], vol)
+        self.__set_plate([compound], vol)
 
     def consume_plate(self, vol: int, force=False):
         """Remove a given volume from every well of the plate"""
@@ -279,6 +286,11 @@ class Plate:
         """Return the total volume in a well"""
         row, col = self.__to_index(pos)
         return self.__get_well(row, col)[1]
+
+    def iterate_wells(self) -> Generator[tuple, None, None]:
+        """Yield a tuple (compounds, volume) for every well in the plate"""
+        for well in self.wells():
+            yield self.well(well)
 
     def row(self, row: str) -> Tuple[List[List[str]], List[int]]:
         """Return compounds and volumes in a row"""

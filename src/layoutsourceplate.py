@@ -59,6 +59,9 @@ for exp_nr, exp in enumerate(synthesis_plan):
         for i in range(5):
             source_plate.fill_well(source_plate.free(), terminator, 65000)
 
+    # as the last source compound, we fill oxalic acid (X) into P1 to P12
+    source_plate.fill_span('P1', 'P12', 'X', 65000)
+
     # finally, we empty the placeholder rows.
     source_plate.empty_span('C1', 'E24')
     source_plate.empty_span('H1', 'J24')

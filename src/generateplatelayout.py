@@ -4,7 +4,7 @@ From a list of building blocks, generate target plate layouts that provide all p
 Inputs:
     - synthesis_plan.json: JSON of a list of experiments. Every experiment contains 1 list for every of the
       3 building blocks. The type of the list must be List[List[str], List[str], List[str]].
-      Typically this is the output of gneratelibraryplan.py
+      Typically this is the output of generatelibraryplan.py
 
 Outputs:
     - Folders exp{nr.} containing plate layout files: The number of folders equals len(input list)

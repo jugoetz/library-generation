@@ -1,3 +1,10 @@
+"""
+Populate the 'experiments' table of the database.
+Location data is taken from plate_layout files in either experiment directories (e.g. exp2, standard usage) or
+in individual directories with lab journal numbers (e.g. JG228, non-standard - add things not within 50k project scope).
+Compound data is retrieved from 'virtuallibrary' table.
+"""
+
 import sqlite3
 from config import *
 from datetime import datetime
@@ -7,7 +14,18 @@ import os
 con = sqlite3.connect(DB_PATH)
 cur = con.cursor()
 
-"""Some functions for simple queries to the db"""
+# control variables
+experiment_directory = 'exp5'
+experiment_number = 5  # can be int or None if not a canonical (50 k) plate
+synthesis_date = datetime(2021, 7, 14).timestamp()
+plate_nr_to_labj_nr = {
+    '1': 'JG252',
+    '2': 'JG253',
+    '3': 'JG254',
+    '4': 'JG255',
+    '5': 'JG256',
+    '6': 'JG257',
+}
 
 
 def copy_data(i, m, t, exp_nr, plate_nr, well, lab_journal_number, synthesis_date_unixepoch):
@@ -33,27 +51,20 @@ def copy_data(i, m, t, exp_nr, plate_nr, well, lab_journal_number, synthesis_dat
 
 
 if __name__ == '__main__':
-    # control variables
-    experiment_number = 2
-    synthesis_date = datetime(2021, 5, 11).timestamp()
-
-    plate_nr_to_labj_nr = {
-        '1': 'JG222',
-        '2': 'JG223',
-        '3': 'JG224',
-        '4': 'JG225',
-        '5': 'JG226',
-        '6': 'JG227',
-    }
+    # import the plate layouts, i.e. retrieve well location data
     plates_dict = {}
-    for path, _, files in os.walk(PLATES_DIR / f'exp{experiment_number}'):
+    for path, _, files in os.walk(PLATES_DIR / f'{experiment_directory}'):
         for f in files:
             m = PLATE_REGEX.match(f)
             if m:
+                print(f'Retrieving plate layout {f}...')
                 plate_dict = import_pl(Path(path, f))
                 plates_dict[m.group(1)] = plate_dict
 
+    # retrieve compound data from 'virtuallibrary' table and write to 'experiments' table
+    # TODO these two steps should be separated(?) and the call to DB probably could use optimization
     for plate_number, plate_content in plates_dict.items():
+        print(f'Retrieving reaction data for plate {plate_number} and saving to DB...')
         labj_nr = plate_nr_to_labj_nr[plate_number]
         for well, content in plate_content.items():
             if type(content) is list and len(content) == 3:

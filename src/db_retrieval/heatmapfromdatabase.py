@@ -9,8 +9,7 @@ from config import *
 import sqlite3
 import numpy as np
 
-exp_nr = 'JG221'
-exp_dir = PLATES_DIR / exp_nr
+# EDIT exp_nr below in __main__
 normalization_constant = 3.0
 plate_size = 384
 
@@ -20,6 +19,11 @@ def read_yields_from_database(db_path, labjournal_nr):
     # PART 1: Query database to obtain a list of lists
     con = sqlite3.connect(db_path)
     cur = con.cursor()
+    # TODO I need a possibility to produce heatmaps for arbitrary data, not just plates.
+    #  Use cases:
+    #   - Compare plate with a set of other syntheses that should be arranged in the same layout as the plate
+    #   - Plot other formats than a plate (e.g. one monomer, all i, all t on the two axes)
+    #  Currently, this is realized in generate_arbitrary_heatmaps.ipynb
     query_result = cur.execute('SELECT well, product_A_lcms_ratio, product_B_lcms_ratio, product_C_lcms_ratio, '
                                'product_D_lcms_ratio, product_E_lcms_ratio, product_F_lcms_ratio, product_G_lcms_ratio,'
                                'product_H_lcms_ratio '
@@ -72,7 +76,7 @@ def get_plot(df, product_type, ax=None):
     return ax
 
 
-def plot_heatmap(df, measurement_number, product_type, save_dir, plate_size):
+def plot_heatmap(df, product_type, save_path, plate_size):
     """Plot an individual plate-sized heatmap from dataframe"""
     if plate_size == 96:
         plt.figure(figsize=(7.5, 5))  # this size works for 96 wells plates
@@ -84,14 +88,14 @@ def plot_heatmap(df, measurement_number, product_type, save_dir, plate_size):
 
     # save to file
     fig = plt.gcf()
-    fig.savefig(save_dir / f"heatmap_{measurement_number}_{product_type}.png", dpi=100)
+    fig.savefig(save_path, dpi=100)
 
     # show the plot
     plt.show()
     return
 
 
-def plot_heatmap_overview(df, measurement_number, save_dir):
+def plot_heatmap_overview(df, save_path):
     """Plot an overview of all products of one plate in a 4x2 grid from dataframe"""
     # Generate figure and 8 axes inside
     fig, axs = plt.subplots(4, 2, figsize=(21, 35))
@@ -107,7 +111,7 @@ def plot_heatmap_overview(df, measurement_number, save_dir):
     fig.tight_layout()
 
     # save to file and show
-    fig.savefig(save_dir / f"heatmap_{measurement_number}_overview.png", dpi=100)
+    fig.savefig(save_path, dpi=100)
     plt.show()
     return
 
@@ -118,7 +122,7 @@ def plot_experiment_heatmap_from_database(db_path, exp_nr, exp_dir, normalizatio
     yields = normalize_yields(yields, normalization_constant)
 
     # plot an overview with all individual heatmaps in a 4x2 grid
-    plot_heatmap_overview(yields, exp_nr, exp_dir)
+    plot_heatmap_overview(yields, exp_dir / f"heatmap_{exp_nr}_overview.png")
 
     # plot all heatmaps
     for product_type in 'ABCDEFGH':
@@ -128,9 +132,11 @@ def plot_experiment_heatmap_from_database(db_path, exp_nr, exp_dir, normalizatio
             .pivot(columns='column', index='row', values=f'product_{product_type}_lcms_ratio') \
             .sort_index(axis=1, key=lambda x: [int(y) for y in x])  # generate individual df for every plot
         # plot the heatmap
-        plot_heatmap(plot_df, exp_nr, product_type, exp_dir, plate_size)
+        plot_heatmap(plot_df, product_type, exp_dir / f"heatmap_{exp_nr}_{product_type}.png", plate_size)
     return
 
 
 if __name__ == '__main__':
-    plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, normalization_constant, plate_size)
+    for exp_nr in ['JG245']:
+        exp_dir = PLATES_DIR / exp_nr
+        plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, normalization_constant, plate_size)

@@ -6,8 +6,12 @@ id | synthesis id  | [lcms compounds] | [lcms areas]
 
 We go to a DB table 'lcms yields':
 id (foreign key from lcms table) | SumF.. | type (e.g. A) | SMILES (or better: id of the product in a different table)
-# TODO what is the best way here? mulitple entries per experiment with
-# TODO looks like I need a products table
+TODO what is the best way here? multiple entries per experiment with
+TODO looks like I need a products table
+TODO get rid of SettingWithCopyWarning
+Note that this overwrites previous data on every execution
+
+EDIT exp_nr below in __main__ before running
 """
 
 import json
@@ -15,12 +19,10 @@ import sqlite3
 import pandas as pd
 from config import *
 
-exp_nr = 'JG221'
-exp_dir = PLATES_DIR / exp_nr
-
 
 def import_lcms_unprocessed_data(db_cur, exp_nr):
     # TODO this is a terrible but working solution
+    #  this only works on the plate level due to the dataframe assumption that all rows have the same columns
     # for now, we do this for a certain synthesis id. we could also do it for the entire DB
     res = db_cur.execute(
         'SELECT synthesis_id, lcms_compounds, lcms_areas FROM lcms WHERE synthesis_id IN (SELECT id FROM experiments WHERE lab_journal_number = ?);',
@@ -29,7 +31,7 @@ def import_lcms_unprocessed_data(db_cur, exp_nr):
     first_res = [
         [int(res[0][0])] + [float(i.strip('[').strip(']')) for i in res[0][2].split(',')]]  # TODO horrible parsing
     first_header = ['synthesis_id'] + [i.split("'")[1] for i in res[0][1].split(
-        ',')]  # TODO this is a ridiculousy breakable way to parse that string
+        ',')]  # TODO this is a ridiculously breakable way to parse that string
     df = pd.DataFrame(data=first_res, columns=first_header)
     # now that we have the df, we iterate all further results.
     for result in res[1:]:
@@ -64,18 +66,17 @@ def split_products_into_dataframes(df, exp_dir):
     # for every product column, add a separate df to dict
     for c in product_columns:
         number = int(regex.match(c).group(1))
-        df_dict[number] = df[['plate', 'row', 'column', c]]
-        df_dict[number].rename(columns={c: 'yield'}, inplace=True)
+        df_dict[number] = df.loc[:, ['plate', 'row', 'column', c]]
+        df_dict[number] = df_dict[number].rename(columns={c: 'yield'})
 
     # Add df for BPC to dict as well
-    df_dict['BPC'] = df[['plate', 'row', 'column', 'BPC Area']].rename(columns={'BPC Area': 'yield'})
+    df_dict['BPC'] = df.loc[:, ['plate', 'row', 'column', 'BPC Area']].rename(columns={'BPC Area': 'yield'})
 
     # Generate dataframe for IS TODO bad idea to do this here. Isolate into its own method
     with open(exp_dir / 'compound_alternative_mass_dict.json', 'r') as jfile:
         side_product_dict = json.load(jfile)
-    # TODO remove this as soon as we are only using PG stuff
-    # side_product_dict = {"A_formula": "SumF1", "B_formula": "SumF2", "C_formula": "SumF3", "D_formula": "SumF4", "E_formula": "SumF5", "F_formula": "SumF6", "G_formula": "SumF7", "H_formula": "SumF8", "IS_formula": "SumF9"}
 
+    # rename IS dict
     IS_compound_number = int(side_product_dict['IS_formula'].strip('SumF'))
     df_dict['IS'] = df_dict[IS_compound_number]
     del df_dict[IS_compound_number]
@@ -87,8 +88,8 @@ def calculate_yield(dict_df):
     """calculate the mass response ratio (i.e. our approximation of yield) for a compounds vs. internal standard """
     # divide all values by the IS value
     for key, df in dict_df.items():
-        df["yield"] = df["yield"].astype('float64') / dict_df["IS"]["yield"]
-        df.fillna(value=0.0, inplace=True)  # TODO this might be a bad idea bc it hides errors. Better propagate na?
+        df.loc[:, "yield"] = df.loc[:, "yield"].astype('float64') / dict_df["IS"].loc[:, "yield"]
+        dict_df[key] = df.fillna(value=0.0)  # TODO this might be a bad idea bc it hides errors. Better propagate na?
 
     return dict_df
 
@@ -105,15 +106,16 @@ def save_to_db(dict_df, db_path, exp_nr):
         The first dataframe must have all the identifiers (first 3 columns) that will be present.
         """
         df = df_list[0]
-        for other in df_list[1:]:
-            df = df.merge(other, how='left', on=['plate', 'row', 'column'])
-        df['cumulated_yield'] = df[[i for i in df.columns if 'yield' in i]].sum(axis=1)
-        df = df[['plate', 'row', 'column', 'cumulated_yield']]
-        df.rename(columns={'cumulated_yield': 'yield'}, inplace=True)
+        for i, other in enumerate(df_list[1:]):
+            df = df.merge(other, how='left', on=['plate', 'row', 'column'], suffixes=(None,
+                                                                                      f'_{i}'))  # it is essential to give different suffix for every iteration to avoid identical column names. Those will lead to sum() taking columns multiple times
+        df.loc[:, 'cumulated_yield'] = df.loc[:, [i for i in df.columns if 'yield' in i]].sum(axis=1)
+        df = df.loc[:, ['plate', 'row', 'column', 'cumulated_yield']]
+        df = df.rename(columns={'cumulated_yield': 'yield'})
         return df
 
     # load the saved connections between product type (A) and SumFx field
-    with open(EXP_DIR / 'compound_alternative_mass_dict.json', 'r') as jfile:
+    with open(exp_dir / 'compound_alternative_mass_dict.json', 'r') as jfile:
         side_product_dict = json.load(jfile)
     # reformat dict for easier use
     side_product_associations = {t: [v for k, v in side_product_dict.items() if k.startswith(t)] for t in 'ABCDEFGH'}
@@ -153,4 +155,12 @@ def calculate_lcms_yields(db_path, exp_dir, exp_nr):
 
 
 if __name__ == '__main__':
-    calculate_lcms_yields(DB_PATH, exp_dir, exp_nr)
+    for exp_nr in ['JG239',
+                   'JG240',
+                   'JG241',
+                   'JG242',
+                   'JG243',
+                   'JG244',
+                   ]:
+        exp_dir = PLATES_DIR / exp_nr
+        calculate_lcms_yields(DB_PATH, exp_dir, exp_nr)

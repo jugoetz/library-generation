@@ -1,5 +1,11 @@
 """
 Evaluate yields of a plate from Mobias output. Save the yields to the DB.
+
+If the program raises KeyError: 'Sample ID', the commas in mobias output are the culprit
+
+edit lcms_data_sources before running this script  TODO move that to config file or read from DB
+
+MIND THAT THIS SCRIPT WILL NOT OVERWRITE DB RECORDS AND MAY WRITE DUPLICATES
 """
 
 import pandas as pd
@@ -7,19 +13,6 @@ from config import *
 import sqlite3
 import numpy as np
 import re
-
-"""GLOBALS"""
-# TODO having these is not ideal. Better to read them from DB or infer them from os.walk or maybe get from sys argv
-#  mind that this will currently not overwrite but add if this LCMS was previously run through the script.
-LCMS_number = 'JG227'
-del EXP_NR
-exp_dir = PLATES_DIR / LCMS_number
-results_file_path = exp_dir / 'BMII002051_Skript-Results.csv'
-submission_file = exp_dir / f'BMIIyyyyyy-SampleTable_{LCMS_number}.xls'
-# with open(exp_dir / 'notebook_nr.txt') as file:
-#     LCMS_number = file.read().strip('\n').strip()
-
-"""If the program raises KeyError: 'Sample ID', the commas in mobias output are the culprit"""
 
 
 def import_lcms_results(path):
@@ -37,7 +30,10 @@ def import_lcms_results(path):
 
 
 def check_mobias_input_output_equivalent(df, mobias_input):
-    """Check if the sum formulae in the Mobias output are the same that I had entered in my submission."""
+    """
+    Check if the sum formulae in the Mobias output are the same that I had entered in my submission.
+    (Basically a test against copy-paste or accidental editing errors)
+    """
 
     # find relevant columns (SumFx) and discard everything else
     regex = re.compile('^SumF([0-9]+)$')
@@ -62,7 +58,11 @@ def check_mobias_input_output_equivalent(df, mobias_input):
         # we are fine
         pass
     else:
-        raise ValueError('Values for Mobias input and output do not align')
+        missing_indices = set([f'JG239-{i:03d}' for i in range(1, 321)]) - set(df.index.to_list())
+        known_missing = ['JG239-265']
+        if set(missing_indices) != set(known_missing):  # don't raise error if problem is known
+            raise ValueError(f'Values for Mobias input and output do not align. These indices are missing in the '
+                             f'output: {missing_indices}')
 
     return
 
@@ -73,15 +73,13 @@ def clean_result_df(df):
     # Remove unneeded columns. We want to keep Vial Pos, File (the raw data name) and all MS Areas
     columns = ['Vial Pos', 'File']
     columns += [s for s in df.columns if "Area" in s and "UV" not in s and df[s].count() > 0]
-    df = df[columns]
+    df = df.loc[:, columns]
 
     # For fields where we did not search for a compound, '-' appears. Replace with np.nan.
     df.replace(to_replace='-', value=np.nan, inplace=True)
     # Since '-' would have induced object dtype, we change to float64. We do this for all Area columns, to be save.
-    for c in df.columns:
-        if c.endswith('Area'):
-            df[c] = df[c].astype('float64')
-
+    area_columns = [c for c in df.columns if c.endswith('Area')]
+    df.loc[:, area_columns] = df.loc[:, area_columns].astype('float64')
     # split "Vial Pos" into separate columns for plate, row, column. Discard "Vial Pos"
     df['plate'] = df['Vial Pos'].str.split('-').str[0]
     df['row'] = df['Vial Pos'].str.split('-').str[1]
@@ -144,4 +142,16 @@ def extract_mobias_results(path, db_path, exp_nr, mobias_input):
 
 
 if __name__ == '__main__':
-    extract_mobias_results(results_file_path, DB_PATH, LCMS_number, submission_file)
+    lcms_data_sources = {'JG239': 'BMII002064_Skript-Results.csv',
+                         'JG240': 'BMII002065_Skript-Results.csv',
+                         'JG241': 'BMII002066_Skript-Results.csv',
+                         'JG242': 'BMII002067_Skript-Results.csv',
+                         'JG243': 'BMII002068_Skript-Results.csv',
+                         'JG244': 'BMII002069_Skript-Results.csv',
+                         }
+
+    for lcms_nr, results_file in lcms_data_sources.items():
+        exp_dir = PLATES_DIR / lcms_nr
+        results_file_path = exp_dir / results_file
+        submission_file = exp_dir / f'BMIIyyyyyy-SampleTable_{lcms_nr}.xls'
+        extract_mobias_results(results_file_path, DB_PATH, lcms_nr, submission_file)

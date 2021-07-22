@@ -1,5 +1,13 @@
 """
 For one plate, retrieve yields from DB, normalize, and plot in heatmaps.
+
+EDIT exp_nr below in __main__ before running
+
+TODO I need a possibility to produce heatmaps for arbitrary data, not just plates.
+     Use cases:
+      - Compare plate with a set of other syntheses that should be arranged in the same layout as the plate
+      - Plot other formats than a plate (e.g. one monomer, all i, all t on the two axes)
+     Currently, this is realized in generate_arbitrary_heatmaps.ipynb
 """
 
 import pandas as pd
@@ -9,7 +17,7 @@ from config import *
 import sqlite3
 import numpy as np
 
-# EDIT exp_nr below in __main__
+
 normalization_constant = 3.0
 plate_size = 384
 
@@ -19,11 +27,6 @@ def read_yields_from_database(db_path, labjournal_nr):
     # PART 1: Query database to obtain a list of lists
     con = sqlite3.connect(db_path)
     cur = con.cursor()
-    # TODO I need a possibility to produce heatmaps for arbitrary data, not just plates.
-    #  Use cases:
-    #   - Compare plate with a set of other syntheses that should be arranged in the same layout as the plate
-    #   - Plot other formats than a plate (e.g. one monomer, all i, all t on the two axes)
-    #  Currently, this is realized in generate_arbitrary_heatmaps.ipynb
     query_result = cur.execute('SELECT well, product_A_lcms_ratio, product_B_lcms_ratio, product_C_lcms_ratio, '
                                'product_D_lcms_ratio, product_E_lcms_ratio, product_F_lcms_ratio, product_G_lcms_ratio,'
                                'product_H_lcms_ratio '
@@ -137,6 +140,12 @@ def plot_experiment_heatmap_from_database(db_path, exp_nr, exp_dir, normalizatio
 
 
 if __name__ == '__main__':
-    for exp_nr in ['JG245']:
+    for exp_nr in ['JG239',
+                   'JG240',
+                   'JG241',
+                   'JG242',
+                   'JG243',
+                   'JG244',
+                   ]:
         exp_dir = PLATES_DIR / exp_nr
         plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, normalization_constant, plate_size)

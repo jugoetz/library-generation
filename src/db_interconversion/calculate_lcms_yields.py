@@ -89,7 +89,6 @@ def calculate_yield(dict_df):
     # divide all values by the IS value
     for key, df in dict_df.items():
         df.loc[:, "yield"] = df.loc[:, "yield"].astype('float64') / dict_df["IS"].loc[:, "yield"]
-        dict_df[key] = df.fillna(value=0.0)  # TODO this might be a bad idea bc it hides errors. Better propagate na?
 
     return dict_df
 
@@ -109,7 +108,7 @@ def save_to_db(dict_df, db_path, exp_nr):
         for i, other in enumerate(df_list[1:]):
             df = df.merge(other, how='left', on=['plate', 'row', 'column'], suffixes=(None,
                                                                                       f'_{i}'))  # it is essential to give different suffix for every iteration to avoid identical column names. Those will lead to sum() taking columns multiple times
-        df.loc[:, 'cumulated_yield'] = df.loc[:, [i for i in df.columns if 'yield' in i]].sum(axis=1)
+        df.loc[:, 'cumulated_yield'] = df.loc[:, [i for i in df.columns if 'yield' in i]].sum(axis=1, min_count=1)
         df = df.loc[:, ['plate', 'row', 'column', 'cumulated_yield']]
         df = df.rename(columns={'cumulated_yield': 'yield'})
         return df

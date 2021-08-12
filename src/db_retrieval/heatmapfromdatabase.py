@@ -140,12 +140,12 @@ def plot_experiment_heatmap_from_database(db_path, exp_nr, exp_dir, normalizatio
 
 
 if __name__ == '__main__':
-    for exp_nr in ['JG239',
-                   'JG240',
-                   'JG241',
-                   'JG242',
-                   'JG243',
-                   'JG244',
+    for exp_nr in ['JG246',
+                   'JG247',
+                   'JG248',
+                   'JG249',
+                   'JG250',
+                   'JG251',
                    ]:
         exp_dir = PLATES_DIR / exp_nr
         plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, normalization_constant, plate_size)

@@ -15,16 +15,16 @@ con = sqlite3.connect(DB_PATH)
 cur = con.cursor()
 
 # control variables
-experiment_directory = 'exp5'
-experiment_number = 5  # can be int or None if not a canonical (50 k) plate
-synthesis_date = datetime(2021, 7, 14).timestamp()
+experiment_directory = 'exp4'
+experiment_number = 4  # can be int or None if not a canonical (50 k) plate
+synthesis_date = datetime(2021, 7, 15).timestamp()
 plate_nr_to_labj_nr = {
-    '1': 'JG252',
-    '2': 'JG253',
-    '3': 'JG254',
-    '4': 'JG255',
-    '5': 'JG256',
-    '6': 'JG257',
+    '1': 'JG246',
+    '2': 'JG247',
+    '3': 'JG248',
+    '4': 'JG249',
+    '5': 'JG250',
+    '6': 'JG251',
 }
 
 

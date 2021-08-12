@@ -279,7 +279,7 @@ if __name__ == '__main__':
 
         """
         Add molecular formulae and exact masses to dataframe
-        mol_prop_dict looks a little different dependign on the source so for now, we will go with two ways to read it
+        mol_prop_dict looks a little different depending on the source so for now, we will go with two ways to read it
         """
         if PROP_SOURCE == 'dict':
             for letter, mol_props in sorted(mol_prop_dict.items()):

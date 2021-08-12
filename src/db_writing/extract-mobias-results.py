@@ -3,7 +3,7 @@ Evaluate yields of a plate from Mobias output. Save the yields to the DB.
 
 If the program raises KeyError: 'Sample ID', the commas in mobias output are the culprit
 
-edit lcms_data_sources before running this script  TODO move that to config file or read from DB
+Edit lcms_data_sources before running this script
 
 MIND THAT THIS SCRIPT WILL NOT OVERWRITE DB RECORDS AND MAY WRITE DUPLICATES
 """
@@ -95,7 +95,6 @@ def save_mobias_data_to_db(df, db_path, exp_nr):
     The data is split into one column for identities (SumF1 etc.) and one for areas (e.g. 36574.000).
     Both columns contain str-representations of lists. compounds[0] corresponds to area[0]
     """
-    # TODO currently, we don't overwrite, so watch out for duplicates
     con = sqlite3.connect(db_path)
     con.execute('PRAGMA foreign_keys = 1')
     cur = con.cursor()
@@ -142,12 +141,12 @@ def extract_mobias_results(path, db_path, exp_nr, mobias_input):
 
 
 if __name__ == '__main__':
-    lcms_data_sources = {'JG239': 'BMII002064_Skript-Results.csv',
-                         'JG240': 'BMII002065_Skript-Results.csv',
-                         'JG241': 'BMII002066_Skript-Results.csv',
-                         'JG242': 'BMII002067_Skript-Results.csv',
-                         'JG243': 'BMII002068_Skript-Results.csv',
-                         'JG244': 'BMII002069_Skript-Results.csv',
+    lcms_data_sources = {'JG246': 'BMII002071_Skript-Results.csv',
+                         'JG247': 'BMII002072_Skript-Results.csv',
+                         'JG248': 'BMII002073_Skript-Results.csv',
+                         'JG249': 'BMII002074_Skript-Results.csv',
+                         'JG250': 'BMII002075_Skript-Results.csv',
+                         'JG251': 'BMII002076_Skript-Results.csv',
                          }
 
     for lcms_nr, results_file in lcms_data_sources.items():

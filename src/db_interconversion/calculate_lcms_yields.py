@@ -6,9 +6,8 @@ id | synthesis id  | [lcms compounds] | [lcms areas]
 
 We go to a DB table 'lcms yields':
 id (foreign key from lcms table) | SumF.. | type (e.g. A) | SMILES (or better: id of the product in a different table)
-TODO what is the best way here? multiple entries per experiment with
-TODO looks like I need a products table
-TODO get rid of SettingWithCopyWarning
+TODO what is the best way here? multiple entries per experiment with the different products? or keep it the way it is?
+TODO looks like I need a products table (is this different form the VL table? Yes, the VL has multiple products.)
 Note that this overwrites previous data on every execution
 
 EDIT exp_nr below in __main__ before running
@@ -154,12 +153,12 @@ def calculate_lcms_yields(db_path, exp_dir, exp_nr):
 
 
 if __name__ == '__main__':
-    for exp_nr in ['JG239',
-                   'JG240',
-                   'JG241',
-                   'JG242',
-                   'JG243',
-                   'JG244',
+    for exp_nr in ['JG246',
+                   'JG247',
+                   'JG248',
+                   'JG249',
+                   'JG250',
+                   'JG251',
                    ]:
         exp_dir = PLATES_DIR / exp_nr
         calculate_lcms_yields(DB_PATH, exp_dir, exp_nr)

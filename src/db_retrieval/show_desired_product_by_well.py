@@ -5,7 +5,6 @@ from config import DB_PATH
 
 
 def get_product(lab_journal_number, well, product_type):
-    global DB_PATH
     product_mapping = dict(zip('ABCDEFGH', range(1, 9)))
     product_idx = product_mapping[product_type]
     # query db
@@ -30,7 +29,7 @@ def get_product(lab_journal_number, well, product_type):
 
 
 if __name__ == '__main__':
-    lab_journal_number = 'JG228'
-    well = 'M1'
+    lab_journal_number = 'JG251'
+    well = 'A3'
     product = 'A'
     get_product(lab_journal_number, well, product)

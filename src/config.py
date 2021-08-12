@@ -24,8 +24,8 @@ DEBUG = 1
 VERBOSE = True
 
 # Library things
-# COMPOUND_MAPPING_PATH = EXP_DIR / 'identity.txt'
 COMPOUND_MAPPING_PATH = DATA_DIR / 'buildingblocks' / 'compound_mapping.txt'
+# COMPOUND_MAPPING_PATH = EXP_DIR / 'identity.txt'
 # PLATE_REGEX = re.compile('test_JG([0-9]+).csv')
 PLATE_REGEX = re.compile('plate_layout_plate([0-9]+).csv')
 

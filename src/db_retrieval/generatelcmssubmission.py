@@ -10,11 +10,11 @@ Inputs:
     either the mol_prop_dict prepared from sdf_to_properties
         OR
     an SQLite DB of the virtuallibrary
-
   - Identity of compounds (txt-file):
     Space-delimited file with one compound per row.
     Columns contain short name (e.g. 'M1') used in the plate layout file
     and the long name (e.g. 2-Pyr003_MT or 2-Pyr003) used in the SDF files
+  NOTE: EXP_NR in config.py must be set to the directory containing all plate layout files for the batch, e.g. "exp5"
 
 
 

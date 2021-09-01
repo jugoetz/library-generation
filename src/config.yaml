@@ -1,0 +1,4 @@
+# configuration for generatelcmssubmission.py
+is_mass: 360.1128  # monoisotopic mass of Fenofibrat
+is_formula: C20H21O4Cl  # molecular formula of Fenofibrat
+well_plate_size: 384

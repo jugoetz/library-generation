@@ -40,6 +40,7 @@ from config import *
 
 """GLOBALS"""
 POSTPROCESSING_ONLY = True
+DEBUG = 1
 
 
 def deprotonate_nitrogen(mol):

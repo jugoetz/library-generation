@@ -13,10 +13,13 @@ Note that this overwrites previous data on every execution
 EDIT exp_nr below in __main__ before running
 """
 
+import re
 import json
 import sqlite3
+
 import pandas as pd
-from config import *
+
+from definitions import PLATES_DIR, DB_PATH
 
 
 def import_lcms_unprocessed_data(db_cur, exp_nr):

@@ -27,17 +27,18 @@ TODO this is in dire need of refactoring
 
 import gzip
 import json
+import re
 import os
 import sqlite3 as sql
 from copy import deepcopy
 from pathlib import Path
 
-from yaml import safe_load as yamlload
 import numpy as np
 import pandas as pd
 
-from config import COMPOUND_MAPPING_PATH, LIB_STATIC_DIR, DB_PATH, PLATE_REGEX, PLATES_DIR
+from definitions import LIB_STATIC_DIR, PLATES_DIR, COMPOUND_MAPPING_PATH, CONF_PATH, DB_PATH
 from labware.plates import Plate384, Plate96
+from utils import get_conf
 
 """GLOBALS"""
 PROP_SOURCE = 'db'  # ['db' / 'dict'] where to look up molecular formula or mass.
@@ -46,8 +47,7 @@ VERBOSE = True
 ADD_IS = True
 MASS_OR_FORMULA = 'formula'  # ['mass'/'formula'] can output mass as a number or can give chemical formula
 PLATE_SIZE = 384
-with open('../config.yaml', 'r') as file:
-    conf = yamlload(file)
+conf = get_conf()
 
 
 def import_sm(file):
@@ -244,7 +244,7 @@ def main(exp_dir):
     plates_dict = {}
     for path, _, files in os.walk(exp_dir):
         for f in files:
-            m = PLATE_REGEX.match(f)
+            m = re.compile(conf['plate_regex']).match(f)
             if m:
                 plate_dict = import_pl(Path(path, f))
                 plates_dict[m.group(1)] = plate_dict

@@ -24,14 +24,16 @@ from rdkit.Chem import Draw, Descriptors
 from rdkit.Chem.PropertyMol import PropertyMol
 import pandas as pd
 import math
-from config import *
+
+from definitions import BUILDING_BLOCKS_DIR, IMAGES_DIR, LIB_SDF_DIR, LIB_INFO_DIR
 
 """Generate a DataFrame with all relevant information from inventory data"""
 print('Importing inventory data...')
-compounds = pd.read_csv(BB_DIR / 'inventory_compounds.csv')  # read df from inventory data
+compounds = pd.read_csv(BUILDING_BLOCKS_DIR / 'inventory_compounds.csv')  # read df from inventory data
 compounds['mol'] = compounds['SMILES'].apply(Chem.MolFromSmiles)  # generate rdkit mol objects
 compounds['mol'] = compounds['mol'].apply(PropertyMol)
-compounds.apply(lambda x: x['mol'].SetProp('_Name', x['Compound Name']), axis=1)  # add the name to mol for later saving to sdf
+compounds.apply(lambda x: x['mol'].SetProp('_Name', x['Compound Name']),
+                axis=1)  # add the name to mol for later saving to sdf
 compounds['img'] = compounds['mol'].apply(Draw.MolToImage)  # generate molecule images
 compounds['exact mass'] = compounds['mol'].apply(Descriptors.ExactMolWt)
 compounds['MW_from_mol'] = compounds['mol'].apply(Descriptors.MolWt)
@@ -51,12 +53,13 @@ compounds.drop(columns=['MW [g/mol]'], inplace=True)  # we won't use this. Calcu
 """Generate outputs"""
 # output to Excel
 print('Generating Excel printout...')
-compounds.drop(columns=['mol', 'img'], inplace=False).to_excel(BB_DIR / 'inventory_compounds_extended.xlsx')
+compounds.drop(columns=['mol', 'img'], inplace=False).to_excel(
+    BUILDING_BLOCKS_DIR / 'inventory_compounds_extended.xlsx')
 
 # write the molecule images to files
 print('Generating molecule images...')
 for i, data in compounds.iterrows():
-    with open(DATA_DIR / 'images' / ''.join([data.loc['Compound Name'], '.png']), 'wb') as file:
+    with open(IMAGES_DIR / ''.join([data.loc['Compound Name'], '.png']), 'wb') as file:
         data.loc['img'].save(file)
 
 img = Draw.MolsToGridImage(compounds['mol'].tolist(),
@@ -81,13 +84,13 @@ img_T = Draw.MolsToGridImage(compounds['mol'].loc[compounds['Category'] == 'T'].
                            )
 
 # write a big overview
-with open(DATA_DIR / 'images' / '_overview.png', 'wb') as file:
+with open(IMAGES_DIR / '_overview.png', 'wb') as file:
     img.save(file)
-with open(DATA_DIR / 'images' / '_I.png', 'wb') as file:
+with open(IMAGES_DIR / '_I.png', 'wb') as file:
     img_I.save(file)
-with open(DATA_DIR / 'images' / '_M.png', 'wb') as file:
+with open(IMAGES_DIR / '_M.png', 'wb') as file:
     img_M.save(file)
-with open(DATA_DIR / 'images' / '_T.png', 'wb') as file:
+with open(IMAGES_DIR / '_T.png', 'wb') as file:
     img_T.save(file)
 
 # output to SDF

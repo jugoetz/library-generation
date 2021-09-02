@@ -11,10 +11,13 @@ Needs to be rerun after changes to the static VL.
 
 import os
 import gzip
+import json
+from pathlib import Path
+
 from rdkit.Chem.rdmolfiles import ForwardSDMolSupplier
 from rdkit.Chem.rdMolDescriptors import CalcExactMolWt, CalcMolFormula
-import json
-from config import *
+
+from definitions import LIB_STATIC_DIR
 
 """GLOBALS"""
 OUTPUT_JSON = LIB_STATIC_DIR / 'static_mol_prop_dict.json.gz'

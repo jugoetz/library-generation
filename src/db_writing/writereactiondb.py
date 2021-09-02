@@ -5,26 +5,31 @@ in individual directories with lab journal numbers (e.g. JG228, non-standard - a
 Compound data is retrieved from 'virtuallibrary' table.
 """
 
-import sqlite3
-from config import *
-from datetime import datetime
-from db_retrieval.generatelcmssubmission import import_pl
+import re
 import os
+import sqlite3
+from datetime import datetime
+from pathlib import Path
 
+from definitions import PLATES_DIR, DB_PATH
+from db_retrieval.generatelcmssubmission import import_pl
+from utils import get_conf
+
+conf = get_conf()
 con = sqlite3.connect(DB_PATH)
 cur = con.cursor()
 
 # control variables
-experiment_directory = 'exp4'
-experiment_number = 4  # can be int or None if not a canonical (50 k) plate
-synthesis_date = datetime(2021, 7, 15).timestamp()
+experiment_directory = 'exp7'
+experiment_number = 7  # can be int or None if not a canonical (50 k) plate
+synthesis_date = datetime(2021, 9, 14).timestamp()
 plate_nr_to_labj_nr = {
-    '1': 'JG246',
-    '2': 'JG247',
-    '3': 'JG248',
-    '4': 'JG249',
-    '5': 'JG250',
-    '6': 'JG251',
+    '1': 'JG264',
+    '2': 'JG265',
+    '3': 'JG266',
+    '4': 'JG267',
+    '5': 'JG268',
+    '6': 'JG269',
 }
 
 
@@ -55,7 +60,7 @@ if __name__ == '__main__':
     plates_dict = {}
     for path, _, files in os.walk(PLATES_DIR / f'{experiment_directory}'):
         for f in files:
-            m = PLATE_REGEX.match(f)
+            m = re.compile(conf['plate_regex']).match(f)
             if m:
                 print(f'Retrieving plate layout {f}...')
                 plate_dict = import_pl(Path(path, f))

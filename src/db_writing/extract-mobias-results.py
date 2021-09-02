@@ -7,12 +7,13 @@ Edit lcms_data_sources before running this script
 
 MIND THAT THIS SCRIPT WILL NOT OVERWRITE DB RECORDS AND MAY WRITE DUPLICATES
 """
+import re
+import sqlite3
 
 import pandas as pd
-from config import *
-import sqlite3
 import numpy as np
-import re
+
+from definitions import PLATES_DIR, DB_PATH
 
 
 def import_lcms_results(path):

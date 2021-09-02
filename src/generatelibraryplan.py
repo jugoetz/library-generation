@@ -18,7 +18,8 @@ import random as rd
 import csv
 import json
 import pandas as pd
-from config import *
+
+from definitions import BUILDING_BLOCKS_DIR, LIB_INFO_DIR, LOG_DIR
 
 """seed randomizer for reproducible result"""
 seed = 42
@@ -35,7 +36,7 @@ total_runs = 26
 total_targets = compounds_per_run * total_runs  # is 49920
 
 """import the building blocks from (processed) cheminventory export"""
-compounds = pd.read_csv(BB_DIR / 'inventory_compounds.csv')
+compounds = pd.read_csv(BUILDING_BLOCKS_DIR / 'inventory_compounds.csv')
 
 """Add a mapping between shorthand and longhand names to the Dataframe"""
 initiator_shorts = [f'I{i + 1}' for i in range(len(compounds.loc[compounds['Category'] == 'I']))]
@@ -129,6 +130,6 @@ with open(LIB_INFO_DIR / 'synthesis_plan.json', 'w') as file:  # json
 
 """write the mapping between short- and longhand names to txt-file"""
 compounds.sort_values(by='Category', inplace=True, kind='mergesort')
-with open(BB_DIR / 'compound_mapping.txt', 'w') as file:
+with open(BUILDING_BLOCKS_DIR / 'compound_mapping.txt', 'w') as file:
     for i, data in compounds[['shorts', 'Compound Name']].iterrows():
         file.write(' '.join([data['shorts'], data['Compound Name']]) + '\n')

@@ -11,8 +11,9 @@ Outputs:
     the number of folders equals len(input list)
 """
 import json
+
+from definitions import LIB_INFO_DIR, PLATES_DIR
 from labware.plates import Plate384
-from config import *
 
 with open(LIB_INFO_DIR / 'synthesis_plan.json', 'r') as file:
     synthesis_plan = json.load(file)
@@ -68,6 +69,6 @@ for exp_nr, exp in enumerate(synthesis_plan):
 
     print(source_plate)
 
-    exp_dir = DATA_DIR / 'plates' / f'exp{exp_nr + 1}'
+    exp_dir = PLATES_DIR / f'exp{exp_nr + 1}'
     # print plates to csv files
     source_plate.to_csv(exp_dir / f'source_plate_layout_echo.csv', save_volumes=True)

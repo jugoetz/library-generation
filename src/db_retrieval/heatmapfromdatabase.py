@@ -10,12 +10,14 @@ TODO I need a possibility to produce heatmaps for arbitrary data, not just plate
      Currently, this is realized in generate_arbitrary_heatmaps.ipynb
 """
 
+import sqlite3
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-from config import *
-import sqlite3
 import numpy as np
+
+from definitions import PLATES_DIR, DB_PATH
 
 
 normalization_constant = 3.0
@@ -140,12 +142,7 @@ def plot_experiment_heatmap_from_database(db_path, exp_nr, exp_dir, normalizatio
 
 
 if __name__ == '__main__':
-    for exp_nr in ['JG246',
-                   'JG247',
-                   'JG248',
-                   'JG249',
-                   'JG250',
-                   'JG251',
+    for exp_nr in ['JG225',
                    ]:
         exp_dir = PLATES_DIR / exp_nr
         plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, normalization_constant, plate_size)

@@ -23,7 +23,8 @@ Outputs:
 """
 
 import pandas as pd
-from config import *
+
+from definitions import INPUT_DIR, BUILDING_BLOCKS_DIR, LOG_DIR, MANUAL_SETTINGS_DIR
 
 
 def import_from_xlsx():
@@ -79,25 +80,25 @@ def convert_dtypes(df):
 def filter_mass(df):
     df.dropna(axis=0, subset=['Container Size'], inplace=True)
     df.loc[(df['Container Size'] <= 10) & (df['Unit'] == 'mg')].loc[:, 'Container Name'] \
-        .to_csv(DATA_DIR / 'logs' / 'removed_small_amount.csv', index=False)
+        .to_csv(LOG_DIR / 'removed_small_amount.csv', index=False)
     df.drop(df.loc[(df['Container Size'] <= 10) & (df['Unit'] == 'mg')].index, axis=0, inplace=True)
 
 
 def filter_dimer(df):
     df.loc[df['Container Name'].str.contains('Dimer', regex=False, case=False)].loc[:, 'Container Name'] \
-        .to_csv(DATA_DIR / 'logs' / 'removed_dimers.csv', index=False)
+        .to_csv(LOG_DIR / 'removed_dimers.csv', index=False)
     df.drop(df.loc[df['Container Name'].str.contains('Dimer', regex=False, case=False), :].index, axis=0, inplace=True)
 
 
 def filter_blacklist(df):
     # import manual blacklist
-    blacklist = import_blacklist(DATA_DIR / 'manual_settings' / 'blacklist.txt')  # TODO consider removing global
+    blacklist = import_blacklist(MANUAL_SETTINGS_DIR / 'blacklist.txt')  # TODO consider removing global
     df.drop(df.loc[df['Container Name'].str.contains('|'.join(blacklist), regex=True)].index, axis=0, inplace=True)
 
 
 def filter_purity(df):
     df.loc[df['Comments'].str.contains('impure', regex=False, na=False, case=False)].loc[:, 'Container Name'] \
-        .to_csv(DATA_DIR / 'logs' / 'removed_impure.csv', index=False)
+        .to_csv(LOG_DIR / 'removed_impure.csv', index=False)
     df.drop(df.loc[df['Comments'].str.contains('impure', regex=False, na=False, case=False)].index, axis=0,
             inplace=True)
 
@@ -149,5 +150,5 @@ print(f'The Virtual Library contains {freq["I"]} Initiators, {freq["M"]} Monomer
       f'This results in a total of {freq["I"] * freq["M"] * freq["T"]:,} possible products.')
 
 # save results
-df.to_csv(BB_DIR / 'inventory_containers.csv', index=False)
-df_compounds.to_csv(BB_DIR / 'inventory_compounds.csv', index=False)
+df.to_csv(BUILDING_BLOCKS_DIR / 'inventory_containers.csv', index=False)
+df_compounds.to_csv(BUILDING_BLOCKS_DIR / 'inventory_compounds.csv', index=False)

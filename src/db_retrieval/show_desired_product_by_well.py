@@ -1,7 +1,9 @@
 import sqlite3
+
 from rdkit import Chem
 from rdkit.Chem import Draw
-from config import DB_PATH
+
+from definitions import DB_PATH
 
 
 def get_product(lab_journal_number, well, product_type):
@@ -29,7 +31,7 @@ def get_product(lab_journal_number, well, product_type):
 
 
 if __name__ == '__main__':
-    lab_journal_number = 'JG251'
-    well = 'A3'
-    product = 'A'
+    lab_journal_number = 'JG225'
+    well = 'P18'
+    product = 'F'
     get_product(lab_journal_number, well, product)

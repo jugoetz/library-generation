@@ -1,7 +1,10 @@
 import pickle as pkl
 import json
+from pathlib import Path
+
 import xlsxwriter
-from config import *
+
+from definitions import BUILDING_BLOCKS_DIR, LIB_INFO_DIR, PLATES_DIR
 
 """
 Right now has many hardcoded assumptions that make it useful only for the 50 k project.
@@ -17,7 +20,7 @@ def main(exp_nr):
 
     # import the short-long name relation TODO this can be fetched from DB
     mapping = {}
-    with open(BB_DIR / 'compound_mapping.txt', 'r') as file:
+    with open(BUILDING_BLOCKS_DIR / 'compound_mapping.txt', 'r') as file:
         for l in file.readlines():
             mapping[l.split()[0]] = l.split()[1]
 

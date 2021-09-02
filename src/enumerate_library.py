@@ -26,17 +26,18 @@ TODO to have this use database instead:
 
 """
 
-from rdkit import Chem
-from rdkit.Chem import Draw, SaltRemover, AllChem
-from rdkit.Chem.SimpleEnum.Enumerator import EnumerateReaction
 import pandas as pd
 import gzip
 import warnings
 import string
 import itertools
 import pickle as pkl
-from config import *
 
+from rdkit import Chem
+from rdkit.Chem import Draw, SaltRemover, AllChem
+from rdkit.Chem.SimpleEnum.Enumerator import EnumerateReaction
+
+from definitions import LIB_INFO_DIR, LIB_SDF_DIR
 
 """GLOBALS"""
 POSTPROCESSING_ONLY = True

@@ -19,7 +19,6 @@ import numpy as np
 
 from definitions import PLATES_DIR, DB_PATH
 
-
 normalization_constant = 3.0
 plate_size = 384
 
@@ -65,7 +64,10 @@ def get_plot(df, product_type, ax=None):
                 vmax=100,
                 annot=True,
                 cbar=False,
-                cmap=sns.cubehelix_palette(as_cmap=True),
+                cmap=sns.color_palette(
+                    'viridis',
+                    as_cmap=True,
+                ),
                 fmt=".1f",
                 square=True,
                 ax=ax

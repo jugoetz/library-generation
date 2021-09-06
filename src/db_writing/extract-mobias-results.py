@@ -142,12 +142,12 @@ def extract_mobias_results(path, db_path, exp_nr, mobias_input):
 
 
 if __name__ == '__main__':
-    lcms_data_sources = {'JG246': 'BMII002071_Skript-Results.csv',
-                         'JG247': 'BMII002072_Skript-Results.csv',
-                         'JG248': 'BMII002073_Skript-Results.csv',
-                         'JG249': 'BMII002074_Skript-Results.csv',
-                         'JG250': 'BMII002075_Skript-Results.csv',
-                         'JG251': 'BMII002076_Skript-Results.csv',
+    lcms_data_sources = {'JG252': 'BMII002078_Skript-Results.csv',
+                         'JG253': 'BMII002079_Skript-Results.csv',
+                         'JG254': 'BMII002080_Skript-Results.csv',
+                         'JG255': 'BMII002081_Skript-Results.csv',
+                         'JG256': 'BMII002082_Skript-Results.csv',
+                         'JG257': 'BMII002083_Skript-Results.csv',
                          }
 
     for lcms_nr, results_file in lcms_data_sources.items():

@@ -156,12 +156,12 @@ def calculate_lcms_yields(db_path, exp_dir, exp_nr):
 
 
 if __name__ == '__main__':
-    for exp_nr in ['JG246',
-                   'JG247',
-                   'JG248',
-                   'JG249',
-                   'JG250',
-                   'JG251',
+    for exp_nr in ['JG252',
+                   'JG253',
+                   'JG254',
+                   'JG255',
+                   'JG256',
+                   'JG257',
                    ]:
         exp_dir = PLATES_DIR / exp_nr
         calculate_lcms_yields(DB_PATH, exp_dir, exp_nr)

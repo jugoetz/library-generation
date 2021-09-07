@@ -20,3 +20,4 @@ COMPOUND_MAPPING_PATH = BUILDING_BLOCKS_DIR / 'compound_mapping.txt'
 # COMPOUND_MAPPING_PATH = EXP_DIR / 'identity.txt'   # this is sometimes useful for non-canonical experiments
 CONF_PATH = ROOT_DIR / 'src' / 'config.yaml'
 DB_PATH = DB_DIR / '50k_project.db'
+PLATE_LIST_PATH = PLATES_DIR / 'plate_list.csv'

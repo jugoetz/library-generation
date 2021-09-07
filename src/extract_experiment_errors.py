@@ -87,10 +87,10 @@ def read_mobias_analysis_errors(path, plate_number):
     # - too many peaks for one compound
     # - too low (or high?) value for internal standard
     # (this list may not yet be complete)
+    # TODO the thresholds for this need to be revisited later
 
     results = pd.read_csv(path, header=3, encoding='latin-1', skip_blank_lines=False)
-    results[
-        'plate'] = plate_number  # TODO need to grab this from filename or experiment description or filename of layout in same directory
+    results['plate'] = plate_number
     results['row'] = results['Vial Pos'].apply(lambda x: x.split('-')[1])
     results['column'] = results['Vial Pos'].apply(lambda x: x.split('-')[2])
     results['error_1'] = 'ok'

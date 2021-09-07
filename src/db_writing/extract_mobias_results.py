@@ -18,11 +18,11 @@ from definitions import PLATES_DIR, DB_PATH
 
 def import_lcms_results(path):
     """
-    Mobias results come in a CSV file. Import the Mobias output into a dataframe, extract the sample ID,
-    and ensure Mobias boys haven't been messing with us again by adding whitespaces to the column names.
+    MoBiAS results come in a CSV file. Import the MoBiAS output into a dataframe, extract the sample ID,
+    and ensure whitespaces in column names haven't been tampered with by accident.
     """
     # read data
-    df = pd.read_csv(path, header=3, encoding='latin-1')  # read results.csv file from Mobias
+    df = pd.read_csv(path, header=3, encoding='latin-1', skip_blank_lines=False)  # read results.csv file from Mobias
     # extract the sample ID (the JG2xx-001 part). It is part after the last whitespace in that field
     df["Sample ID"] = df["Sample ID"].str.split(" ").str[-1]
     # remove any accidental whitespaces in column names

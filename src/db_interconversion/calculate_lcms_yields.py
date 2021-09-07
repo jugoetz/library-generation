@@ -20,6 +20,7 @@ import sqlite3
 import pandas as pd
 
 from definitions import PLATES_DIR, DB_PATH
+from utils import get_product_dict, get_internal_standard_number
 
 
 def import_lcms_unprocessed_data(db_cur, exp_nr):
@@ -74,14 +75,10 @@ def split_products_into_dataframes(df, exp_dir):
     # Add df for BPC to dict as well
     df_dict['BPC'] = df.loc[:, ['plate', 'row', 'column', 'BPC Area']].rename(columns={'BPC Area': 'yield'})
 
-    # Generate dataframe for IS TODO bad idea to do this here. Isolate into its own method
-    with open(exp_dir / 'compound_alternative_mass_dict.json', 'r') as jfile:
-        side_product_dict = json.load(jfile)
-
-    # rename IS dict
-    IS_compound_number = int(side_product_dict['IS_formula'].strip('SumF'))
-    df_dict['IS'] = df_dict[IS_compound_number]
-    del df_dict[IS_compound_number]
+    # Generate dataframe for IS
+    internal_standard_number = int(get_internal_standard_number(exp_dir).strip('SumF'))
+    df_dict['IS'] = df_dict[internal_standard_number]
+    del df_dict[internal_standard_number]
 
     return df_dict
 
@@ -115,12 +112,11 @@ def save_to_db(dict_df, db_path, exp_nr):
         df = df.rename(columns={'cumulated_yield': 'yield'})
         return df
 
-    # load the saved connections between product type (A) and SumFx field
-    with open(exp_dir / 'compound_alternative_mass_dict.json', 'r') as jfile:
-        side_product_dict = json.load(jfile)
+    # load the saved connections between product type (e.g. A) and SumFxx field
+    product_dict = get_product_dict(exp_dir)
     # reformat dict for easier use
-    side_product_associations = {t: [v for k, v in side_product_dict.items() if k.startswith(t)] for t in 'ABCDEFGH'}
-    for k, v in side_product_associations.items():
+    product_associations = {t: [v for k, v in product_dict.items() if k.startswith(t)] for t in 'ABCDEFGH'}
+    for k, v in product_associations.items():
         product_yields = add([dict_df[int(val.strip('SumF'))] for val in v])
         print(product_yields)
         for i, data in product_yields.iterrows():  # TODO should not write to exp db but have its own lcms yields thing

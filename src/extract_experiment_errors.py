@@ -14,10 +14,12 @@ Additionally warnings should be generated for:
 - Wells with low volume in last NEXUS survey
 - Split peaks, e.g. 2 peaks for IS or main product
 """
+import sqlite3
+import warnings
 
 import pandas as pd
 
-from definitions import PLATES_DIR, PLATE_LIST_PATH
+from definitions import PLATES_DIR, PLATE_LIST_PATH, DB_PATH
 from utils import get_internal_standard_number
 
 
@@ -26,7 +28,11 @@ def get_manual_error_records(path):
     Import a CSV file containing manually curated error records.
     :return:
     """
-    errors = pd.read_csv(path)
+    try:
+        errors = pd.read_csv(path)
+    except FileNotFoundError:
+        warnings.warn(f'No manual error list found in {path.parent}. Manual errors will not be included.')
+        return []
     return errors.values.tolist()
 
 
@@ -51,8 +57,34 @@ def read_nexus_transfer_errors(path, error_string):
         transfers['row'] = transfers['Destination Well'].str[0]
         transfers['column'] = transfers['Destination Well'].str[1:]
         transfers['error'] = error_string
-        exceptions = transfers.iloc[exceptions_idx[0] + 2:details_idx[0] - 1]
+        exceptions = transfers.iloc[exceptions_idx[0] + 2:details_idx[0]]
         return exceptions[['plate', 'row', 'column', 'error']].values.tolist()
+    else:
+        return []
+
+
+def read_nexus_repeated_tranfers(path, error_string):
+    """
+    Import a CSV transfer file and add everything under details to success records.
+    Outside of this function, these should be substracted from the error list.
+    :param path: path to transfer file (csv)
+    :return: List of transfers successful on second try
+    """
+    transfers = pd.read_csv(path, header=None,
+                            names=['Source Plate Name', 'Source Plate Barcode', 'Source Plate Type', 'Source Well',
+                                   'Source Concentration', 'Source Concentration Units', 'Destination Plate Name',
+                                   'Destination Plate Barcode', 'Destination Well', 'Destination Concentration',
+                                   'Destination Concentration Units', 'Compound Name', 'Transfer Volume',
+                                   'Actual Volume', 'Transfer Status', 'Current Fluid Height', 'Current Fluid Volume',
+                                   '% DMSO'])
+    if '[DETAILS]' in transfers.values:
+        details_idx = transfers.loc[transfers['Source Plate Name'] == '[DETAILS]'].index
+        transfers['plate'] = transfers['Destination Plate Barcode'].str.strip('Synthesis')
+        transfers['row'] = transfers['Destination Well'].str[0]
+        transfers['column'] = transfers['Destination Well'].str[1:]
+        transfers['error'] = error_string
+        successes = transfers.iloc[details_idx[0] + 2:]
+        return successes[['plate', 'row', 'column', 'error']].values.tolist()
     else:
         return []
 
@@ -107,13 +139,13 @@ def read_mobias_analysis_errors(path, plate_number):
     # identify where IS response deviates >20% from mean
     mean_response_area = results[f'{internal_standard_number} Area'].mean()
     results.loc[
-        ~results[f'{internal_standard_number} Area'].between(mean_response_area * 0.8, mean_response_area * 1.2), [
-            'error_3']] = 'WARNING: IS response differs >20% from mean'
+        ~results[f'{internal_standard_number} Area'].between(mean_response_area * 0.5, mean_response_area * 1.5), [
+            'error_3']] = 'WARNING: IS response differs >50% from mean'
     # identify where IS response deviates >50% from mean
     mean_response_area = results[f'{internal_standard_number} Area'].mean()
     results.loc[
-        ~results[f'{internal_standard_number} Area'].between(mean_response_area * 0.5, mean_response_area * 1.5), [
-            'error_4']] = 'ERROR: IS response differs >50% from mean'
+        ~results[f'{internal_standard_number} Area'].between(mean_response_area * 0.2, mean_response_area * 1.8), [
+            'error_4']] = 'ERROR: IS response differs >80% from mean'
 
     # aggregate the four error strings into one
     def aggregate_errors(series):
@@ -141,10 +173,20 @@ def get_nexus_errors(nexus_dir):
     for child in (nexus_dir / 'I_M').iterdir():
         if child.is_file() and 'transfer' in child.name:
             error_list += read_nexus_transfer_errors(child, 'I/M transfer error')
+    if (nexus_dir / 'I_M' / 'repeated_transfers').exists():
+        for child in (nexus_dir / 'I_M' / 'repeated_transfers').iterdir():
+            if child.is_file() and 'transfer' in child.name:
+                for successful_transfer in read_nexus_repeated_tranfers(child, 'I/M transfer error'):
+                    error_list.remove(successful_transfer)
     # task 2: Iterate T transfers
     for child in (nexus_dir / 'T').iterdir():
         if child.is_file() and 'transfer' in child.name:
             error_list += read_nexus_transfer_errors(child, 'T transfer error')
+    if (nexus_dir / 'T' / 'repeated_transfers').exists():
+        for child in (nexus_dir / 'T' / 'repeated_transfers').iterdir():
+            if child.is_file() and 'transfer' in child.name:
+                for successful_transfer in read_nexus_repeated_tranfers(child, 'T transfer error'):
+                    error_list.remove(successful_transfer)
     # task 3: Iterate dilution transfers
     for child in (nexus_dir / 'dilution').iterdir():
         if child.is_file() and 'transfer' in child.name:
@@ -185,7 +227,19 @@ def aggregate_error_list(error_list):
     error_df['plate'] = error_df['well'].apply(lambda x: x.split('-')[0])
     error_df['row'] = error_df['well'].apply(lambda x: x.split('-')[1])
     error_df['column'] = error_df['well'].apply(lambda x: x.split('-')[2])
+    error_df = error_df.sort_values(by=['plate', 'row', 'column'], key=lambda x: pd.to_numeric(x, errors='ignore'))
     return error_df.loc[:, ['plate', 'row', 'column', 'errors']]
+
+
+def save_errors_to_db(error_df, exp_dir_name):
+    con = sqlite3.connect(DB_PATH)
+    cur = con.cursor()
+    for i, row in error_df.iterrows():
+        cur.execute('UPDATE experiments SET valid = ? WHERE exp_nr = ? AND plate_nr = ? AND well = ?;',
+                    (row['errors'], int(exp_dir_name.strip('exp')), row['plate'], f'{row["row"]}{row["column"]}')
+                    )
+    con.commit()
+    con.close()
 
 
 def main(exp_dir, exp_dir_name):
@@ -194,13 +248,18 @@ def main(exp_dir, exp_dir_name):
     error_list += get_nexus_errors(exp_dir / 'transfer_files')
     error_list += get_mobias_errors(exp_dir_name)
     error_df = aggregate_error_list(error_list)
-    print(error_df)
-    print(len(error_df))
     error_df.to_csv(exp_dir / 'extracted_errors.csv', index=False)
+    print(f'{len(error_df)} wells with errors or warnings where found')
+    print(f'A list of errors had been saved to {exp_dir / "extracted_errors.csv"}.')
+    print('Check the list and make any required changes before continuing this program')
+    input('Press ENTER to continue...\n')
+    error_df_approved = pd.read_csv(exp_dir / 'extracted_errors.csv')
+    print('Writing errors to database...')
+    save_errors_to_db(error_df_approved, exp_dir_name)
     return
 
 
 if __name__ == '__main__':
-    exp_dir_name = 'exp1'
+    exp_dir_name = 'exp4'
     exp_dir = PLATES_DIR / exp_dir_name
     main(exp_dir, exp_dir_name)

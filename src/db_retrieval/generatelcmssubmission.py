@@ -334,7 +334,7 @@ def main(exp_dir):
         df = pd.merge(df, i, how='left')
 
     """add internal standard if user wishes"""
-    if ADD_IS == "y":
+    if ADD_IS is True:
         add_is(df)
     else:
         print("You chose not to add internal standard.\n")
@@ -348,12 +348,12 @@ def main(exp_dir):
 
 
 if __name__ == '__main__':
-    exp_nrs = ['JG258',
-               'JG259',
-               'JG260',
-               'JG261',
-               'JG262',
-               'JG263',
+    exp_nrs = ['JG264',
+               'JG265',
+               'JG266',
+               'JG267',
+               'JG268',
+               'JG269',
                ]
     for exp_nr in exp_nrs:
         print(f'Generating submission file for {exp_nr}...')

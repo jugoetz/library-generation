@@ -53,7 +53,8 @@ def read_nexus_transfer_errors(path, error_string):
     if '[EXCEPTIONS]' in transfers.values:
         exceptions_idx = transfers.loc[transfers['Source Plate Name'] == '[EXCEPTIONS]'].index
         details_idx = transfers.loc[transfers['Source Plate Name'] == '[DETAILS]'].index
-        transfers['plate'] = transfers['Destination Plate Barcode'].str.strip('Synthesis')
+        transfers['plate'] = transfers['Destination Plate Barcode'].str.strip('Synthesis').str.strip('Analysis')
+        # ^ we can do this since the analysis plate is a 1:1 copy
         transfers['row'] = transfers['Destination Well'].str[0]
         transfers['column'] = transfers['Destination Well'].str[1:]
         transfers['error'] = error_string
@@ -260,6 +261,6 @@ def main(exp_dir, exp_dir_name):
 
 
 if __name__ == '__main__':
-    exp_dir_name = 'exp4'
+    exp_dir_name = 'exp6'
     exp_dir = PLATES_DIR / exp_dir_name
     main(exp_dir, exp_dir_name)

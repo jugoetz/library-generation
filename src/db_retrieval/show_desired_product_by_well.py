@@ -31,7 +31,7 @@ def get_product(lab_journal_number, well, product_type):
 
 
 if __name__ == '__main__':
-    lab_journal_number = 'JG225'
-    well = 'P18'
-    product = 'F'
+    lab_journal_number = 'JG264'
+    well = 'A5'
+    product = 'A'
     get_product(lab_journal_number, well, product)

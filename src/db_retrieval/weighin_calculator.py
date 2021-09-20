@@ -12,7 +12,7 @@ Note that this works on exp{x}, not JGxxx, so this exp_nr needs to be an experim
 """
 
 # control variable TODO import from a config file
-exp_nr = 6
+exp_nr = 7
 
 
 def main(exp_nr):

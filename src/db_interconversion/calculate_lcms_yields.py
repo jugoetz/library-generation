@@ -14,7 +14,6 @@ EDIT exp_nr below in __main__ before running
 """
 
 import re
-import json
 import sqlite3
 
 import pandas as pd
@@ -152,12 +151,12 @@ def calculate_lcms_yields(db_path, exp_dir, exp_nr):
 
 
 if __name__ == '__main__':
-    for exp_nr in ['JG252',
-                   'JG253',
-                   'JG254',
-                   'JG255',
-                   'JG256',
-                   'JG257',
+    for exp_nr in ['JG258',
+                   'JG259',
+                   'JG260',
+                   'JG261',
+                   'JG262',
+                   'JG263',
                    ]:
         exp_dir = PLATES_DIR / exp_nr
         calculate_lcms_yields(DB_PATH, exp_dir, exp_nr)

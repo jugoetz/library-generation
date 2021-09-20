@@ -14,6 +14,7 @@ import pandas as pd
 import numpy as np
 
 from definitions import PLATES_DIR, DB_PATH
+from utils import get_lcms_file_name
 
 
 def import_lcms_results(path):
@@ -142,16 +143,21 @@ def extract_mobias_results(path, db_path, exp_nr, mobias_input):
 
 
 if __name__ == '__main__':
-    lcms_data_sources = {'JG252': 'BMII002078_Skript-Results.csv',
-                         'JG253': 'BMII002079_Skript-Results.csv',
-                         'JG254': 'BMII002080_Skript-Results.csv',
-                         'JG255': 'BMII002081_Skript-Results.csv',
-                         'JG256': 'BMII002082_Skript-Results.csv',
-                         'JG257': 'BMII002083_Skript-Results.csv',
-                         }
+    lcms_data_sources = ['JG258',
+                         'JG259',
+                         'JG260',
+                         'JG261',
+                         'JG262',
+                         'JG263',
+                         ]
 
-    for lcms_nr, results_file in lcms_data_sources.items():
+    for lcms_nr in lcms_data_sources:
         exp_dir = PLATES_DIR / lcms_nr
-        results_file_path = exp_dir / results_file
+        results_file_name = get_lcms_file_name(lcms_nr)
+
+        print(f'Now extracting data for {lcms_nr} from {results_file_name}...')
+
+        results_file_path = exp_dir / results_file_name
         submission_file = exp_dir / f'BMIIyyyyyy-SampleTable_{lcms_nr}.xls'
         extract_mobias_results(results_file_path, DB_PATH, lcms_nr, submission_file)
+    print('Finished data extraction!')

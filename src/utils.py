@@ -1,7 +1,8 @@
 import json
 from yaml import safe_load
+import pandas as pd
 
-from definitions import CONF_PATH
+from definitions import CONF_PATH, PLATE_LIST_PATH
 
 
 def get_conf():
@@ -31,3 +32,13 @@ def get_internal_standard_number(exp_dir):
     """
     product_dict = get_product_dict(exp_dir)
     return product_dict['IS_formula']
+
+
+def get_lcms_file_name(lab_journal_number):
+    """
+    :param lab_journal_number: JGxxx, the lab journal number attached to the experiment
+    :type lab_journal_number: str
+    :return: filename of the lcms results file
+    """
+    df = pd.read_csv(PLATE_LIST_PATH)
+    return df.loc[df['lab_journal_number'] == lab_journal_number, 'results_file_name'].values[0]

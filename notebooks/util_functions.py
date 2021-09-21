@@ -1,7 +1,6 @@
 import copy
 import re
 from rdkit.Chem.SaltRemover import SaltRemover
-from rdkit.Chem.rdMolDescriptors import CalcMolFormula
 from rdkit.Chem import MolFromSmarts
 
 

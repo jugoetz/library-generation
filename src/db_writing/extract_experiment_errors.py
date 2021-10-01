@@ -261,6 +261,6 @@ def main(exp_dir, exp_dir_name):
 
 
 if __name__ == '__main__':
-    exp_dir_name = 'exp6'
+    exp_dir_name = 'exp7'
     exp_dir = PLATES_DIR / exp_dir_name
     main(exp_dir, exp_dir_name)

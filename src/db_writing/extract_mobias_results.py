@@ -143,13 +143,7 @@ def extract_mobias_results(path, db_path, exp_nr, mobias_input):
 
 
 if __name__ == '__main__':
-    lcms_data_sources = ['JG258',
-                         'JG259',
-                         'JG260',
-                         'JG261',
-                         'JG262',
-                         'JG263',
-                         ]
+    lcms_data_sources = [f'JG{i}' for i in range(269, 270)]
 
     for lcms_nr in lcms_data_sources:
         exp_dir = PLATES_DIR / lcms_nr

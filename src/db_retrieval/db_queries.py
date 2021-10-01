@@ -5,7 +5,7 @@ Provides only functions for import, to facilitate querying the DB
 
 import sqlite3 as sql
 
-from rdkit import Chem
+from rdkit.Chem import MolFromSmiles
 from PIL import Image
 
 from definitions import DB_PATH
@@ -21,7 +21,7 @@ class MyDatabaseConnection:
 
     def get_mol(self, short):
         smiles = self.cur.execute('SELECT SMILES FROM main.buildingblocks WHERE short = ?;', (short,)).fetchone()[0]
-        return Chem.MolFromSmiles(smiles)
+        return MolFromSmiles(smiles)
 
     def get_smiles(self, short):
         smiles = self.cur.execute('SELECT SMILES FROM main.buildingblocks WHERE short = ?;', (short,)).fetchone()[0]
@@ -36,6 +36,17 @@ class MyDatabaseConnection:
         """Returns a 4-tuple: (#boc, #cbz, #tbu, #tms)"""
         return self.cur.execute('SELECT boc, cbz, tbu, tms FROM main.buildingblocks WHERE short = ?;',
                                 (short,)).fetchone()
+
+    def get_vl_member(self, vl_id):
+        """Takes a vl_id and returns the product MOL"""
+        smiles = self.cur.execute('SELECT SMILES FROM main.virtuallibrary WHERE id = ?;',
+                                  (vl_id,)).fetchone()[0]
+        return MolFromSmiles(smiles)
+
+    def get_reactant_class(self, short):
+        """Takes a building block short name and returns the reactant class"""
+        return self.cur.execute('SELECT reactant_class FROM main.buildingblocks WHERE short = ?;', (short,)).fetchone()[
+            0]
 
     def __delete__(self, instance):
         self.con.close()

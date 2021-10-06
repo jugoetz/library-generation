@@ -68,11 +68,13 @@ def import_sm(file):
     return dictionary
 
 
-def import_pl(file):
+def import_pl(file, return_type='dict'):
     """
     Import the plate layout from x files 'plate_layout_plateX.csv' where X is the plate number.
-    Create a dict of the form {'A1': ['I1', 'M1', 'T1']} that maps wells to shorthand names
-    :return: dict
+    Return dict of the form {'A1': ['I1', 'M1', 'T1']} that maps wells to shorthand names if return_type == 'dict'
+    OR
+    Return labware.plates.Plate if return_type == 'plate'
+    :return: dict or labware.plates.Plate
     """
     if conf['well_plate_size'] == 96:
         p = Plate96(150000, 5000)
@@ -81,8 +83,12 @@ def import_pl(file):
     else:
         raise ValueError(f'Invalid plate size: {conf["well_plate_size"]}')
     p.from_csv(file)
-    p_dict = p.to_dict()
-    return p_dict
+    if return_type == 'dict':
+        return p.to_dict()
+    elif return_type == 'plate':
+        return p
+    else:
+        raise ValueError(f'Unknown return_type {return_type}. return_type can be "plate" or "dict".')
 
 
 def get_long_name(row, dictionary):
@@ -348,12 +354,12 @@ def main(exp_dir):
 
 
 if __name__ == '__main__':
-    exp_nrs = ['JG264',
-               'JG265',
-               'JG266',
-               'JG267',
-               'JG268',
-               'JG269',
+    exp_nrs = ['JG270',
+               'JG271',
+               'JG272',
+               'JG273',
+               'JG274',
+               'JG275',
                ]
     for exp_nr in exp_nrs:
         print(f'Generating submission file for {exp_nr}...')

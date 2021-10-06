@@ -9,7 +9,6 @@ TODO
     - Make new directories for the six plates inside plates directory
     - Move expX/plate_layout_y* to respective new directory
     - Add the experiments at the end of plates_list.csv
-    In addition, this should be refactored
 """
 
 import re
@@ -27,17 +26,23 @@ from utils import get_conf
 conf = get_conf()
 
 # control variables
-experiment_directory = 'exp9'
-experiment_number = 9  # can be int or None if not a canonical (50 k) plate
-synthesis_date = datetime(2021, 10, 5).timestamp()
+experiment_directory = 'exp_test4'
+experiment_number = None  # can be int or None if not a canonical (50 k) plate
+synthesis_date = datetime(2021, 10, 7).timestamp()
 labj_nr_dict = {
-    '1': 'JG270',
-    '2': 'JG271',
-    '3': 'JG272',
-    '4': 'JG273',
-    '5': 'JG274',
-    '6': 'JG275',
+    '1': 'JG276',
+    # '2': 'JG271',
+    # '3': 'JG272',
+    # '4': 'JG273',
+    # '5': 'JG274',
+    # '6': 'JG275',
 }
+
+
+def make_new_directories(dir_list):
+    """Make a list of directories if they don't exist yet and copy the respective plate layout to them"""
+    # TODO
+    return
 
 
 def get_plates_for_experiment(exp_dir):
@@ -52,6 +57,7 @@ def get_plates_for_experiment(exp_dir):
                 print(f'Retrieving plate layout {f}...')
                 plate = import_pl(Path(path, f), return_type='plate')
                 plates_dict[m.group(1)] = plate
+    print(f'Retrieved data for {len(plates_dict)} plate(s).')
     return plates_dict
 
 
@@ -61,12 +67,14 @@ def bulk_data_retrieval_from_virtuallibrary(con, initiators: list, monomers: lis
     monomers and terminators given to the function.
     """
     cur = con.cursor()
+    print('Retrieving product data from virtuallibrary table...')
     results = cur.execute(f'''SELECT id, initiator, monomer, terminator, initiator_long, monomer_long, terminator_long,
      long_name, type, SMILES FROM main.virtuallibrary 
      WHERE initiator IN ({(", ".join("?" for _ in initiators))}) 
      AND monomer IN ({(", ".join("?" for _ in monomers))}) 
      AND terminator IN ({(", ".join("?" for _ in terminators))});''',
                           initiators + monomers + terminators).fetchall()
+    print(f'Retrieved product data for {len(results)} products.')
     return results
 
 
@@ -81,6 +89,7 @@ def bulk_data_insertion_to_experiments(con, df):
     :return: None
     """
     cur = con.cursor()
+    print('Now writing reactions to DB....')
     cur.executemany(
         'INSERT INTO main.experiments (vl_id, exp_nr, plate_nr, well, lab_journal_number, synthesis_date_unixepoch,\
          initiator, monomer, terminator, initiator_long, monomer_long, terminator_long, long_name, product_A_smiles,\
@@ -91,6 +100,7 @@ def bulk_data_insertion_to_experiments(con, df):
             'SMILES_A',
             'SMILES_B', 'SMILES_C', 'SMILES_D', 'SMILES_E', 'SMILES_F', 'SMILES_G', 'SMILES_H']].values.tolist())
     con.commit()
+    print(f'Wrote {len(df)} reactions to DB.')
     return
 
 
@@ -114,7 +124,6 @@ def main():
     terminators = well_df['terminator'].unique().tolist()
 
     # get product infos from database
-    print('Retrieving product data from virtuallibrary table...')
     products = bulk_data_retrieval_from_virtuallibrary(con, initiators, monomers, terminators)
     products = pd.DataFrame(products, columns=['vl_id',
                                                'initiator', 'monomer', 'terminator', 'initiator_long',
@@ -126,8 +135,12 @@ def main():
     # one row holds all data for one well
     products.columns = ['_'.join(t).strip('_') for t in products.columns]  # pivoting leads to MultiIndex. Get rid of it
 
+    print(f'After processing, products for {len(products)} unique reagent combinations have been obtained.')
     # merge well and product info
-    new_df = pd.merge(products, well_df, how='left', on=['initiator', 'monomer', 'terminator'])
+    # Note that this forms the intersection, so if entries are missing in one of the dfs, this might fail silently.
+    # This behavior is desirable because sometimes, we do not exhaustively synthesise all combinations in 'products'.
+    # To alert the user to silent failing, we print the number of reactions below.
+    new_df = pd.merge(products, well_df, how='inner', on=['initiator', 'monomer', 'terminator'])
 
     # add experiment info
     new_df['exp_nr'] = experiment_number
@@ -136,9 +149,7 @@ def main():
     new_df = new_df.sort_values(['plate', 'well'])  # we sort so that DB table is a little more intuitive
 
     # write gathered info to experiments table
-    print('Now writing to DB....')
     bulk_data_insertion_to_experiments(con, new_df)
-    print('Finished writing to DB.')
     con.close()
     return
 

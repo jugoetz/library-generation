@@ -288,9 +288,10 @@ class Plate:
         return self.__get_well(row, col)[1]
 
     def iterate_wells(self) -> Generator[tuple, None, None]:
-        """Yield a tuple (compounds, volume) for every well in the plate"""
+        """Yield a tuple (well, compounds, volume) for every well in the plate"""
         for well in self.wells():
-            yield self.well(well)
+            comps, vols = self.well(well)
+            yield well, comps, vols
 
     def row(self, row: str) -> Tuple[List[List[str]], List[int]]:
         """Return compounds and volumes in a row"""

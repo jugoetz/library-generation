@@ -1,83 +1,74 @@
-import pickle as pkl
-import json
+"""
+Generate the weigh-in sheet for an experiment.
+The experiment can be defined by either an exp_nr or a lab_journal_number (both as in the experiments DB table).
+    -> To use this with (single plate) non-canonical reactions, use a lab_journal_number
+The directory connected to the experiment must be specified (exp_dir). This is where output will be saved.
+Volumes can be adjusted in configuration.
+"""
+
 from pathlib import Path
 
 import xlsxwriter
 
-from definitions import BUILDING_BLOCKS_DIR, LIB_INFO_DIR, PLATES_DIR
+from definitions import PLATES_DIR
+from db_queries import MyDatabaseConnection
 
-"""
-Right now has many hardcoded assumptions that make it useful only for the 50 k project.
-Note that this works on exp{x}, not JGxxx, so this exp_nr needs to be an experiment nr not a lab journal number
-"""
+# configuration
+config = {  # exactly one of 'exp_nr' or 'lab_journal_number' may not be None
+    'exp_nr':            8,
+    'lab_journal_nr':    None,
+    'exp_dir':           'exp8',
+    'initiator_volume':  2 * 65 + 35,  # in uL
+    'monomer_volume':    3 * 65 + 25,  # in uL
+    'terminator_volume': 4 * 65 + 30,  # in uL
+}
 
-# control variable TODO import from a config file
-exp_nr = 7
 
+def main(config):
+    exp_dir = config['exp_dir']
+    print(f'Generating weigh-in for {exp_dir}...')
+    mycon = MyDatabaseConnection()
 
-def main(exp_nr):
-    exp_dir = PLATES_DIR / f'exp{exp_nr}'
+    # get the list of compounds of interest
+    if config['exp_nr'] is not None and config['lab_journal_nr'] is not None:
+        raise ValueError('Exactly one of "exp_nr" and "lab_journal_nr" must be None.')
+    elif config['exp_nr'] is not None:
+        compounds = mycon.get_starting_materials_for_experiment(exp_nr=config['exp_nr'])
+    elif config['lab_journal_nr'] is not None:
+        compounds = mycon.get_starting_materials_for_experiment(lab_journal_number=config['lab_journal_nr'])
+    else:
+        raise ValueError('Only (and exactly) one of "exp_nr" and "lab_journal_nr" may be None.')
 
-    # import the short-long name relation TODO this can be fetched from DB
-    mapping = {}
-    with open(BUILDING_BLOCKS_DIR / 'compound_mapping.txt', 'r') as file:
-        for l in file.readlines():
-            mapping[l.split()[0]] = l.split()[1]
-
-    # import properties for weigh-in mass TODO this can be fetched from DB
-    with open(LIB_INFO_DIR / 'library_constituents_dataframe.pkl', 'rb') as file:
-        df = pkl.load(file)
-
-    # import which compounds are of interest TODO this can be fetched from DB
-    with open(LIB_INFO_DIR / 'synthesis_plan.json', 'r') as file:
-        synthesis_plan = json.load(file)
-
-    print(f'Generating weigh-in for experiment {exp_nr}...')
-    compounds = synthesis_plan[exp_nr - 1]
-
-    # overwrite inputs
-    # compounds = [['I15', 'I56'], [f'M{i+1}' for i in range(74)], ['T19', 'T31']]
-
-    i_volume = 2 * 65 + 35  # in uL. this is wells needed * max well volume (last well does not need to be full)
-    m_volume = 3 * 65 + 25
-    t_volume = 4 * 65 + 30
-
-    # overwrite volumes
-
-    # i_volume = 2 * 65  # in uL. this is wells needed * max well volume
-    # m_volume = 1 * 65
-    # t_volume = 2 * 65
-
+    # for all compounds (shorts), assign long names and needed solution volumes
     compound_volumes = {}
     for i in compounds[0]:  # initiators
-        long = mapping[i]
-        compound_volumes[i] = [long, i_volume]
+        compound_volumes[i] = [mycon.get_long_name(i), config['initiator_volume']]
     for m in compounds[1]:  # monomers
-        long = mapping[m]
-        compound_volumes[m] = [long, m_volume]
+        compound_volumes[m] = [mycon.get_long_name(m), config['monomer_volume']]
     for t in compounds[2]:  # terminators
-        long = mapping[t]
-        compound_volumes[t] = [long, t_volume]
+        compound_volumes[t] = [mycon.get_long_name(t), config['terminator_volume']]
 
-    # add minimum weights
+    # add weights needed for the minimum solution volume
     for k, v in compound_volumes.items():
-        print(f'{k}: {v}')
-        mass_per_100uL = df.loc[df['Compound Name'] == v[0], 'weigh-in [mg] / 100 µL'].values[0]
-        mass = mass_per_100uL * v[1] / 100
+        mol_wt = mycon.get_molecular_weight(k)
+        # m = M (g/mol) * c (mol/L) * V (uL) / 1000 ug/mg
+        mass = mol_wt * 0.05 * v[1] / 1000.0
         v.append(mass)
+        print(f'{k}: {v}')
 
     # flatten dict to list for convenience with the output
     cmp_list = [[k] + v for k, v in compound_volumes.items()]
 
-    # output
-    if Path(exp_dir / 'weigh-in.xlsx').exists():
-        go_on = input(f'{exp_dir / "weigh-in.xlsx"} already exists? Overwrite? [[y]/n]:\n')
+    # check if output file exists and prompt user if so
+    if Path(PLATES_DIR / exp_dir / 'weigh-in.xlsx').exists():
+        go_on = input(f'{PLATES_DIR / exp_dir / "weigh-in.xlsx"} already exists? Overwrite? [[y]/n]:\n')
         if go_on == 'y':
             pass
         else:
             exit(1)
 
-    workbook = xlsxwriter.Workbook(exp_dir / 'weigh-in.xlsx')
+    # write the excel sheet
+    workbook = xlsxwriter.Workbook(PLATES_DIR / exp_dir / 'weigh-in.xlsx')
     worksheet = workbook.add_worksheet()
     decimal_format_one_place = workbook.add_format()
     decimal_format_one_place.set_num_format('#.0')
@@ -119,4 +110,4 @@ def main(exp_nr):
 
 
 if __name__ == '__main__':
-    main(exp_nr=exp_nr)
+    main(config=config)

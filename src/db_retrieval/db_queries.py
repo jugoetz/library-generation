@@ -19,6 +19,10 @@ class MyDatabaseConnection:
 
     """Some functions for simple queries to the db"""
 
+    def get_long_name(self, short: str) -> str:
+        """Get long name (e.g. 2-Pyr001) from short name (e.g. I1))"""
+        return self.cur.execute('SELECT long FROM main.buildingblocks WHERE short = ?;', (short,)).fetchone()[0]
+
     def get_smiles(self, short: str):
         """Get SMILES from a building block short"""
         smiles = self.cur.execute('SELECT SMILES FROM main.buildingblocks WHERE short = ?;', (short,)).fetchone()[0]
@@ -76,4 +80,5 @@ class MyDatabaseConnection:
 
 if __name__ == '__main__':
     # add debugging statements here
-    pass
+    mycon = MyDatabaseConnection()
+    print(mycon.get_long_name('I1'))

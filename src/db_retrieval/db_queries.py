@@ -5,8 +5,9 @@ Provides only functions for import, to facilitate querying the DB
 
 import sqlite3 as sql
 
-from rdkit.Chem import MolFromSmiles
 from PIL import Image
+from rdkit.Chem import MolFromSmiles
+from rdkit.Chem.Descriptors import MolWt
 
 from definitions import DB_PATH
 
@@ -48,11 +49,51 @@ class MyDatabaseConnection:
         return self.cur.execute('SELECT reactant_class FROM main.buildingblocks WHERE short = ?;', (short,)).fetchone()[
             0]
 
+    def get_molecular_weight(self, short: str):
+        """Get molecular weight from a building block short"""
+        return MolWt(self.get_mol(short))
+
     def get_vl_member(self, vl_id):
         """Takes a vl_id and returns the product MOL"""
         smiles = self.cur.execute('SELECT SMILES FROM main.virtuallibrary WHERE id = ?;',
                                   (vl_id,)).fetchone()[0]
         return MolFromSmiles(smiles)
+
+    def get_starting_materials_for_experiment(self, **kwargs):
+        """
+        Return unique building blocks in an experiment. The experiment can be defined by either an exp_nr
+        or a lab_journal_number.
+        :param kwargs: Exactly one of lab_journal_nr or exp_nr must be given.
+        :return: 3-tuple of sorted building block lists: ([initiators], [monomers], [terminators])
+        """
+        # if-clause checks whether exactly one of the possible two kwargs(and no other kwargs) was given
+        if not set() < kwargs.keys() < {'lab_journal_number', 'exp_nr'}:
+            raise ValueError('One keyword argument is required: lab_journal_number=x or exp_nr=x')
+
+        if list(kwargs.keys())[0] == 'exp_nr':
+            initiators = sorted([i[0] for i in
+                                 self.cur.execute(f'SELECT DISTINCT initiator FROM experiments WHERE exp_nr = ?;',
+                                                  (kwargs['exp_nr'],)).fetchall()], key=lambda x: int(x[1:]))
+            monomers = sorted([i[0] for i in
+                               self.cur.execute(f'SELECT DISTINCT monomer FROM experiments WHERE exp_nr = ?;',
+                                                (kwargs['exp_nr'],)).fetchall()], key=lambda x: int(x[1:]))
+            terminators = sorted([i[0] for i in
+                                  self.cur.execute(f'SELECT DISTINCT terminator FROM experiments WHERE exp_nr = ?;',
+                                                   (kwargs['exp_nr'],)).fetchall()], key=lambda x: int(x[1:]))
+        else:
+            initiators = sorted([i[0] for i in
+                                 self.cur.execute(
+                                     f'SELECT DISTINCT initiator FROM experiments WHERE lab_journal_number = ?;',
+                                     (kwargs['lab_journal_number'],)).fetchall()], key=lambda x: int(x[1:]))
+            monomers = sorted([i[0] for i in
+                               self.cur.execute(
+                                   f'SELECT DISTINCT monomer FROM experiments WHERE lab_journal_number = ?;',
+                                   (kwargs['lab_journal_number'],)).fetchall()], key=lambda x: int(x[1:]))
+            terminators = sorted([i[0] for i in
+                                  self.cur.execute(
+                                      f'SELECT DISTINCT terminator FROM experiments WHERE lab_journal_number = ?;',
+                                      (kwargs['lab_journal_number'],)).fetchall()], key=lambda x: int(x[1:]))
+        return initiators, monomers, terminators
 
     def get_product_mol_by_well(self, lab_journal_number: str, well: str, product_type: str):
         """
@@ -81,4 +122,4 @@ class MyDatabaseConnection:
 if __name__ == '__main__':
     # add debugging statements here
     mycon = MyDatabaseConnection()
-    print(mycon.get_long_name('I1'))
+    print(mycon.get_molecular_weight('I1'))

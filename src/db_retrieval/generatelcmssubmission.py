@@ -22,7 +22,7 @@ Output:
     + a variable number of deprotection product columns (e.g. from Boc removal)
     + 1 column for internal standard
 
-TODO this is in dire need of refactoring
+TODO this is in dire need of refactoring (but it works)
 """
 
 import gzip
@@ -40,13 +40,10 @@ from definitions import LIB_STATIC_DIR, PLATES_DIR, COMPOUND_MAPPING_PATH, CONF_
 from labware.plates import Plate384, Plate96
 from utils import get_conf
 
-"""GLOBALS"""
-PROP_SOURCE = 'db'  # ['db' / 'dict'] where to look up molecular formula or mass.
-# dict only gives expected product props, db also has deprotection products
-VERBOSE = True
+# configuration
+lab_journal_numbers = [f'JG{i}' for i in range(276, 277)]
 ADD_IS = True
 MASS_OR_FORMULA = 'formula'  # ['mass'/'formula'] can output mass as a number or can give chemical formula
-PLATE_SIZE = 384
 conf = get_conf()
 
 
@@ -233,20 +230,13 @@ def write_csv(df, file, exp_dir):
 
 
 def main(exp_dir):
-    if PROP_SOURCE == 'dict':
-        """Import Mass and Formula from json"""
-        with gzip.open(LIB_STATIC_DIR / 'static_mol_prop_dict.json.gz', 'rt', encoding='ascii') as zipfile:
-            mol_prop_dict = json.load(zipfile)
-    elif PROP_SOURCE == 'db':
-        """Import Mass and Formula from DB"""
-        mol_prop_dict = get_prop_from_db(DB_PATH)
-    else:
-        raise ValueError(f'Invalid PROP_SOURCE {PROP_SOURCE}')
+    # Import Mass and Formula from DB
+    mol_prop_dict = get_prop_from_db(DB_PATH)
 
-    """Import identities"""
+    # Import identities
     starting_material_dict = import_sm(COMPOUND_MAPPING_PATH)
 
-    """Import plates as lists"""
+    # Import plates
     plates_dict = {}
     for path, _, files in os.walk(exp_dir):
         for f in files:
@@ -255,17 +245,16 @@ def main(exp_dir):
                 plate_dict = import_pl(Path(path, f))
                 plates_dict[m.group(1)] = plate_dict
 
-    if VERBOSE:
-        # print the input values for double checking
-        print("########## INPUT VALUES ###########\n")
-        for k, v in mol_prop_dict.items():
-            print(f"Products {k}:\n{v}\n")
-        print(f"Used starting materials: \n{starting_material_dict}\n\n")
-        for k, v in plates_dict.items():
-            print(f"Plate layout {k}:\n{v}\n")
+    # print the input values for double checking
+    print("########## INPUT VALUES ###########\n")
+    for k, v in mol_prop_dict.items():
+        print(f"Products {k}:\n{v}\n")
+    print(f"Used starting materials: \n{starting_material_dict}\n\n")
+    for k, v in plates_dict.items():
+        print(f"Plate layout {k}:\n{v}\n")
 
-        # start printing terminal output
-        print("########## OUTPUT ###########\n")
+    # start printing terminal output
+    print("########## OUTPUT ###########\n")
 
     """Put everything in df for ease of use"""
     dfs = []
@@ -282,55 +271,48 @@ def main(exp_dir):
     """Translate product names from shorthand to long names (e.g. 'Al002 + Mon001 + TerTH010')"""
     df['long'] = df.loc[:, ['I', 'M', 'T']].apply(get_long_name, axis=1, dictionary=starting_material_dict)
 
-    if VERBOSE:
-        for i, data in df.iterrows():
-            print(f'Plate {data["plate"]}, Well {data["well"]}, Product: {data["long"]}')
+    for i, data in df.iterrows():
+        print(f'Plate {data["plate"]}, Well {data["well"]}, Product: {data["long"]}')
 
     """
     Add molecular formulae and exact masses to dataframe
-    mol_prop_dict looks a little different depending on the source, so for now, we will go with two ways to read it
     """
-    if PROP_SOURCE == 'dict':
-        for letter, mol_props in sorted(mol_prop_dict.items()):
-            df[f'{letter}_mass'] = df['long'].apply(get_prop, mol_props=mol_props, prop='mass')
-            df[f'{letter}_formula'] = df['long'].apply(get_prop, mol_props=mol_props, prop='formula')
-    elif PROP_SOURCE == 'db':
-        # select the subportion of the prop-dict that we need (for this specific plate)
-        needed_dict = {k: v for k, v in mol_prop_dict.items() if k in df['long'].values}
-        # find how many different submission forms we will need
-        # Here's how this works: We only need look at products A and E since they are candidates for the
-        # maximum number of combinations. Everything else will have equal or less.
-        # We go through the keys in the inner dict-level, only take unique ones starting with A, resp. D. The length
-        # of this set corresponds to the maximum number of combinations and thus submission forms
+    # select the subportion of the prop-dict that we need (for this specific plate)
+    needed_dict = {k: v for k, v in mol_prop_dict.items() if k in df['long'].values}
+    # find how many different submission forms we will need
+    # Here's how this works: We only need look at products A and E since they are candidates for the
+    # maximum number of combinations. Everything else will have equal or less.
+    # We go through the keys in the inner dict-level, only take unique ones starting with A, resp. D. The length
+    # of this set corresponds to the maximum number of combinations and thus submission forms
 
-        combinations_a = len(set([key for v in needed_dict.values() for key in v.keys() if key.startswith('A')]))
-        combinations_d = len(set([key for v in needed_dict.values() for key in v.keys() if key.startswith('D')]))
-        combinations = max(combinations_a, combinations_d)
-        # now we add everything to dataframes
-        dfs = []
-        # here we generate all those de-PG variants of the expected products
-        for i in range(combinations):
-            index = i + 1
-            dfs.append(deepcopy(df))
-            df_this = dfs[i]
-            for long_name, type_dict in needed_dict.items():
-                for letter, mol_props in type_dict.items():
-                    if index == 1 and letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
-                        # if the columns are not yet present, fill them with placeholder values
-                        if f'{letter}_mass' not in df_this.columns:
-                            df_this[f'{letter}_mass'] = np.nan
-                        if f'{letter}_formula' not in df_this.columns:
-                            df_this[f'{letter}_formula'] = ''
-                        df_this.loc[df_this['long'] == long_name, f'{letter}_mass'] = mol_props[1]
-                        df_this.loc[df_this['long'] == long_name, f'{letter}_formula'] = mol_props[0]
-                    if letter.endswith(str(index)):
-                        # if the columns are not yet present, fill them with placeholder values
-                        if f'{letter}_mass' not in df_this.columns:
-                            df_this[f'{letter}_mass'] = np.nan
-                        if f'{letter}_formula' not in df_this.columns:
-                            df_this[f'{letter}_formula'] = ''
-                        df_this.loc[df_this['long'] == long_name, f'{letter}_mass'] = mol_props[1]
-                        df_this.loc[df_this['long'] == long_name, f'{letter}_formula'] = mol_props[0]
+    combinations_a = len(set([key for v in needed_dict.values() for key in v.keys() if key.startswith('A')]))
+    combinations_d = len(set([key for v in needed_dict.values() for key in v.keys() if key.startswith('D')]))
+    combinations = max(combinations_a, combinations_d)
+    # now we add everything to dataframes
+    dfs = []
+    # here we generate all those de-PG variants of the expected products
+    for i in range(combinations):
+        index = i + 1
+        dfs.append(deepcopy(df))
+        df_this = dfs[i]
+        for long_name, type_dict in needed_dict.items():
+            for letter, mol_props in type_dict.items():
+                if index == 1 and letter in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
+                    # if the columns are not yet present, fill them with placeholder values
+                    if f'{letter}_mass' not in df_this.columns:
+                        df_this[f'{letter}_mass'] = np.nan
+                    if f'{letter}_formula' not in df_this.columns:
+                        df_this[f'{letter}_formula'] = ''
+                    df_this.loc[df_this['long'] == long_name, f'{letter}_mass'] = mol_props[1]
+                    df_this.loc[df_this['long'] == long_name, f'{letter}_formula'] = mol_props[0]
+                if letter.endswith(str(index)):
+                    # if the columns are not yet present, fill them with placeholder values
+                    if f'{letter}_mass' not in df_this.columns:
+                        df_this[f'{letter}_mass'] = np.nan
+                    if f'{letter}_formula' not in df_this.columns:
+                        df_this[f'{letter}_formula'] = ''
+                    df_this.loc[df_this['long'] == long_name, f'{letter}_mass'] = mol_props[1]
+                    df_this.loc[df_this['long'] == long_name, f'{letter}_formula'] = mol_props[0]
 
     """
     from the individual dataframes for different -PG product sets, we form one big dataframe and drop the na columns
@@ -354,14 +336,7 @@ def main(exp_dir):
 
 
 if __name__ == '__main__':
-    exp_nrs = ['JG270',
-               'JG271',
-               'JG272',
-               'JG273',
-               'JG274',
-               'JG275',
-               ]
-    for exp_nr in exp_nrs:
+    for exp_nr in lab_journal_numbers:
         print(f'Generating submission file for {exp_nr}...')
         main(PLATES_DIR / exp_nr)
     print('End of script. Exiting...')

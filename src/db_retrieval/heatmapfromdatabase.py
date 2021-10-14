@@ -1,7 +1,6 @@
 """
-For one plate, retrieve yields from DB, normalize, and plot in heatmaps.
+Retrieve yields from DB, normalize, and plot in heatmaps.
 
-EDIT exp_nr below in __main__ before running
 
 TODO I need a possibility to produce heatmaps for arbitrary data, not just plates.
      Use cases:
@@ -19,6 +18,8 @@ import numpy as np
 
 from definitions import PLATES_DIR, DB_PATH
 
+# configuration
+lab_journal_numbers = [f'JG{i}' for i in range(276, 277)]
 normalization_constant = 0.798
 plate_size = 384
 
@@ -144,7 +145,7 @@ def plot_experiment_heatmap_from_database(db_path, exp_nr, exp_dir, normalizatio
 
 
 if __name__ == '__main__':
-    for exp_nr in [f'JG{i}' for i in range(269, 270)]:
+    for exp_nr in lab_journal_numbers:
         print(f'Now plotting {exp_nr}...')
         exp_dir = PLATES_DIR / exp_nr
         plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, normalization_constant, plate_size)

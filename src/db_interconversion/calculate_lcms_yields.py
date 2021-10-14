@@ -21,6 +21,9 @@ import pandas as pd
 from definitions import PLATES_DIR, DB_PATH
 from utils import get_product_dict, get_internal_standard_number
 
+# configurations
+lab_journal_numbers = [f'JG{i}' for i in range(276, 277)]
+
 
 def import_lcms_unprocessed_data(db_cur, exp_nr):
     # TODO this is a terrible but working solution
@@ -151,7 +154,7 @@ def calculate_lcms_yields(db_path, exp_dir, exp_nr):
 
 
 if __name__ == '__main__':
-    for exp_nr in [f'JG{i}' for i in range(269, 270)]:
+    for exp_nr in lab_journal_numbers:
         print(f'Now calculating LCMS ratios for {exp_nr}...')
         exp_dir = PLATES_DIR / exp_nr
         calculate_lcms_yields(DB_PATH, exp_dir, exp_nr)

@@ -1,10 +1,6 @@
 """
 Evaluate yields of a plate from Mobias output. Save the yields to the DB.
 
-If the program raises KeyError: 'Sample ID', the commas in mobias output are the culprit
-
-Edit lcms_data_sources before running this script
-
 MIND THAT THIS SCRIPT WILL NOT OVERWRITE DB RECORDS AND MAY WRITE DUPLICATES
 """
 import re
@@ -15,6 +11,9 @@ import numpy as np
 
 from definitions import PLATES_DIR, DB_PATH
 from utils import get_lcms_file_name
+
+# configuration
+lab_journal_numbers = [f'JG{i}' for i in range(276, 277)]
 
 
 def import_lcms_results(path):
@@ -143,9 +142,7 @@ def extract_mobias_results(path, db_path, exp_nr, mobias_input):
 
 
 if __name__ == '__main__':
-    lcms_data_sources = [f'JG{i}' for i in range(269, 270)]
-
-    for lcms_nr in lcms_data_sources:
+    for lcms_nr in lab_journal_numbers:
         exp_dir = PLATES_DIR / lcms_nr
         results_file_name = get_lcms_file_name(lcms_nr)
 

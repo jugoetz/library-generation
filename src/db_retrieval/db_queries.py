@@ -122,4 +122,4 @@ class MyDatabaseConnection:
 if __name__ == '__main__':
     # add debugging statements here
     mycon = MyDatabaseConnection()
-    print(mycon.get_molecular_weight('I1'))
+    print(mycon.show_image('M40'))

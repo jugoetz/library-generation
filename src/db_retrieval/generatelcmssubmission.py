@@ -41,7 +41,7 @@ from labware.plates import Plate384, Plate96
 from utils import get_conf
 
 # configuration
-lab_journal_numbers = [f'JG{i}' for i in range(276, 277)]
+lab_journal_numbers = [f'JG{i}' for i in range(277, 283)]
 ADD_IS = True
 MASS_OR_FORMULA = 'formula'  # ['mass'/'formula'] can output mass as a number or can give chemical formula
 conf = get_conf()

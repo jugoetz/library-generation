@@ -9,6 +9,8 @@ id (foreign key from lcms table) | SumF.. | type (e.g. A) | SMILES (or better: i
 TODO what is the best way here? multiple entries per experiment with the different products? or keep it the way it is?
 TODO looks like I need a products table (is this different form the VL table? Yes, the VL has multiple products.)
 Note that this overwrites previous data on every execution
+TODO It is not clear to me what happens when there are several entries in lcms for a given synthesis_id. Eliminate
+    this ambiguity.
 
 EDIT exp_nr below in __main__ before running
 """

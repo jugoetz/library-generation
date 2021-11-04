@@ -42,6 +42,20 @@ def read_yields_from_database(db_path, labjournal_nr):
                       columns=['well', 'product_A_lcms_ratio', 'product_B_lcms_ratio', 'product_C_lcms_ratio',
                                'product_D_lcms_ratio', 'product_E_lcms_ratio', 'product_F_lcms_ratio',
                                'product_G_lcms_ratio', 'product_H_lcms_ratio'])
+    # a little trick to swap a few wells if necessary bc of minor errors:
+    # df['well'] = df['well'].replace({'N14': 'O14',
+    #                                        'O14': 'N14',
+    #                                        'N16': 'O16',
+    #                                        'O16': 'N16',
+    #                                        'N18': 'O18',
+    #                                        'O18': 'N18',
+    #                                        'N20': 'O20',
+    #                                        'O20': 'N20',
+    #                                        'N22': 'O22',
+    #                                        'O22': 'N22',
+    #                                        'N24': 'O24',
+    #                                        'O24': 'N24',
+    #                                        })
     df['row'] = df['well'].str[0]
     df['column'] = df['well'].str[1:]
     return df

@@ -4,44 +4,67 @@ Location data is taken from plate_layout files in either experiment directories 
 in individual directories with lab journal numbers (e.g. JG228, non-standard - add things not within 50k project scope).
 Compound data is retrieved from 'virtuallibrary' table.
 
-TODO
-    This could have additional functionality. Currently I perform some steps of the experiment setup manually:
-    - Make new directories for the six plates inside plates directory
-    - Move expX/plate_layout_y* to respective new directory
-    - Add the experiments at the end of plates_list.csv
+TODO: Check documentation accuracy + add a warning about the appending or overwriting parts
 """
 
 import re
 import os
+import csv
 import sqlite3
+import shutil
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 
-from definitions import PLATES_DIR, DB_PATH
+from definitions import PLATES_DIR, DB_PATH, PLATE_LIST_PATH
 from db_retrieval.generatelcmssubmission import import_pl
 from utils import get_conf
 
 conf = get_conf()
 
-# control variables
-experiment_directory = 'exp_test4'
-experiment_number = None  # can be int or None if not a canonical (50 k) plate
-synthesis_date = datetime(2021, 10, 7).timestamp()
-labj_nr_dict = {
-    '1': 'JG276',
-    # '2': 'JG271',
-    # '3': 'JG272',
-    # '4': 'JG273',
-    # '5': 'JG274',
-    # '6': 'JG275',
+# configuration
+config = {
+    'exp_dir':             'exp9',
+    'exp_nr':              9,
+    'synthesis_date':      datetime(2021, 11, 2).timestamp(),
+    'lab_journal_nr_dict': {
+        '1': 'JG277',
+        '2': 'JG278',
+        '3': 'JG279',
+        '4': 'JG280',
+        '5': 'JG281',
+        '6': 'JG282',
+    }
 }
 
 
 def make_new_directories(dir_list):
     """Make a list of directories if they don't exist yet and copy the respective plate layout to them"""
-    # TODO
+    print(f'Making new directories: {repr(dir_list)}')
+    for i in dir_list:
+        (PLATES_DIR / i).mkdir(exist_ok=True)
+    return
+
+
+def copy_plate_layout_files(exp_dir, mapping_dict):
+    """Copy the plate layout files from the experiment directory (e.g.exp1) to the plate directories (e.g JG255)"""
+    for src_nr, target_dir in mapping_dict.items():
+        src_main = PLATES_DIR / exp_dir / f'plate_layout_plate{src_nr}.csv'
+        src_vol = PLATES_DIR / exp_dir / f'plate_layout_plate{src_nr}_volumes.csv'
+        target = PLATES_DIR / target_dir
+        print(f'Copying \t{src_main}\t to \t{target}')
+        print(f'Copying \t{src_vol}\t to \t{target}')
+        shutil.copy2(src_main, target)
+        shutil.copy2(src_vol, target)
+    return
+
+
+def append_plate_log(exp_dir, exp_nr, mapping_dict):
+    """Append the log in plate_list.csv with mapping information for the current plates"""
+    with open(PLATE_LIST_PATH, 'a') as file:
+        writer = csv.writer(file)
+        writer.writerows([[exp_dir, exp_nr, plate_nr, labj_nr, ''] for plate_nr, labj_nr in mapping_dict.items()])
     return
 
 
@@ -107,8 +130,17 @@ def bulk_data_insertion_to_experiments(con, df):
 def main():
     con = sqlite3.connect(DB_PATH)
 
+    # make new experiment directories
+    make_new_directories(list(config['lab_journal_nr_dict'].values()))
+
+    # copy plate files
+    copy_plate_layout_files(config['exp_dir'], config['lab_journal_nr_dict'])
+
+    # add the plate mapping information to plate_list.csv
+    append_plate_log(config['exp_dir'], config['exp_nr'], config['lab_journal_nr_dict'])
+
     # import the plate info
-    plates_dict = get_plates_for_experiment(experiment_directory)
+    plates_dict = get_plates_for_experiment(config['exp_dir'])
 
     # get the info about well <-> composition into a single df
     well_list = []
@@ -143,9 +175,9 @@ def main():
     new_df = pd.merge(products, well_df, how='inner', on=['initiator', 'monomer', 'terminator'])
 
     # add experiment info
-    new_df['exp_nr'] = experiment_number
-    new_df['lab_journal_nr'] = new_df['plate'].apply(lambda x: labj_nr_dict[x])
-    new_df['synthesis_date_unixepoch'] = synthesis_date
+    new_df['exp_nr'] = config['exp_nr']
+    new_df['lab_journal_nr'] = new_df['plate'].apply(lambda x: config['lab_journal_nr_dict'][x])
+    new_df['synthesis_date_unixepoch'] = config['synthesis_date']
     new_df = new_df.sort_values(['plate', 'well'])  # we sort so that DB table is a little more intuitive
 
     # write gathered info to experiments table

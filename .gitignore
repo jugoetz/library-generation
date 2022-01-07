@@ -4,7 +4,7 @@
 /data/*
 !library_static/
 # Jupyter
-/.ipynb_checkpoints
+.ipynb_checkpoints
 # MacOS
 .DS_Store
 # Pickle

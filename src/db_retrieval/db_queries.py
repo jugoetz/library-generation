@@ -1,12 +1,13 @@
 """
 Module to query our specific DB implementation.
-Provides only functions for import, to facilitate querying the DB
+Provides a class MyDatabaseConnection to facilitate querying the DB.
 """
 
 import sqlite3 as sql
+from typing import Optional
 
 from PIL import Image
-from rdkit.Chem import MolFromSmiles
+from rdkit.Chem import MolFromSmiles, Mol
 from rdkit.Chem.Descriptors import MolWt
 
 from definitions import DB_PATH
@@ -18,48 +19,56 @@ class MyDatabaseConnection:
         self.con = sql.connect(DB_PATH)
         self.cur = self.con.cursor()
 
-    """Some functions for simple queries to the db"""
+    def execute_arbitrary_simple_query(self, query: str) -> list:
+        """Execute simple SELECT statement on the database."""
+        if "SELECT" not in query:
+            raise ValueError("Not a SELECT statement")
+        disallowed = ["INSERT", "CREATE", "ATTACH", "DETACH", "DROP", "UPDATE", "DELETE"]
+        for disallowed_statement in disallowed:
+            if disallowed_statement.lower() in query.lower():
+                raise ValueError("forbidden")
+        return self.cur.execute(query).fetchall()
 
     def get_long_name(self, short: str) -> str:
         """Get long name (e.g. 2-Pyr001) from short name (e.g. I1))"""
         return self.cur.execute('SELECT long FROM main.buildingblocks WHERE short = ?;', (short,)).fetchone()[0]
 
-    def get_smiles(self, short: str):
+    def get_smiles(self, short: str) -> str:
         """Get SMILES from a building block short"""
         smiles = self.cur.execute('SELECT SMILES FROM main.buildingblocks WHERE short = ?;', (short,)).fetchone()[0]
         return smiles
 
-    def get_mol(self, short: str):
+    def get_mol(self, short: str) -> Mol:
         """Get MOL from a building block short"""
         return MolFromSmiles(self.get_smiles(short))
 
-    def show_image(self, short: str):
+    def show_image(self, short: str) -> None:
         """Show the molecular structure drawing for a building block short"""
         img_path = self.cur.execute('SELECT image FROM main.buildingblocks WHERE short = ?;', (short,)).fetchone()[0]
         Image.open(img_path).show()
         return
 
-    def list_pg(self, short: str):
+    def list_pg(self, short: str) -> tuple:
         """Returns a 4-tuple: (#boc, #cbz, #tbu, #tms)"""
         return self.cur.execute('SELECT boc, cbz, tbu, tms FROM main.buildingblocks WHERE short = ?;',
                                 (short,)).fetchone()
 
-    def get_reactant_class(self, short: str):
+    def get_reactant_class(self, short: str) -> str:
         """Takes a building block short name and returns the reactant class"""
         return self.cur.execute('SELECT reactant_class FROM main.buildingblocks WHERE short = ?;', (short,)).fetchone()[
             0]
 
-    def get_molecular_weight(self, short: str):
+    def get_molecular_weight(self, short: str) -> float:
         """Get molecular weight from a building block short"""
         return MolWt(self.get_mol(short))
 
-    def get_vl_member(self, vl_id):
+    def get_vl_member(self, vl_id: int) -> Mol:
         """Takes a vl_id and returns the product MOL"""
         smiles = self.cur.execute('SELECT SMILES FROM main.virtuallibrary WHERE id = ?;',
                                   (vl_id,)).fetchone()[0]
         return MolFromSmiles(smiles)
 
-    def get_starting_materials_for_experiment(self, **kwargs):
+    def get_starting_materials_for_experiment(self, **kwargs: dict) -> tuple:
         """
         Return unique building blocks in an experiment. The experiment can be defined by either an exp_nr
         or a lab_journal_number.
@@ -95,7 +104,7 @@ class MyDatabaseConnection:
                                       (kwargs['lab_journal_number'],)).fetchall()], key=lambda x: int(x[1:]))
         return initiators, monomers, terminators
 
-    def get_product_mol_by_well(self, lab_journal_number: str, well: str, product_type: str):
+    def get_product_mol_by_well(self, lab_journal_number: str, well: str, product_type: str) -> Optional[Mol]:
         """
         :param lab_journal_number: Unique identifier for the plate
         :param well: Identifier for the well within the plate

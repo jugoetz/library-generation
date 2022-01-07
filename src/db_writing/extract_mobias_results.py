@@ -13,7 +13,7 @@ from definitions import PLATES_DIR, DB_PATH
 from utils import get_lcms_file_name
 
 # configuration
-lab_journal_numbers = [f'JG{i}' for i in range(276, 277)]
+lab_journal_numbers = [f'JG{i}' for i in range(276, 290)]
 
 
 def import_lcms_results(path):

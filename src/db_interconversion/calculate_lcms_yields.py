@@ -24,7 +24,7 @@ from definitions import PLATES_DIR, DB_PATH
 from utils import get_product_dict, get_internal_standard_number
 
 # configurations
-lab_journal_numbers = [f'JG{i}' for i in range(276, 277)]
+lab_journal_numbers = [f'JG{i}' for i in range(276, 290)]
 
 
 def import_lcms_unprocessed_data(db_cur, exp_nr):
@@ -160,4 +160,4 @@ if __name__ == '__main__':
         print(f'Now calculating LCMS ratios for {exp_nr}...')
         exp_dir = PLATES_DIR / exp_nr
         calculate_lcms_yields(DB_PATH, exp_dir, exp_nr)
-    print('Finished')
+    print('Calculation of LCMS yields finished!')

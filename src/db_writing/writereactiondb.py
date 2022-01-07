@@ -25,23 +25,23 @@ conf = get_conf()
 
 # configuration
 config = {
-    'exp_dir':             'exp9',
-    'exp_nr':              9,
-    'synthesis_date':      datetime(2021, 11, 2).timestamp(),
+    'exp_dir': 'exp_test5',
+    'exp_nr': 99005,
+    'synthesis_date': datetime(2021, 11, 16).timestamp(),
     'lab_journal_nr_dict': {
-        '1': 'JG277',
-        '2': 'JG278',
-        '3': 'JG279',
-        '4': 'JG280',
-        '5': 'JG281',
-        '6': 'JG282',
+        '1': 'JG289',
+        # '2': 'JG284',
+        # '3': 'JG285',
+        # '4': 'JG286',
+        # '5': 'JG287',
+        # '6': 'JG288',
     }
 }
 
 
 def make_new_directories(dir_list):
     """Make a list of directories if they don't exist yet and copy the respective plate layout to them"""
-    print(f'Making new directories: {repr(dir_list)}')
+    print(f'Making new directories (if they do not exist): {repr(dir_list)}')
     for i in dir_list:
         (PLATES_DIR / i).mkdir(exist_ok=True)
     return
@@ -77,7 +77,7 @@ def get_plates_for_experiment(exp_dir):
         for f in files:
             m = re.compile(conf['plate_regex']).match(f)
             if m:
-                print(f'Retrieving plate layout {f}...')
+                print(f'Retrieving plate layout: {f}...')
                 plate = import_pl(Path(path, f), return_type='plate')
                 plates_dict[m.group(1)] = plate
     print(f'Retrieved data for {len(plates_dict)} plate(s).')

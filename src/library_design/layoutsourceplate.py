@@ -22,9 +22,9 @@ for exp_nr, exp in enumerate(synthesis_plan):
     print(f'{exp_nr}  |  {exp}')
 
 for exp_nr, exp in enumerate(synthesis_plan):
-    """
-    Keep in mind to not use list.pop() on exp without making a deepcopy as many entries are shallow copies of each other
-    """
+    # skip for plates that were already run when the skript was changed
+    if exp_nr < 12:
+        continue
 
     print(f'Experiment Nr. {exp_nr + 1}:')
     print(exp[0])  # I
@@ -40,9 +40,11 @@ for exp_nr, exp in enumerate(synthesis_plan):
     source_plate = Plate384(max_vol=65000, dead_vol=15000)
 
     # now initiators will fill the rows A and B. Three wells per initiator (left to right, top to bottom)
+    # volumes are 63 uL for the first two and 35 uL for the last well
     for initiator in exp[0]:
-        for i in range(3):
-            source_plate.fill_well(source_plate.free(), initiator, 65000)
+        for i in range(2):
+            source_plate.fill_well(source_plate.free(), initiator, 63000)
+        source_plate.fill_well(source_plate.free(), initiator, 35000)
 
     # to be able to use Plate.free() for the Monomers and Terminators as well, we use a little trick and fill the empty
     # rows with placeholders that we will get rid off later
@@ -50,18 +52,22 @@ for exp_nr, exp in enumerate(synthesis_plan):
     source_plate.fill_span('H1', 'J24', 'placeholder', 65000)
 
     # now we fill monomers into rows F and G. 4 wells per monomer, again in latin reading order.
+    # volumes are 63 uL for the first three and 25 uL for the last well
     for monomer in exp[1]:
-        for i in range(4):
-            source_plate.fill_well(source_plate.free(), monomer, 65000)
+        for i in range(3):
+            source_plate.fill_well(source_plate.free(), monomer, 63000)
+        source_plate.fill_well(source_plate.free(), monomer, 25000)
 
     # now we fill terminators into rows K and L and the first 2 wells of M.
     # 5 wells per terminator, again in latin reading order.
+    # volumes are 65 uL for the first three and 30 uL for the last well
     for terminator in exp[2]:
-        for i in range(5):
+        for i in range(4):
             source_plate.fill_well(source_plate.free(), terminator, 65000)
+        source_plate.fill_well(source_plate.free(), terminator, 30000)
 
-    # as the last source compound, we fill oxalic acid (X) into P1 to P12
-    source_plate.fill_span('P1', 'P12', 'X', 65000)
+    # as the last source compound, we fill oxalic acid (X) into P1 to P14 (two more than needed as fallback)
+    source_plate.fill_span('P1', 'P14', 'X', 65000)
 
     # finally, we empty the placeholder rows.
     source_plate.empty_span('C1', 'E24')
@@ -71,4 +77,4 @@ for exp_nr, exp in enumerate(synthesis_plan):
 
     exp_dir = PLATES_DIR / f'exp{exp_nr + 1}'
     # print plates to csv files
-    source_plate.to_csv(exp_dir / f'source_plate_layout_echo.csv', save_volumes=True)
+    source_plate.to_csv(exp_dir / f'source_plate_layout.csv', save_volumes=True)

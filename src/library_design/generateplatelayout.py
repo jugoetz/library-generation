@@ -24,7 +24,7 @@ for exp_nr, exp in enumerate(synthesis_plan):
 for exp_nr, exp in enumerate(synthesis_plan):
     """
     First, create a "working copy" of x this is necessary because the list comprehension producing synthesis_plan 
-    gives shallow copies. Using list.pop() would result in that element being remove for all shallow copies and
+    gives shallow copies. Using list.pop() would result in that element being removed for all shallow copies and
     would cause the program to fail when it first hits a monomer set it has already seen in a previous exp.
     We prevent this by deep-copying exp before we use it.
     """

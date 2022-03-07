@@ -27,14 +27,14 @@ conf = get_conf()
 config = {
     'exp_dir': 'exp_test5',
     'exp_nr': 99005,
-    'synthesis_date': datetime(2021, 11, 16).timestamp(),
+    'synthesis_date': datetime(2022, 2, 15).timestamp(),
     'lab_journal_nr_dict': {
         '1': 'JG289',
-        # '2': 'JG284',
-        # '3': 'JG285',
-        # '4': 'JG286',
-        # '5': 'JG287',
-        # '6': 'JG288',
+        '2': 'JG296',
+        # '3': 'JG299',
+        # '4': 'JG300',
+        # '5': 'JG301',
+        # '6': 'JG302',
     }
 }
 

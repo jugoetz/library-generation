@@ -15,9 +15,9 @@ from db_queries import MyDatabaseConnection
 
 # configuration
 config = {  # exactly one of 'exp_nr' or 'lab_journal_number' may not be None
-    'exp_nr': 10,
+    'exp_nr': 12,
     'lab_journal_nr': None,
-    'exp_dir': 'exp10',
+    'exp_dir': 'exp12',
     'initiator_volume': 2 * 65 + 35,  # in uL
     'monomer_volume': 3 * 65 + 25,  # in uL
     'terminator_volume': 4 * 65 + 30,  # in uL

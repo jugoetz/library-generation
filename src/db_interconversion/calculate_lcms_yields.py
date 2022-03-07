@@ -24,7 +24,7 @@ from definitions import PLATES_DIR, DB_PATH
 from utils import get_product_dict, get_internal_standard_number
 
 # configurations
-lab_journal_numbers = [f'JG{i}' for i in range(276, 290)]
+lab_journal_numbers = [f'JG{i}' for i in range(297, 303)]
 
 
 def import_lcms_unprocessed_data(db_cur, exp_nr):

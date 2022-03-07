@@ -19,7 +19,7 @@ import numpy as np
 from definitions import PLATES_DIR, DB_PATH
 
 # configuration
-lab_journal_numbers = [f'JG{i}' for i in range(276, 290)]
+lab_journal_numbers = [f'JG{i}' for i in range(297, 303)]
 normalization_constant = 0.798
 plate_size = 384
 

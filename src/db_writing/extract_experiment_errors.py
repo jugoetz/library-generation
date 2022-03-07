@@ -27,8 +27,8 @@ from definitions import PLATES_DIR, PLATE_LIST_PATH, DB_PATH
 from utils import get_internal_standard_number
 
 # configuration
-exp_dir_name = 'exp10'
-exp_nr = 10
+exp_dir_name = 'exp12'
+exp_nr = 12
 skip_nexus = False  # set to True for reactions that were not conducted at NEXUS
 
 

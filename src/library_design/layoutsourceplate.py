@@ -4,7 +4,7 @@ From an (ORDERED!) list of building blocks, generate source plate layouts for Ec
 Inputs:
     - synthesis_plan.json: JSON of a list of experiments. Every experiment contains 1 list for every of the
       3 building blocks. The type of the list must be List[List[str], List[str], List[str]].
-      Typically this is the output of generatelibraryplan.py
+      Typically, this is the output of generatelibraryplan.py
 
 Outputs:
     - (In folders exp{nr.}): source plate layout files source_plate_layout_echo.csv: 1 file per folder,
@@ -23,7 +23,7 @@ for exp_nr, exp in enumerate(synthesis_plan):
 
 for exp_nr, exp in enumerate(synthesis_plan):
     # skip for plates that were already run when the skript was changed
-    if exp_nr < 12:
+    if exp_nr < 12:  # (starts at 0)
         continue
 
     print(f'Experiment Nr. {exp_nr + 1}:')
@@ -66,8 +66,8 @@ for exp_nr, exp in enumerate(synthesis_plan):
             source_plate.fill_well(source_plate.free(), terminator, 65000)
         source_plate.fill_well(source_plate.free(), terminator, 30000)
 
-    # as the last source compound, we fill oxalic acid (X) into P1 to P14 (two more than needed as fallback)
-    source_plate.fill_span('P1', 'P14', 'X', 65000)
+    # as the last source compound, we fill oxalic acid (X) into the entire bottom row P (more than needed, as fallback)
+    source_plate.fill_span('P1', 'P24', 'X', 65000)
 
     # finally, we empty the placeholder rows.
     source_plate.empty_span('C1', 'E24')

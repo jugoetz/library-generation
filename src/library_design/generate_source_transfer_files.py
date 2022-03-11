@@ -21,6 +21,8 @@ import pandas as pd
 from labware.plates import Plate384
 from definitions import PLATES_DIR
 
+EXPERIMENT_FOLDER = "exp13"
+
 
 def compound_to_well(cmpd):
     """
@@ -53,11 +55,11 @@ def compound_to_source_plate(cmpd):
         return "terminator"
 
 
-test_file = PLATES_DIR / "exp13" / "source_plate_layout.csv"
-test_output = PLATES_DIR / "exp13" / "ot2_transfers.csv"
+source_plate_layout_file = PLATES_DIR / EXPERIMENT_FOLDER / "source_plate_layout.csv"
+transfer_file = PLATES_DIR / EXPERIMENT_FOLDER / "ot2_transfers.csv"
 
 target_plate = Plate384(max_vol=65000, dead_vol=15000)
-target_plate.from_csv(test_file)
+target_plate.from_csv(source_plate_layout_file)
 
 transfers = defaultdict(lambda: ([], []))
 
@@ -97,4 +99,4 @@ df_lcms["target_volumes"] = [1000, ] * len(df_lcms)
 
 df = pd.concat((df, df_lcms), ignore_index=True)
 
-df[["step", "source_plate", "source_well", "target_wells", "target_volumes"]].to_csv(test_output, index=False)
+df[["step", "source_plate", "source_well", "target_wells", "target_volumes"]].to_csv(transfer_file, index=False)

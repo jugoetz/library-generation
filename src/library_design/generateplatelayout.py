@@ -72,7 +72,7 @@ for exp_nr, exp in enumerate(synthesis_plan):
         print(f'WARNING: Duplicate product_generator detected')
 
     exp_dir = PLATES_DIR / f'exp{exp_nr + 1}'
-    exp_dir.mkdir(exist_ok=True)
+    exp_dir.mkdir(exist_ok=True, parents=True)
     # print plates to csv files
     for i, p in enumerate(plates):
         p.to_csv(exp_dir / f'plate_layout_plate{i+1}.csv', save_volumes=True)

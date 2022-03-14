@@ -35,7 +35,7 @@ def compound_to_well(cmpd):
         return "A1"
     cmpd_nr = int(cmpd[1:])
     wells = [f"{row}{column}" for row in "ABCDEFGH" for column in range(1, 13)]
-    return wells[cmpd_nr]
+    return wells[cmpd_nr - 1]  # -1 b/c compound nrs start at 1, but wells is 0-based
 
 
 def compound_to_source_plate(cmpd):

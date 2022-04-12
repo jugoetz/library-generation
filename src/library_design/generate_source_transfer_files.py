@@ -21,12 +21,22 @@ import pandas as pd
 from labware.plates import Plate384
 from definitions import PLATES_DIR
 
-EXPERIMENT_FOLDER = "exp13"
+EXPERIMENT_FOLDER = "exp15"
+source_plate_layout = "outer_wells"
+
+
+# option source_plate_layout:
+# - "outer_wells": source plate has all compounds in A/H rows (for better visibility)
+#   the order is such it increases A1->A12->H1->H12, but we leave wells free to avoid cross contamination.
+#   Precisely, the 16 initiators occupy A1-A9, A11, and all odd wells in row H,
+#   the 12 monomers fill all odd wells in rows A and H
+#   the 10 terminators fill all odd wells in row A and all odd wells in H1-H8
+# - "canonical_order": compound I10 is in the 10th well (i.e. A10) and so on
 
 
 def compound_to_well(cmpd):
     """
-    Translate by making this substitution i-th compound -> i-th well in a 96 well plate.
+    Translate by making this substitution: i-th compound -> i-th well in a 96 well plate.
 
     Example:
         compound I15 -> well B3
@@ -36,6 +46,20 @@ def compound_to_well(cmpd):
     cmpd_nr = int(cmpd[1:])
     wells = [f"{row}{column}" for row in "ABCDEFGH" for column in range(1, 13)]
     return wells[cmpd_nr - 1]  # -1 b/c compound nrs start at 1, but wells is 0-based
+
+
+def compound_to_outer_well(cmpds, cmpd_type):
+    cmpd_list = sorted(cmpds.values.tolist(), key=lambda x: (x[0], int(x[1:])))
+    if cmpd_type == "I":
+        wells = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A11", "H1", "H3", "H5", "H7", "H9", "H11"]
+    elif cmpd_type == "M":
+        wells = ["A1", "A3", "A5", "A7", "A9", "A11", "H1", "H3", "H5", "H7", "H9", "H11"]
+    elif cmpd_type == "T":
+        wells = ["A1", "A3", "A5", "A7", "A9", "A11", "H1", "H3", "H5", "H7"]
+    else:
+        raise ValueError("Invalid cmpd_type. Options: 'I', 'M', 'T'")
+    well_map = dict(zip(cmpd_list, wells))
+    return cmpds.map(well_map)
 
 
 def compound_to_source_plate(cmpd):
@@ -73,9 +97,21 @@ for well in target_plate.wells():
 
 df = pd.DataFrame.from_dict(transfers, orient="index").reset_index().rename(
     columns={"index": "compound", 0: "target_wells", 1: "target_volumes"})
-
-df["source_well"] = df["compound"].apply(compound_to_well)
 df["source_plate"] = df["compound"].apply(compound_to_source_plate)
+if source_plate_layout == "canonical_order":
+    df["source_well"] = df["compound"].apply(compound_to_well)
+elif source_plate_layout == "outer_wells":
+    df["source_well"] = "A1"  # by initializing as A1, we don't have to take care of oxalic acid wells
+    df.loc[df["source_plate"] == "initiator", "source_well"] = compound_to_outer_well(
+        df.loc[df["source_plate"] == "initiator", "compound"], "I")
+    df.loc[df["source_plate"] == "monomer", "source_well"] = compound_to_outer_well(
+        df.loc[df["source_plate"] == "monomer", "compound"], "M")
+    df.loc[df["source_plate"] == "terminator", "source_well"] = compound_to_outer_well(
+        df.loc[df["source_plate"] == "terminator", "compound"], "T")
+
+else:
+    raise ValueError("Invalid option for 'source_plate_layout'.")
+
 df["step"] = df["source_plate"].apply(lambda x: 2 if x == "terminator" else 1)
 
 # set up transfers for LCMS analysis plate

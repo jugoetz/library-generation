@@ -75,6 +75,6 @@ for exp_nr, exp in enumerate(synthesis_plan):
 
     print(source_plate)
 
-    exp_dir = PLATES_DIR / f'exp{exp_nr + 1}'
+    exp_dir = PLATES_DIR / 'new' / f'exp{exp_nr + 1}'
     # print plates to csv files
     source_plate.to_csv(exp_dir / f'source_plate_layout.csv', save_volumes=True)

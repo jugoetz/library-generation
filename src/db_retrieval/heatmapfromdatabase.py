@@ -162,6 +162,6 @@ if __name__ == '__main__':
     for exp_nr in conf['lab_journal_numbers']:
         print(f'Now plotting {exp_nr}...')
         exp_dir = PLATES_DIR / exp_nr
-        plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, conf['normalization_constant'],
-                                              conf['well_plate_size'])
+        plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, conf['heatmap']['normalization_constant'],
+                                              conf['heatmap']['well_plate_size'])
     print('Finished plotting!')

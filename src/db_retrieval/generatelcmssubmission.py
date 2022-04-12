@@ -25,7 +25,6 @@ Output:
 TODO this is in dire need of refactoring (but it works)
 """
 
-import gzip
 import json
 import re
 import os
@@ -36,14 +35,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from definitions import LIB_STATIC_DIR, PLATES_DIR, COMPOUND_MAPPING_PATH, CONF_PATH, DB_PATH
+from definitions import PLATES_DIR, COMPOUND_MAPPING_PATH, DB_PATH
 from labware.plates import Plate384, Plate96
 from utils import get_conf
 
 # configuration
-lab_journal_numbers = [f'JG{i}' for i in range(296, 297)]
-ADD_IS = True
-MASS_OR_FORMULA = 'formula'  # ['mass'/'formula'] can output mass as a number or can give chemical formula
+# edit config.yaml to change
 conf = get_conf()
 
 
@@ -73,12 +70,12 @@ def import_pl(file, return_type='dict'):
     Return labware.plates.Plate if return_type == 'plate'
     :return: dict or labware.plates.Plate
     """
-    if conf['well_plate_size'] == 96:
+    if conf['lcms']['well_plate_size'] == 96:
         p = Plate96(150000, 5000)
-    elif conf['well_plate_size'] == 384:
+    elif conf['lcms']['well_plate_size'] == 384:
         p = Plate384(12000, 2500)
     else:
-        raise ValueError(f'Invalid plate size: {conf["well_plate_size"]}')
+        raise ValueError(f'Invalid plate size: {conf["lcms"]["well_plate_size"]}')
     p.from_csv(file)
     if return_type == 'dict':
         return p.to_dict()
@@ -174,8 +171,8 @@ def get_prop(long_name, mol_props, prop):
 def add_is(df):
     df['IS_mass'] = np.nan
     df['IS_formula'] = ''
-    df.loc[df['long'] != '', 'IS_mass'] = conf['is_mass']
-    df.loc[df['long'] != '', 'IS_formula'] = conf['is_formula']
+    df.loc[df['long'] != '', 'IS_mass'] = conf['lcms']['is_mass']
+    df.loc[df['long'] != '', 'IS_formula'] = conf['lcms']['is_formula']
     return df
 
 
@@ -190,12 +187,12 @@ def write_csv(df, file, exp_dir):
         new = f'Py-{str(well)[0]}-{str(well)[1:]}'
         return new
 
-    if MASS_OR_FORMULA == 'mass':
+    if conf['lcms']["mass_or_formula"] == 'mass':
         suffix = '_mass'
-    elif MASS_OR_FORMULA == 'formula':
+    elif conf['lcms']["mass_or_formula"] == 'formula':
         suffix = '_formula'
     else:
-        raise ValueError(f'Invalid option {MASS_OR_FORMULA}')
+        raise ValueError(f'Invalid option {conf["lcms"]["mass_or_formula"]}')
     df['Vial'] = df.loc[:, ['plate', 'well']].apply(splitwell, axis=1)
     # drop any row were all masses are np.nan
     df.dropna(axis=0, how='all', subset=[col for col in df.columns if col.endswith('mass') and col != 'IS_mass'],
@@ -240,7 +237,7 @@ def main(exp_dir):
     plates_dict = {}
     for path, _, files in os.walk(exp_dir):
         for f in files:
-            m = re.compile(conf['plate_regex']).match(f)
+            m = re.compile(conf['lcms']['plate_regex']).match(f)
             if m:
                 plate_dict = import_pl(Path(path, f))
                 plates_dict[m.group(1)] = plate_dict
@@ -322,7 +319,7 @@ def main(exp_dir):
         df = pd.merge(df, i, how='left')
 
     """add internal standard if user wishes"""
-    if ADD_IS is True:
+    if conf['lcms']["add_is"] is True:
         add_is(df)
     else:
         print("You chose not to add internal standard.\n")
@@ -336,7 +333,7 @@ def main(exp_dir):
 
 
 if __name__ == '__main__':
-    for exp_nr in lab_journal_numbers:
+    for exp_nr in conf['lab_journal_numbers']:
         print(f'Generating submission file for {exp_nr}...')
         main(PLATES_DIR / exp_nr)
     print('End of script. Exiting...')

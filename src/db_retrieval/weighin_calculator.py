@@ -12,41 +12,36 @@ import xlsxwriter
 
 from definitions import PLATES_DIR
 from db_queries import MyDatabaseConnection
+from utils import get_conf
 
 # configuration
-config = {  # exactly one of 'exp_nr' or 'lab_journal_number' may not be None
-    'exp_nr': 12,
-    'lab_journal_nr': None,
-    'exp_dir': 'exp12',
-    'initiator_volume': 2 * 65 + 35,  # in uL
-    'monomer_volume': 3 * 65 + 25,  # in uL
-    'terminator_volume': 4 * 65 + 30,  # in uL
-}
+# edit config.yaml to change
+conf = get_conf()
 
 
-def main(config):
-    exp_dir = config['exp_dir']
+def main():
+    exp_dir = conf['exp_dir']
     print(f'Generating weigh-in for {exp_dir}...')
     mycon = MyDatabaseConnection()
 
     # get the list of compounds of interest
-    if config['exp_nr'] is not None and config['lab_journal_nr'] is not None:
-        raise ValueError('Exactly one of "exp_nr" and "lab_journal_nr" must be None.')
-    elif config['exp_nr'] is not None:
-        compounds = mycon.get_starting_materials_for_experiment(exp_nr=config['exp_nr'])
-    elif config['lab_journal_nr'] is not None:
-        compounds = mycon.get_starting_materials_for_experiment(lab_journal_number=config['lab_journal_nr'])
+    if conf['exp_nr'] is not None and conf['weight']['lab_journal_number'] is not None:
+        raise ValueError('Exactly one of "exp_nr" and "weight.lab_journal_number" must be None.')
+    elif conf['exp_nr'] is not None:
+        compounds = mycon.get_starting_materials_for_experiment(exp_nr=conf['exp_nr'])
+    elif conf['lab_journal_nr'] is not None:
+        compounds = mycon.get_starting_materials_for_experiment(lab_journal_number=conf['lab_journal_nr'])
     else:
         raise ValueError('Only (and exactly) one of "exp_nr" and "lab_journal_nr" may be None.')
 
     # for all compounds (shorts), assign long names and needed solution volumes
     compound_volumes = {}
     for i in compounds[0]:  # initiators
-        compound_volumes[i] = [mycon.get_long_name(i), config['initiator_volume']]
+        compound_volumes[i] = [mycon.get_long_name(i), conf['weight']['initiator_volume']]
     for m in compounds[1]:  # monomers
-        compound_volumes[m] = [mycon.get_long_name(m), config['monomer_volume']]
+        compound_volumes[m] = [mycon.get_long_name(m), conf['weight']['monomer_volume']]
     for t in compounds[2]:  # terminators
-        compound_volumes[t] = [mycon.get_long_name(t), config['terminator_volume']]
+        compound_volumes[t] = [mycon.get_long_name(t), conf['weight']['terminator_volume']]
 
     # add weights needed for the minimum solution volume
     for k, v in compound_volumes.items():
@@ -110,4 +105,4 @@ def main(config):
 
 
 if __name__ == '__main__':
-    main(config=config)
+    main()

@@ -17,11 +17,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from definitions import PLATES_DIR, DB_PATH
+from utils import get_conf
 
 # configuration
-lab_journal_numbers = [f'JG{i}' for i in range(297, 303)]
-normalization_constant = 0.798
-plate_size = 384
+# edit config.yaml to change
+conf = get_conf()
 
 
 def read_yields_from_database(db_path, labjournal_nr):
@@ -159,8 +159,9 @@ def plot_experiment_heatmap_from_database(db_path, exp_nr, exp_dir, normalizatio
 
 
 if __name__ == '__main__':
-    for exp_nr in lab_journal_numbers:
+    for exp_nr in conf['lab_journal_numbers']:
         print(f'Now plotting {exp_nr}...')
         exp_dir = PLATES_DIR / exp_nr
-        plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, normalization_constant, plate_size)
+        plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, conf['normalization_constant'],
+                                              conf['well_plate_size'])
     print('Finished plotting!')

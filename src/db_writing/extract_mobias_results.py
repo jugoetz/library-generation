@@ -10,10 +10,11 @@ import pandas as pd
 import numpy as np
 
 from definitions import PLATES_DIR, DB_PATH
-from utils import get_lcms_file_name
+from utils import get_lcms_file_name, get_conf
 
 # configuration
-lab_journal_numbers = [f'JG{i}' for i in range(297, 303)]
+# edit config.yaml to change
+conf = get_conf()
 
 
 def import_lcms_results(path):
@@ -142,7 +143,7 @@ def extract_mobias_results(path, db_path, exp_nr, mobias_input):
 
 
 if __name__ == '__main__':
-    for lcms_nr in lab_journal_numbers:
+    for lcms_nr in conf['lab_journal_numbers']:
         exp_dir = PLATES_DIR / lcms_nr
         results_file_name = get_lcms_file_name(lcms_nr)
 

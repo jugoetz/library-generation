@@ -1,7 +1,48 @@
+# global options applying to most scripts
+exp_nr: 15
+exp_dir: exp15
+lab_journal_numbers:
+  - JG315
+  - JG316
+  - JG317
+  - JG318
+  - JG319
+  - JG320
+
+# configuration for extract_experiment_errors.py
+errors:
+  skip_nexus: False  # set to True for reactions that were not conducted at NEXUS
+
+# configuration for heatmapfromdatabase.py
+heatmap:
+  well_plate_size: 384
+  normalization_constant: 0.798
+
 # configuration for generatelcmssubmission.py
-is_mass: 360.1128  # monoisotopic mass of Fenofibrat
-is_formula: C20H21O4Cl  # molecular formula of Fenofibrat
-well_plate_size: 384
+lcms:
+  is_mass: 360.1128  # monoisotopic mass of Fenofibrat
+  is_formula: C20H21O4Cl  # molecular formula of Fenofibrat
+  well_plate_size: 384
+  add_is: True
+  mass_or_formula: formula  # ['mass'/'formula'] can output mass as a number or can give chemical formula
+
+# configuration for weighin_calculator.py
+weight:
+  initiator_volume: 165  # in uL
+  monomer_volume: 220  # in uL
+  terminator_volume: 290  # in uL
+#  lab_journal_number: JG315  # this is an alternative for exp_nr for non-canonical reactions. Only one of this and exp_nr may be given
+
+# configuration for writereactiondb.py
+db:
+  synthesis_date: !!timestamp "2022-04-29"  # in uL
+  plate_nrs: # these need to align with lab_journal_numbers
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
 
 plate_regex: plate_layout_plate([0-9]+).csv
 # plate_regex: test_JG([0-9]+).csv   # this alternative is sometimes useful for non-canonical experiments

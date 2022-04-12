@@ -12,7 +12,6 @@ import os
 import csv
 import sqlite3
 import shutil
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -21,22 +20,13 @@ from definitions import PLATES_DIR, DB_PATH, PLATE_LIST_PATH
 from db_retrieval.generatelcmssubmission import import_pl
 from utils import get_conf
 
-conf = get_conf()
-
 # configuration
-config = {
-    'exp_dir': 'exp_test5',
-    'exp_nr': 99005,
-    'synthesis_date': datetime(2022, 2, 15).timestamp(),
-    'lab_journal_nr_dict': {
-        '1': 'JG289',
-        '2': 'JG296',
-        # '3': 'JG299',
-        # '4': 'JG300',
-        # '5': 'JG301',
-        # '6': 'JG302',
-    }
-}
+# edit config.yaml to change
+conf = get_conf()
+if len(conf['db']['plate_nrs']) == len(conf['lab_journal_numbers']):
+    conf['db']['lab_journal_nr_dict'] = dict(zip(conf['db']['plate_nrs'], conf['lab_journal_numbers']))
+else:
+    raise ValueError('db.plate_nrs and lab_journal_numbers do not align (different length)')
 
 
 def make_new_directories(dir_list):
@@ -131,16 +121,16 @@ def main():
     con = sqlite3.connect(DB_PATH)
 
     # make new experiment directories
-    make_new_directories(list(config['lab_journal_nr_dict'].values()))
+    make_new_directories(list(conf['db']['lab_journal_nr_dict'].values()))
 
     # copy plate files
-    copy_plate_layout_files(config['exp_dir'], config['lab_journal_nr_dict'])
+    copy_plate_layout_files(conf['exp_dir'], conf['db']['lab_journal_nr_dict'])
 
     # add the plate mapping information to plate_list.csv
-    append_plate_log(config['exp_dir'], config['exp_nr'], config['lab_journal_nr_dict'])
+    append_plate_log(conf['exp_dir'], conf['exp_nr'], conf['db']['lab_journal_nr_dict'])
 
     # import the plate info
-    plates_dict = get_plates_for_experiment(config['exp_dir'])
+    plates_dict = get_plates_for_experiment(conf['exp_dir'])
 
     # get the info about well <-> composition into a single df
     well_list = []
@@ -175,9 +165,9 @@ def main():
     new_df = pd.merge(products, well_df, how='inner', on=['initiator', 'monomer', 'terminator'])
 
     # add experiment info
-    new_df['exp_nr'] = config['exp_nr']
-    new_df['lab_journal_nr'] = new_df['plate'].apply(lambda x: config['lab_journal_nr_dict'][x])
-    new_df['synthesis_date_unixepoch'] = config['synthesis_date']
+    new_df['exp_nr'] = conf['exp_nr']
+    new_df['lab_journal_nr'] = new_df['plate'].apply(lambda x: conf['db']['lab_journal_nr_dict'][x])
+    new_df['synthesis_date_unixepoch'] = conf['db']['synthesis_date']
     new_df = new_df.sort_values(['plate', 'well'])  # we sort so that DB table is a little more intuitive
 
     # write gathered info to experiments table

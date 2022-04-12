@@ -24,12 +24,11 @@ from pathlib import Path
 import pandas as pd
 
 from definitions import PLATES_DIR, PLATE_LIST_PATH, DB_PATH
-from utils import get_internal_standard_number
+from utils import get_internal_standard_number, get_conf
 
 # configuration
-exp_dir_name = 'exp12'
-exp_nr = 12
-skip_nexus = False  # set to True for reactions that were not conducted at NEXUS
+# edit config.yaml to change
+conf = get_conf()
 
 
 def get_manual_error_records(path: Path) -> list:
@@ -216,7 +215,6 @@ def get_nexus_errors(nexus_dir: Path) -> list:
 def get_mobias_errors(exp_nr: int) -> list:
     """
     :param exp_nr: number of the experiment under consideration
-    :param plate_list_path: path to csv-file containing list of experiments / plate numbers
     :return: List of transfer errors
     """
     error_list = []
@@ -280,5 +278,5 @@ def main(exp_dir: Path, exp_nr: int, skip_nexus=False):
 
 
 if __name__ == '__main__':
-    exp_dir = PLATES_DIR / exp_dir_name
-    main(exp_dir, exp_nr, skip_nexus=skip_nexus)
+    exp_dir = PLATES_DIR / conf['exp_dir']
+    main(exp_dir, conf['exp_nr'], skip_nexus=conf['errors']['skip_nexus'])

@@ -12,7 +12,7 @@ Note that this overwrites previous data on every execution
 TODO It is not clear to me what happens when there are several entries in lcms for a given synthesis_id. Eliminate
     this ambiguity.
 
-EDIT exp_nr below in __main__ before running
+edit config.yaml before running
 """
 
 import re
@@ -21,10 +21,11 @@ import sqlite3
 import pandas as pd
 
 from definitions import PLATES_DIR, DB_PATH
-from utils import get_product_dict, get_internal_standard_number
+from utils import get_product_dict, get_internal_standard_number, get_conf
 
 # configurations
-lab_journal_numbers = [f'JG{i}' for i in range(297, 303)]
+# edit config.yaml before running
+conf = get_conf()
 
 
 def import_lcms_unprocessed_data(db_cur, exp_nr):
@@ -156,7 +157,7 @@ def calculate_lcms_yields(db_path, exp_dir, exp_nr):
 
 
 if __name__ == '__main__':
-    for exp_nr in lab_journal_numbers:
+    for exp_nr in conf['lab_journal_numbers']:
         print(f'Now calculating LCMS ratios for {exp_nr}...')
         exp_dir = PLATES_DIR / exp_nr
         calculate_lcms_yields(DB_PATH, exp_dir, exp_nr)

@@ -123,7 +123,7 @@ def save_to_db(dict_df, db_path, exp_nr):
     product_associations = {t: [v for k, v in product_dict.items() if k.startswith(t)] for t in 'ABCDEFGH'}
     for k, v in product_associations.items():
         product_yields = add([dict_df[int(val.strip('SumF'))] for val in v])
-        print(product_yields)
+        # print(product_yields)
         for i, data in product_yields.iterrows():  # TODO should not write to exp db but have its own lcms yields thing
             cur.execute(
                 f'UPDATE main.experiments SET product_{k}_lcms_ratio = ? WHERE lab_journal_number = ? AND well = ?;',

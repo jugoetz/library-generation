@@ -166,7 +166,7 @@ def main():
 
     # add experiment info
     new_df['exp_nr'] = conf['exp_nr']
-    new_df['lab_journal_nr'] = new_df['plate'].apply(lambda x: conf['db']['lab_journal_nr_dict'][x])
+    new_df['lab_journal_nr'] = new_df['plate'].apply(lambda x: conf['db']['lab_journal_nr_dict'][int(x)])
     new_df['synthesis_date_unixepoch'] = conf['db']['synthesis_date']
     new_df = new_df.sort_values(['plate', 'well'])  # we sort so that DB table is a little more intuitive
 

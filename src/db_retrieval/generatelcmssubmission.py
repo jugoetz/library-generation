@@ -237,7 +237,7 @@ def main(exp_dir):
     plates_dict = {}
     for path, _, files in os.walk(exp_dir):
         for f in files:
-            m = re.compile(conf['lcms']['plate_regex']).match(f)
+            m = re.compile(conf['plate_regex']).match(f)
             if m:
                 plate_dict = import_pl(Path(path, f))
                 plates_dict[m.group(1)] = plate_dict

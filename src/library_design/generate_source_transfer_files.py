@@ -20,9 +20,11 @@ import pandas as pd
 
 from labware.plates import Plate384
 from definitions import PLATES_DIR
+from utils import get_conf
 
-EXPERIMENT_FOLDER = "exp15"
-source_plate_layout = "outer_wells"
+# configuration
+# edit config.yaml to change
+conf = get_conf()
 
 
 # option source_plate_layout:
@@ -79,8 +81,8 @@ def compound_to_source_plate(cmpd):
         return "terminator"
 
 
-source_plate_layout_file = PLATES_DIR / EXPERIMENT_FOLDER / "source_plate_layout.csv"
-transfer_file = PLATES_DIR / EXPERIMENT_FOLDER / "ot2_transfers.csv"
+source_plate_layout_file = PLATES_DIR / conf["exp_dir"] / "source_plate_layout.csv"
+transfer_file = PLATES_DIR / conf["exp_dir"] / "ot2_transfers.csv"
 
 target_plate = Plate384(max_vol=65000, dead_vol=15000)
 target_plate.from_csv(source_plate_layout_file)
@@ -98,9 +100,9 @@ for well in target_plate.wells():
 df = pd.DataFrame.from_dict(transfers, orient="index").reset_index().rename(
     columns={"index": "compound", 0: "target_wells", 1: "target_volumes"})
 df["source_plate"] = df["compound"].apply(compound_to_source_plate)
-if source_plate_layout == "canonical_order":
+if conf["source_plate_layout"] == "canonical_order":
     df["source_well"] = df["compound"].apply(compound_to_well)
-elif source_plate_layout == "outer_wells":
+elif conf["source_plate_layout"] == "outer_wells":
     df["source_well"] = "A1"  # by initializing as A1, we don't have to take care of oxalic acid wells
     df.loc[df["source_plate"] == "initiator", "source_well"] = compound_to_outer_well(
         df.loc[df["source_plate"] == "initiator", "compound"], "I")

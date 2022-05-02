@@ -25,11 +25,11 @@ def main():
     mycon = MyDatabaseConnection()
 
     # get the list of compounds of interest
-    if conf['exp_nr'] is not None and conf['weight']['lab_journal_number'] is not None:
+    if 'exp_nr' in conf and 'lab_journal_number' in conf['weight']:
         raise ValueError('Exactly one of "exp_nr" and "weight.lab_journal_number" must be None.')
-    elif conf['exp_nr'] is not None:
+    elif 'exp_nr' in conf:
         compounds = mycon.get_starting_materials_for_experiment(exp_nr=conf['exp_nr'])
-    elif conf['lab_journal_nr'] is not None:
+    elif 'lab_journal_number' in conf['weight']:
         compounds = mycon.get_starting_materials_for_experiment(lab_journal_number=conf['lab_journal_nr'])
     else:
         raise ValueError('Only (and exactly) one of "exp_nr" and "lab_journal_nr" may be None.')

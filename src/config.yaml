@@ -1,13 +1,19 @@
 # global options applying to most scripts
-exp_nr: 15
-exp_dir: exp15
+exp_nr: 16
+exp_dir: exp16
 lab_journal_numbers:
-  - JG315
-  - JG316
-  - JG317
-  - JG318
-  - JG319
-  - JG320
+  #  - JG315
+  #  - JG316
+  #  - JG317
+  #  - JG318
+  #  - JG319
+  #  - JG320
+  - JG321
+  - JG322
+  - JG323
+  - JG324
+  - JG325
+  - JG326
 
 # configuration for extract_experiment_errors.py
 errors:
@@ -20,8 +26,8 @@ heatmap:
 
 # configuration for generatelcmssubmission.py
 lcms:
-  is_mass: 360.1128  # monoisotopic mass of Fenofibrat
-  is_formula: C20H21O4Cl  # molecular formula of Fenofibrat
+  is_mass: 360.1128  # monoisotopic mass of Fenofibrate
+  is_formula: C20H21O4Cl  # molecular formula of Fenofibrate
   well_plate_size: 384
   add_is: True
   mass_or_formula: formula  # ['mass'/'formula'] can output mass as a number or can give chemical formula
@@ -35,7 +41,7 @@ weight:
 
 # configuration for writereactiondb.py
 db:
-  synthesis_date: !!timestamp "2022-04-29"  # in uL
+  synthesis_date: !!timestamp "2022-05-03"
   plate_nrs: # these need to align with lab_journal_numbers
     - 1
     - 2

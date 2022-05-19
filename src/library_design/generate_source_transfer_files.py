@@ -100,9 +100,9 @@ for well in target_plate.wells():
 df = pd.DataFrame.from_dict(transfers, orient="index").reset_index().rename(
     columns={"index": "compound", 0: "target_wells", 1: "target_volumes"})
 df["source_plate"] = df["compound"].apply(compound_to_source_plate)
-if conf["source_plate_layout"] == "canonical_order":
+if conf["ot2_transfers"]["source_plate_layout"] == "canonical_order":
     df["source_well"] = df["compound"].apply(compound_to_well)
-elif conf["source_plate_layout"] == "outer_wells":
+elif conf["ot2_transfers"]["source_plate_layout"] == "outer_wells":
     df["source_well"] = "A1"  # by initializing as A1, we don't have to take care of oxalic acid wells
     df.loc[df["source_plate"] == "initiator", "source_well"] = compound_to_outer_well(
         df.loc[df["source_plate"] == "initiator", "compound"], "I")

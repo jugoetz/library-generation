@@ -55,8 +55,21 @@ formulae of the library molecules.
 Put the ChemInventory export file into <root>/data/inputs/ and run library_design scripts everything
 
 #### When new products are added in the enumeration
-Change enumerate_reaction.py and rerun:
-  - enumerate_reaction.py
-  - sdf-to-properties.py
-  - generatelcmssubmission.py
 
+Change enumerate_reaction.py and rerun:
+
+- enumerate_reaction.py
+- sdf-to-properties.py
+- generatelcmssubmission.py
+
+#### When the synthesis plan has to be changed (e.g. compound cannot be located)
+
+- Apply changes to `synthesis_plan.json` manually.
+  You should also do the changes in `synthesis_plan.csv`, but this will have no downstream influence.
+- Run `generateplatelayout.py` to generate the new target plate layouts (this will operate in the `new` directory).
+- Run `layoutsourceplate.py` to generate the source plate layouts (this will operate in the `new` directory).
+- Manually copy appropriate directories from `new` to `plates`.
+
+You are good to go.
+Depending on previous work you might additionally have to delete now obsolete entries in the experiment database table,
+re-rerun `writereactiondb.py` and `weighin_calculator.py`, and delete entries in `plate_list.csv`.

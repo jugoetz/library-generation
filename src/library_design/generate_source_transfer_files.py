@@ -84,6 +84,8 @@ def compound_to_source_plate(cmpd):
 source_plate_layout_file = PLATES_DIR / conf["exp_dir"] / "source_plate_layout.csv"
 transfer_file = PLATES_DIR / conf["exp_dir"] / "ot2_transfers.csv"
 
+print(f"Reading source plate layout from {source_plate_layout_file}...")
+
 target_plate = Plate384(max_vol=65000, dead_vol=15000)
 target_plate.from_csv(source_plate_layout_file)
 
@@ -137,4 +139,8 @@ df_lcms["target_volumes"] = [1000, ] * len(df_lcms)
 
 df = pd.concat((df, df_lcms), ignore_index=True)
 
+print(f"Writing transfers to {transfer_file}...")
+
 df[["step", "source_plate", "source_well", "target_wells", "target_volumes"]].to_csv(transfer_file, index=False)
+
+print("Done.")

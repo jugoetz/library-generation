@@ -47,7 +47,7 @@ for exp_nr, exp in enumerate(synthesis_plan):
         source_plate.fill_well(source_plate.free(), initiator, 35000)
 
     # to be able to use Plate.free() for the Monomers and Terminators as well, we use a little trick and fill the empty
-    # rows with placeholders that we will get rid off later
+    # rows with placeholders that we will get rid of later
     source_plate.fill_span('C1', 'E24', 'placeholder', 65000)
     source_plate.fill_span('H1', 'J24', 'placeholder', 65000)
 

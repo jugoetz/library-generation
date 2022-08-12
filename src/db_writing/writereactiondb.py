@@ -63,12 +63,12 @@ def get_plates_for_experiment(exp_dir):
     Import the plate layouts for an experiment into a dictionary of plates.
     """
     plates_dict = {}
-    for path, _, files in os.walk(PLATES_DIR / f'{exp_dir}'):
-        for f in files:
-            m = re.compile(conf['plate_regex']).match(f)
+    with os.scandir(PLATES_DIR / f'{exp_dir}') as it:
+        for entry in it:
+            m = re.compile(conf['plate_regex']).match(entry.name)
             if m:
-                print(f'Retrieving plate layout: {f}...')
-                plate = import_pl(Path(path, f), return_type='plate')
+                print(f'Retrieving plate layout: {entry.name}...')
+                plate = import_pl(entry.path, return_type='plate')
                 plates_dict[m.group(1)] = plate
     print(f'Retrieved data for {len(plates_dict)} plate(s).')
     return plates_dict

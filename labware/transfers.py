@@ -94,6 +94,11 @@ class Transfer:
 
 
 if __name__ == '__main__':
+
+    """
+    This routine checks whether given Echo transfer files generate the correct target plates from a given source plate.
+    """
+
     import csv
 
 
@@ -108,12 +113,13 @@ if __name__ == '__main__':
 
 
     transfer_steps = []
-    transfer_steps += import_echo_transfer_file('../data/plates/exp4/step1.csv')
-    transfer_steps += import_echo_transfer_file('../data/plates/exp4/step2.csv')
+    transfer_steps += import_echo_transfer_file('../data/plates/exp25/step1.csv')
+    transfer_steps += import_echo_transfer_file('../data/plates/exp25/step2.csv')
     transfer = Transfer(transfer_steps)
     print(transfer)
-    source_plate = Plate384(max_vol=65000, dead_vol=15000)
-    source_plate.from_csv('/Users/julian/PycharmProjects/library-generation/data/plates/exp4/source_plate_layout.csv')
+    source_plate = Plate384(max_vol=65000,
+                            dead_vol=13000)  # note we set the dead volume to 13 uL not 15 as in plate specs
+    source_plate.from_csv('/Users/julian/PycharmProjects/library-generation/data/plates/exp25/source_plate_layout.csv')
     print(source_plate)
     planned_destination_plates = {
         'Synthesis1': Plate384Echo(),
@@ -126,7 +132,7 @@ if __name__ == '__main__':
 
     for i in range(6):
         planned_destination_plates[f'Synthesis{i + 1}'].from_csv(
-            f'/Users/julian/PycharmProjects/library-generation/data/plates/exp4/plate_layout_plate{i + 1}.csv')
+            f'/Users/julian/PycharmProjects/library-generation/data/plates/exp25/plate_layout_plate{i + 1}.csv')
         print((planned_destination_plates[f'Synthesis{i + 1}']))
 
     destination_plates = transfer.simulate({'Source1': source_plate}, 384, save_plate=True,
@@ -136,6 +142,6 @@ if __name__ == '__main__':
         planned_plate = planned_destination_plates[key]
         print(plate)
         for well, well_planned in zip(plate.iterate_wells(), planned_plate.iterate_wells()):
-
+            well_planned[1].insert(2, "X")
             if well != well_planned:
                 print(f'{well}, {well_planned}')

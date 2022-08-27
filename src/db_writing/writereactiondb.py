@@ -132,6 +132,10 @@ def main():
     # import the plate info
     plates_dict = get_plates_for_experiment(conf['exp_dir'])
 
+    # we only consider plates listed in the config file
+    plates_dict = {k: v for k, v in plates_dict.items() if int(k) in conf['db']['plate_nrs']}
+    print(f'Based on the configuration for plate_nrs, {len(plates_dict)} plate(s) are considered.')
+
     # get the info about well <-> composition into a single df
     well_list = []
     for i, plate in plates_dict.items():

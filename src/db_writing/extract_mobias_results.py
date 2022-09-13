@@ -1,7 +1,7 @@
 """
-Evaluate yields of a plate from Mobias output. Save the yields to the DB.
+Evaluate yields of a plate from MoBiAS output. Save the yields to the DB.
 
-MIND THAT THIS SCRIPT WILL NOT OVERWRITE DB RECORDS AND MAY WRITE DUPLICATES
+This script will overwrite existing records in the lcms table (with the same synthesis_id).
 """
 import re
 import sqlite3
@@ -124,8 +124,9 @@ def save_mobias_data_to_db(df, db_path, exp_nr):
             if index.endswith('Area'):
                 compounds.append(index)
                 areas.append(value)
-        cur.execute('INSERT INTO lcms (synthesis_id, lcms_compounds, lcms_areas) VALUES (?, ?, ?);',
-                    (synthesis_id, repr(compounds), repr(areas)))
+        cur.execute(
+            'INSERT INTO lcms (synthesis_id, lcms_compounds, lcms_areas) VALUES (?, ?, ?) ON CONFLICT(synthesis_id) DO UPDATE SET lcms_compounds = ?, lcms_areas = ? WHERE synthesis_id = ?;',
+            (synthesis_id, repr(compounds), repr(areas), repr(compounds), repr(areas), synthesis_id))
     con.commit()
     return
 

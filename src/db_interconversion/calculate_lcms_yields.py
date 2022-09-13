@@ -89,7 +89,7 @@ def split_products_into_dataframes(df, exp_dir):
 
 
 def calculate_lcms_yield(dict_df):
-    """calculate the mass response ratio (i.e. our approximation of yield) for a compounds vs. internal standard """
+    """Calculate the mass response ratio (i.e. our approximation of yield) for a compounds vs. internal standard """
     # divide all values by the IS value
     for key, df in dict_df.items():
         df.loc[:, "yield"] = df.loc[:, "yield"].astype('float64') / dict_df["IS"].loc[:, "yield"]
@@ -98,6 +98,7 @@ def calculate_lcms_yield(dict_df):
 
 
 def save_lcms_yields_to_db(dict_df, db_path):
+    """From the LCMS yield data, extract the yield for each product and save it to the DB"""
     con = sqlite3.connect(db_path)
     cur = con.cursor()
     # load the saved connections between product type (e.g. A) and SumFxx field

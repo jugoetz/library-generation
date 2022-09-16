@@ -4,7 +4,8 @@ Location data is taken from plate_layout files in either experiment directories 
 in individual directories with lab journal numbers (e.g. JG228, non-standard - add things not within 50k project scope).
 Compound data is retrieved from 'virtuallibrary' table.
 
-TODO: Check documentation accuracy + add a warning about the appending or overwriting parts
+Note that this script appends records to the 'experiments' table.
+Any previous, outdated records will remain in the table.
 """
 
 import re

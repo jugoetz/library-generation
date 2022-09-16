@@ -10,7 +10,7 @@ Tools needed to deal generate HTE compound libraries. Specialized on Synthetic F
 
 #### db_models
 
-ORM models for database. Currently not use din production
+ORM models for database. Currently not used in production
 
 #### db_retrieval
 

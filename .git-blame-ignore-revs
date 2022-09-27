@@ -1,2 +1,4 @@
 # migrate code to black
 4534e56a4281eec51f1d450b93c12cbf70a407e8
+# add black to pre-commit hooks
+d339d1ecc8e1801c8e25c5d0e040476e28d146d3

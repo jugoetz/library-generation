@@ -10,7 +10,8 @@ from src.definitions import UTIL_DIR
 
 con = MyDatabaseConnection()
 df = pd.DataFrame(con.get_number_of_experiments_by_date())
-df.to_csv(UTIL_DIR / "experiment_numbers.csv",
-          header=["synthesis date", "number of compounds"],
-          index=False
-          )
+df.to_csv(
+    UTIL_DIR / "experiment_numbers.csv",
+    header=["synthesis date", "number of compounds"],
+    index=False,
+)

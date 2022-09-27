@@ -50,7 +50,7 @@ def import_sm(file):
         # iterate txt-file
         for line in f:
             # split columns of space-delimited file
-            columns = line.strip('\n').split(sep=' ', maxsplit=1)
+            columns = line.strip("\n").split(sep=" ", maxsplit=1)
             # remove any "_XX" suffixes from long names
             dictionary[columns[0]] = columns[1].split("_")[0]
     return dictionary
@@ -65,7 +65,9 @@ def import_mf(file):
     try:
         # import molecular formulae to pandas dataframe, then convert to dictionary
         mf_dict = pd.read_csv(file, index_col="row ID").to_dict()
-        mf_dict = mf_dict["Molecular formula"]  # remove the outer level of the dictionary
+        mf_dict = mf_dict[
+            "Molecular formula"
+        ]  # remove the outer level of the dictionary
         # strip the person identifiers and [1/1] from the titles, so that only say "2-Pyr002" remains
         new_dict = {}
         for dic_key in mf_dict.keys():
@@ -92,7 +94,7 @@ def import_pl():
     # import all plate layouts to single dictionary
     layout = {}
     # iterate plates
-    for plate in range(1, int(number_of_plates)+1):
+    for plate in range(1, int(number_of_plates) + 1):
         filename = "plate_layout_plate{}.csv".format(plate)
         if verbose:
             print("Trying to open {}...\n".format(filename))
@@ -100,19 +102,27 @@ def import_pl():
         columns = []
         wells = []
         i = True
-        with open(filename, newline='') as csvfile:
+        with open(filename, newline="") as csvfile:
             csvreader = csv.reader(csvfile, dialect="excel")
             for line in csvreader:
                 if i:  # True for the first line
                     columns = line
                     i = False
-                rows.append(line[0])  # Put the first element of every line (row letter) into list
+                rows.append(
+                    line[0]
+                )  # Put the first element of every line (row letter) into list
                 wells.append(line)  # put everything from csv file into list
         # prepare the dictionary
-        for i in range(1, len(rows)):  # iterate excluding the first row (column numbers)
-            for j in range(1, len(columns)):  # iterate excluding the first column (row letters)
+        for i in range(
+                1, len(rows)
+        ):  # iterate excluding the first row (column numbers)
+            for j in range(
+                    1, len(columns)
+            ):  # iterate excluding the first column (row letters)
                 # construct key as e.g. "1-A,1" and assign value e.g. "I1, M1, T1"
-                layout["".join([str(plate), "-", rows[i], ",", columns[j]])] = wells[i][j]
+                layout["".join([str(plate), "-", rows[i], ",", columns[j]])] = wells[i][
+                    j
+                ]
     return layout
 
 
@@ -167,14 +177,17 @@ def remove_one_proton(dictionary, position):
     :return:
     """
     import re
+
     count = 0  # counts proton substractions
     for dic_key in dictionary.keys():
         str_list_to_modify = dictionary[dic_key][position].split(sep=" ")
-        str_to_modify = str_list_to_modify[1]  # THIS HOLDS THE HARDCODED ASSUMPTION THAT H COMES SECOND IN THE MOLECULAR FORMULA!
+        str_to_modify = str_list_to_modify[
+            1
+        ]  # THIS HOLDS THE HARDCODED ASSUMPTION THAT H COMES SECOND IN THE MOLECULAR FORMULA!
         match = re.match(r"([a-z]+)([0-9]+)", str_to_modify, re.I)
         if match:
             items = match.groups()
-            protons = "".join([items[0], str(int(items[1])-1)])
+            protons = "".join([items[0], str(int(items[1]) - 1)])
             str_list_to_modify[1] = protons
             dictionary[dic_key][position] = " ".join(str_list_to_modify)
             count += 1
@@ -182,7 +195,11 @@ def remove_one_proton(dictionary, position):
             print("ERROR in function remove_one_proton: Failed to find proton count.")
             exit(1)
     if verbose:
-        print("Removed a total of {} protons from {} product_generator.\n".format(count, len(dictionary.keys())))
+        print(
+            "Removed a total of {} protons from {} product_generator.\n".format(
+                count, len(dictionary.keys())
+            )
+        )
         print("Updated dictionary after proton removal:\n{}\n".format(dictionary))
     return dictionary
 
@@ -198,7 +215,11 @@ def add_internal_standard(dictionary, molform):
     for dic_key in dictionary.keys():
         dictionary[dic_key].append(molform)
     if verbose:
-        print("Added internal standard.\n New molecular formulae table:\n{}\n".format(dictionary))
+        print(
+            "Added internal standard.\n New molecular formulae table:\n{}\n".format(
+                dictionary
+            )
+        )
     return dictionary
 
 
@@ -212,7 +233,7 @@ def convert_mf_to_mass(dictionary):
     """
     for dic_key in dictionary.keys():
         for i in range(0, len(dictionary[dic_key])):
-            if dictionary[dic_key][i] != '':  # omit empty entries
+            if dictionary[dic_key][i] != "":  # omit empty entries
                 # create a Formula object from string
                 formula_object = Formula(dictionary[dic_key][i])
                 # calculate monoisotopic mass
@@ -230,8 +251,12 @@ def get_experiment_number():
     cwd = os.getcwd()
     parent_folder = cwd.split("/")[-1]
     # ask user to confirm default or choose alternative name
-    alternative_name = input("Experiment number was detected as '{}' from directory name. "
-                             "Press ENTER to confirm or write a different experiment number...\n".format(parent_folder))
+    alternative_name = input(
+        "Experiment number was detected as '{}' from directory name. "
+        "Press ENTER to confirm or write a different experiment number...\n".format(
+            parent_folder
+        )
+    )
     if alternative_name != "":
         parent_folder = alternative_name
     experiment_number = parent_folder + "-"
@@ -251,14 +276,18 @@ def write_csv(dictionary, file, experiment_number):
     for dic_key in dictionary.keys():
         if len(dictionary[dic_key]) > max_length:
             max_length = len(dictionary[dic_key])
-    for i in range(1, max_length+1):
-        header.append("SumF"+str(i))
-    with open(file, "w", newline='') as csvfile:
+    for i in range(1, max_length + 1):
+        header.append("SumF" + str(i))
+    with open(file, "w", newline="") as csvfile:
         writer = csv.writer(csvfile, dialect="excel")
         writer.writerow(header)
         i = 1
         for dic_key in dictionary.keys():
-            writer.writerow([experiment_number+"{0:0=4d}".format(i)] + [dic_key] + dictionary[dic_key])
+            writer.writerow(
+                [experiment_number + "{0:0=4d}".format(i)]
+                + [dic_key]
+                + dictionary[dic_key]
+            )
             i += 1
     return
 
@@ -267,22 +296,22 @@ def write_csv(dictionary, file, experiment_number):
 #                                                        MAIN                                                          #
 ########################################################################################################################
 v = False
-DATA_DIR = Path('data').resolve()
-INPUT_DIR = DATA_DIR / 'inputs'
+DATA_DIR = Path("data").resolve()
+INPUT_DIR = DATA_DIR / "inputs"
 
-if __name__ == '__main__':
-    if '-v' in sys.argv or v is True:
+if __name__ == "__main__":
+    if "-v" in sys.argv or v is True:
         verbose = True
     else:
         verbose = False
 
     # import data
-    molecularFormulae_A = import_mf(INPUT_DIR / 'A.csv')
-    molecularFormulae_B = import_mf(INPUT_DIR / 'B.csv')
-    molecularFormulae_C = import_mf(INPUT_DIR / 'C.csv')
-    molecularFormulae_D = import_mf(INPUT_DIR / 'D.csv')
-    molecularFormulae_E = import_mf(INPUT_DIR / 'E.csv')
-    startingMaterial_dict = import_sm(DATA_DIR / 'outputs' / 'compound_mapping.txt')
+    molecularFormulae_A = import_mf(INPUT_DIR / "A.csv")
+    molecularFormulae_B = import_mf(INPUT_DIR / "B.csv")
+    molecularFormulae_C = import_mf(INPUT_DIR / "C.csv")
+    molecularFormulae_D = import_mf(INPUT_DIR / "D.csv")
+    molecularFormulae_E = import_mf(INPUT_DIR / "E.csv")
+    startingMaterial_dict = import_sm(DATA_DIR / "outputs" / "compound_mapping.txt")
     plateLayout_dict = import_pl()
 
     if verbose:
@@ -303,9 +332,17 @@ if __name__ == '__main__':
     translatedplateLayout = {}
     # for every well, generate the product names
     for key in plateLayout_dict.keys():
-        starting_material = translate_names(plateLayout_dict[key], startingMaterial_dict)
+        starting_material = translate_names(
+            plateLayout_dict[key], startingMaterial_dict
+        )
         product_ABC, product_D, product_E = generate_product_names(starting_material)
-        translatedplateLayout[key] = [product_ABC, product_ABC, product_ABC, product_D, product_E]
+        translatedplateLayout[key] = [
+            product_ABC,
+            product_ABC,
+            product_ABC,
+            product_D,
+            product_E,
+        ]
         if verbose:
             print("Well {}".format(key))
             print("Product ABC:\n{}".format(product_ABC))
@@ -318,49 +355,77 @@ if __name__ == '__main__':
     for key in translatedplateLayout.keys():
         if "n/a" not in translatedplateLayout[key]:  # don't process well if n/a
             try:
-                molecularFormulae_dict[key] = [molecularFormulae_A[translatedplateLayout[key][0]]]
+                molecularFormulae_dict[key] = [
+                    molecularFormulae_A[translatedplateLayout[key][0]]
+                ]
             except KeyError:
                 molecularFormulae_dict[key] = [""]
             try:
-                molecularFormulae_dict[key].append(molecularFormulae_B[translatedplateLayout[key][1]])
+                molecularFormulae_dict[key].append(
+                    molecularFormulae_B[translatedplateLayout[key][1]]
+                )
             except KeyError:
                 molecularFormulae_dict[key].append("")
             try:
-                molecularFormulae_dict[key].append(molecularFormulae_C[translatedplateLayout[key][2]])
+                molecularFormulae_dict[key].append(
+                    molecularFormulae_C[translatedplateLayout[key][2]]
+                )
             except KeyError:
                 molecularFormulae_dict[key].append("")
             try:
-                molecularFormulae_dict[key].append(molecularFormulae_D[translatedplateLayout[key][3]])
+                molecularFormulae_dict[key].append(
+                    molecularFormulae_D[translatedplateLayout[key][3]]
+                )
             except KeyError:
                 molecularFormulae_dict[key].append("")
             try:
-                molecularFormulae_dict[key].append(molecularFormulae_E[translatedplateLayout[key][4]])
+                molecularFormulae_dict[key].append(
+                    molecularFormulae_E[translatedplateLayout[key][4]]
+                )
             except KeyError:
                 molecularFormulae_dict[key].append("")
         else:
             if verbose:
-                print("Well {} is empty. If well {} is non-empty in the input, an error has occurred.".format(key, key))
+                print(
+                    "Well {} is empty. If well {} is non-empty in the input, an error has occurred.".format(
+                        key, key
+                    )
+                )
     if verbose:
-        print("\nPrepared dictionary with molecular formulae by well:\n{}\n".format(molecularFormulae_dict))
+        print(
+            "\nPrepared dictionary with molecular formulae by well:\n{}\n".format(
+                molecularFormulae_dict
+            )
+        )
 
     # remove one proton from product C if user wishes
-    remove_proton_y_n = input("Should the mass of product C be reduced by one hydrogen? "
-                              "(to correct the frequent Schrödinger error) [enter y for yes]...\n")
+    remove_proton_y_n = input(
+        "Should the mass of product C be reduced by one hydrogen? "
+        "(to correct the frequent Schrödinger error) [enter y for yes]...\n"
+    )
     if remove_proton_y_n == "y":
-        molecularFormulae_dict = remove_one_proton(molecularFormulae_dict, 2)  # the 2 equals product C
+        molecularFormulae_dict = remove_one_proton(
+            molecularFormulae_dict, 2
+        )  # the 2 equals product C
     else:
         print("You chose to skip proton removal.\n")
 
     # add internal standard if user wishes
-    internal_standard_y_n = input("Was Fenofibrat added as internal standard? [enter y for yes]...\n")
+    internal_standard_y_n = input(
+        "Was Fenofibrat added as internal standard? [enter y for yes]...\n"
+    )
     internalStandardMF = "C20 H21 O4 Cl"  # molecular formula of Fenofibrat
     if internal_standard_y_n == "y":
-        molecularFormulae_dict = add_internal_standard(molecularFormulae_dict, internalStandardMF)
+        molecularFormulae_dict = add_internal_standard(
+            molecularFormulae_dict, internalStandardMF
+        )
     else:
         print("You chose not to add internal standard.\n")
 
     # convert molecular formula to exact mass if user wishes
-    convert_to_mass = input("Convert molecular formulae to mass? [enter y for yes]...\n")
+    convert_to_mass = input(
+        "Convert molecular formulae to mass? [enter y for yes]...\n"
+    )
     if convert_to_mass == "y":
         molecularFormulae_dict = convert_mf_to_mass(molecularFormulae_dict)
         print("Molecular formulae were converted to exact masses.")
@@ -368,7 +433,7 @@ if __name__ == '__main__':
             print("Updated dictionary:\n{}\n".format(molecularFormulae_dict))
 
     # generate output
-    output_file = DATA_DIR / 'outputs' / 'mobias_submission.csv'
+    output_file = DATA_DIR / "outputs" / "mobias_submission.csv"
     ex_number = get_experiment_number()
     write_csv(molecularFormulae_dict, output_file, ex_number)
     print("Data was written to '{}'.".format(output_file))

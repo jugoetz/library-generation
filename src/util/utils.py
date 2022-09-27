@@ -7,7 +7,7 @@ from src.definitions import CONF_PATH, PLATE_LIST_PATH
 
 def get_conf():
     """Read the config.yaml file for the project"""
-    with open(CONF_PATH, 'r') as file:
+    with open(CONF_PATH, "r") as file:
         conf = safe_load(file)
     return conf
 
@@ -20,7 +20,7 @@ def get_product_dict(exp_dir):
     :param exp_dir: directory or the experiment under consideration
     :return: dict of the form {"A_formula": "SumF1", ...}
     """
-    with open(exp_dir / 'compound_alternative_mass_dict.json', 'r') as file:
+    with open(exp_dir / "compound_alternative_mass_dict.json", "r") as file:
         product_dict = json.load(file)
     return product_dict
 
@@ -35,7 +35,7 @@ def get_internal_standard_number(exp_dir):
     :rtype: str
     """
     product_dict = get_product_dict(exp_dir)
-    return product_dict['IS_formula']
+    return product_dict["IS_formula"]
 
 
 def get_lcms_file_name(lab_journal_number):
@@ -46,4 +46,6 @@ def get_lcms_file_name(lab_journal_number):
     :rtype: str
     """
     df = pd.read_csv(PLATE_LIST_PATH)
-    return df.loc[df['lab_journal_number'] == lab_journal_number, 'results_file_name'].values[0]
+    return df.loc[
+        df["lab_journal_number"] == lab_journal_number, "results_file_name"
+    ].values[0]

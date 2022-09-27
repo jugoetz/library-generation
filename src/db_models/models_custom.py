@@ -22,24 +22,30 @@ class MyBuildingBlock(BuildingBlockBase):
 
     Also, inputs can be subject to filtering rules. TODO
     """
-    __mapper_args__ = {
-        'polymorphic_identity': 'mybuildingblock'
-    }
+
+    __mapper_args__ = {"polymorphic_identity": "mybuildingblock"}
 
     category = Column(String)
     comment = Column(String)
     weigh_in = Column(String)
 
-    def __init__(self, name, smiles, category, nickname='auto', reactant_class='generic', id_int=None, comment=None,
-                 ):
-        super().__init__(name, smiles, nickname, reactant_class, id_int
-                         )
+    def __init__(
+            self,
+            name,
+            smiles,
+            category,
+            nickname="auto",
+            reactant_class="generic",
+            id_int=None,
+            comment=None,
+    ):
+        super().__init__(name, smiles, nickname, reactant_class, id_int)
         self.category = category
         self.comment = comment
         self.weigh_in = self.__get_weigh_in()
 
     def __repr__(self):
-        return f'BuildingBlock(id={self.id}, name={self.name}, smiles={self.smiles}, category={self.category}, weigh-in={self.weigh_in})'
+        return f"BuildingBlock(id={self.id}, name={self.name}, smiles={self.smiles}, category={self.category}, weigh-in={self.weigh_in})"
 
     def __get_weigh_in(self):
         """Calculate weigh-in for preparing 0.1 mL of a 0.05 M solution from MolWt"""
@@ -53,12 +59,11 @@ class MyBottle(BottleBase):
     Additional info:
     - mass / mass unit
     """
-    __mapper_args__ = {
-        'polymorphic_identity': 'mybottle'
-    }
+
+    __mapper_args__ = {"polymorphic_identity": "mybottle"}
 
     mass = Column(Float)
     mass_unit = Column(String)
 
     def __repr__(self):
-        return f'Bottle(id={self.id}, barcode={self.barcode}, buildingblock={self.buildingblock})'
+        return f"Bottle(id={self.id}, barcode={self.barcode}, buildingblock={self.buildingblock})"

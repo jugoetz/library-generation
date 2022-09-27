@@ -44,7 +44,18 @@ def mask_arr(arr, start, end):
 combinations = []
 
 compounds = list(range(0, 64)) + list(range(100, 172)) + list(range(200, 240))
-usage = [3] * 48 + [0] * 16 + [4] * 12 + [2] * 24 + [1] * 12 + [0] * 24 + [6] * 10 + [2] * 10 + [1] * 10 + [0] * 10
+usage = (
+        [3] * 48
+        + [0] * 16
+        + [4] * 12
+        + [2] * 24
+        + [1] * 12
+        + [0] * 24
+        + [6] * 10
+        + [2] * 10
+        + [1] * 10
+        + [0] * 10
+)
 usage = np.array(usage)
 print(usage)
 
@@ -58,7 +69,12 @@ for _ in range(20):
     usage[idx_m] += 1
     usage[idx_t] += 1
 
-    combinations += [f"{compounds[i]}_{compounds[m]}_{compounds[t]}" for i in idx_i for m in idx_m for t in idx_t]
+    combinations += [
+        f"{compounds[i]}_{compounds[m]}_{compounds[t]}"
+        for i in idx_i
+        for m in idx_m
+        for t in idx_t
+    ]
 print(usage)
 print(len(combinations))
 print(len(set(combinations)))

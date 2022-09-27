@@ -30,7 +30,7 @@ conf = get_conf()
 
 def strip_brackets(s):
     """Strip brackets from a string."""
-    return s.strip('[').strip(']')
+    return s.strip("[").strip("]")
 
 
 def import_lcms_for_plate(db_cur, lab_journal_nr, unique_ids=True):
@@ -46,16 +46,17 @@ def import_lcms_for_plate(db_cur, lab_journal_nr, unique_ids=True):
     """
     # for now, we do this for a certain synthesis id. we could also do it for the entire DB
     res = db_cur.execute(
-        'SELECT synthesis_id, lcms_compounds, lcms_areas FROM lcms WHERE synthesis_id IN (SELECT id FROM experiments WHERE lab_journal_number = ?);',
-        (lab_journal_nr,)).fetchall()
+        "SELECT synthesis_id, lcms_compounds, lcms_areas FROM lcms WHERE synthesis_id IN (SELECT id FROM experiments WHERE lab_journal_number = ?);",
+        (lab_journal_nr,),
+    ).fetchall()
     # we rearrange the data to put it into a dataframe
     synthesis_ids, headers, data = [[x[i] for x in res] for i in range(3)]
     # check that all headers are identical
     if not headers.count(headers[0]) == len(headers):
-        raise ValueError('The data headers are not identical for all synthesis ids')
+        raise ValueError("The data headers are not identical for all synthesis ids")
     # check that all synthesis ids are unique
     if unique_ids and not len(synthesis_ids) == len(set(synthesis_ids)):
-        raise RuntimeError('There are multiple entries for a given synthesis id')
+        raise RuntimeError("There are multiple entries for a given synthesis id")
     # cast data to float
     data = [[float(strip_brackets(s)) for s in d.split(",")] for d in data]
     # put everything into a dataframe
@@ -68,31 +69,33 @@ def split_products_into_dataframes(df, exp_dir):
     df_dict = {}
 
     # find the product columns in df by regex
-    regex = re.compile('SumF([0-9]+) Area')
+    regex = re.compile("SumF([0-9]+) Area")
     product_columns = filter(regex.match, df.columns)
 
     # for every product column, add a separate df to dict
     for c in product_columns:
         number = int(regex.match(c).group(1))
         df_dict[number] = df.loc[:, [c]]
-        df_dict[number] = df_dict[number].rename(columns={c: 'yield'})
+        df_dict[number] = df_dict[number].rename(columns={c: "yield"})
 
     # Add df for BPC to dict as well
-    df_dict['BPC'] = df.loc[:, ['BPC Area']].rename(columns={'BPC Area': 'yield'})
+    df_dict["BPC"] = df.loc[:, ["BPC Area"]].rename(columns={"BPC Area": "yield"})
 
     # Generate dataframe for IS
-    internal_standard_number = int(get_internal_standard_number(exp_dir).strip('SumF'))
-    df_dict['IS'] = df_dict[internal_standard_number]
+    internal_standard_number = int(get_internal_standard_number(exp_dir).strip("SumF"))
+    df_dict["IS"] = df_dict[internal_standard_number]
     del df_dict[internal_standard_number]
 
     return df_dict
 
 
 def calculate_lcms_yield(dict_df):
-    """Calculate the mass response ratio (i.e. our approximation of yield) for a compounds vs. internal standard """
+    """Calculate the mass response ratio (i.e. our approximation of yield) for a compounds vs. internal standard"""
     # divide all values by the IS value
     for key, df in dict_df.items():
-        df.loc[:, "yield"] = df.loc[:, "yield"].astype('float64') / dict_df["IS"].loc[:, "yield"]
+        df.loc[:, "yield"] = (
+                df.loc[:, "yield"].astype("float64") / dict_df["IS"].loc[:, "yield"]
+        )
 
     return dict_df
 
@@ -104,18 +107,21 @@ def save_lcms_yields_to_db(dict_df, db_path):
     # load the saved connections between product type (e.g. A) and SumFxx field
     product_dict = get_product_dict(exp_dir)
     # reformat dict for easier use
-    product_associations = {t: [v for k, v in product_dict.items() if k.startswith(t)] for t in 'ABCDEFGH'}
+    product_associations = {
+        t: [v for k, v in product_dict.items() if k.startswith(t)] for t in "ABCDEFGH"
+    }
     # sum over all dataframes for a product type
     for k, v in product_associations.items():
         # get all dataframes for a product type
-        product_yields = [dict_df[int(val.strip('SumF'))] for val in v]
+        product_yields = [dict_df[int(val.strip("SumF"))] for val in v]
         # sum over all dataframes for a product type
         yield_df = reduce(lambda a, b: a.add(b, fill_value=0.0), product_yields)
         # save to DB
         for i, data in yield_df.iterrows():
             cur.execute(
-                f'UPDATE main.experiments SET product_{k}_lcms_ratio = ? WHERE id = ?;',
-                (data['yield'], i))
+                f"UPDATE main.experiments SET product_{k}_lcms_ratio = ? WHERE id = ?;",
+                (data["yield"], i),
+            )
         con.commit()
     con.close()
     return
@@ -144,9 +150,9 @@ def calculate_lcms_yields(db_path, exp_dir, lab_journal_nr):
     con.close()
 
 
-if __name__ == '__main__':
-    for lab_journal_nr in conf['lab_journal_numbers']:
-        print(f'Now calculating LCMS ratios for {lab_journal_nr}...')
+if __name__ == "__main__":
+    for lab_journal_nr in conf["lab_journal_numbers"]:
+        print(f"Now calculating LCMS ratios for {lab_journal_nr}...")
         exp_dir = PLATES_DIR / lab_journal_nr
         calculate_lcms_yields(DB_PATH, exp_dir, lab_journal_nr)
-    print('Calculation of LCMS yields finished!')
+    print("Calculation of LCMS yields finished!")

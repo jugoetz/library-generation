@@ -53,9 +53,39 @@ def compound_to_well(cmpd):
 def compound_to_outer_well(cmpds, cmpd_type):
     cmpd_list = sorted(cmpds.values.tolist(), key=lambda x: (x[0], int(x[1:])))
     if cmpd_type == "I":
-        wells = ["A1", "A2", "A3", "A4", "A5", "A6", "A7", "A8", "A9", "A11", "H1", "H3", "H5", "H7", "H9", "H11"]
+        wells = [
+            "A1",
+            "A2",
+            "A3",
+            "A4",
+            "A5",
+            "A6",
+            "A7",
+            "A8",
+            "A9",
+            "A11",
+            "H1",
+            "H3",
+            "H5",
+            "H7",
+            "H9",
+            "H11",
+        ]
     elif cmpd_type == "M":
-        wells = ["A1", "A3", "A5", "A7", "A9", "A11", "H1", "H3", "H5", "H7", "H9", "H11"]
+        wells = [
+            "A1",
+            "A3",
+            "A5",
+            "A7",
+            "A9",
+            "A11",
+            "H1",
+            "H3",
+            "H5",
+            "H7",
+            "H9",
+            "H11",
+        ]
     elif cmpd_type == "T":
         wells = ["A1", "A3", "A5", "A7", "A9", "A11", "H1", "H3", "H5", "H7"]
     else:
@@ -99,19 +129,27 @@ for well in target_plate.wells():
     transfers[well_content[0][0]][0].append(well)
     transfers[well_content[0][0]][1].append(well_content[1])
 
-df = pd.DataFrame.from_dict(transfers, orient="index").reset_index().rename(
-    columns={"index": "compound", 0: "target_wells", 1: "target_volumes"})
+df = (
+    pd.DataFrame.from_dict(transfers, orient="index")
+    .reset_index()
+    .rename(columns={"index": "compound", 0: "target_wells", 1: "target_volumes"})
+)
 df["source_plate"] = df["compound"].apply(compound_to_source_plate)
 if conf["ot2_transfers"]["source_plate_layout"] == "canonical_order":
     df["source_well"] = df["compound"].apply(compound_to_well)
 elif conf["ot2_transfers"]["source_plate_layout"] == "outer_wells":
-    df["source_well"] = "A1"  # by initializing as A1, we don't have to take care of oxalic acid wells
+    df[
+        "source_well"
+    ] = "A1"  # by initializing as A1, we don't have to take care of oxalic acid wells
     df.loc[df["source_plate"] == "initiator", "source_well"] = compound_to_outer_well(
-        df.loc[df["source_plate"] == "initiator", "compound"], "I")
+        df.loc[df["source_plate"] == "initiator", "compound"], "I"
+    )
     df.loc[df["source_plate"] == "monomer", "source_well"] = compound_to_outer_well(
-        df.loc[df["source_plate"] == "monomer", "compound"], "M")
+        df.loc[df["source_plate"] == "monomer", "compound"], "M"
+    )
     df.loc[df["source_plate"] == "terminator", "source_well"] = compound_to_outer_well(
-        df.loc[df["source_plate"] == "terminator", "compound"], "T")
+        df.loc[df["source_plate"] == "terminator", "compound"], "T"
+    )
 
 else:
     raise ValueError("Invalid option for 'source_plate_layout'.")
@@ -126,21 +164,29 @@ df_lcms = df.loc[df["source_plate"] != "oxalic acid"].copy()
 df_lcms["source_plate"] += "_lcms"
 # chained sort to get I1->I99->M1->M99->T1->T99 order
 df_lcms = df_lcms.sort_values(
-    by="compound", kind="stable", key=lambda x: [int(y[1:]) for y in x]).sort_values(
-    by="compound", kind="stable", key=lambda x: [y[0] for y in x])
+    by="compound", kind="stable", key=lambda x: [int(y[1:]) for y in x]
+).sort_values(by="compound", kind="stable", key=lambda x: [y[0] for y in x])
 
-df_lcms.loc[df_lcms["source_plate"] == "initiator_lcms", "target_wells"] = [f"{r}{c}" for c in range(1, 5) for r in
-                                                                            "ABCD"]
-df_lcms.loc[df_lcms["source_plate"] == "monomer_lcms", "target_wells"] = [f"{r}{c}" for c in range(5, 8) for r in
-                                                                          "ABCD"]
-df_lcms.loc[df_lcms["source_plate"] == "terminator_lcms", "target_wells"] = [f"{r}{c}" for c in range(1, 4) for r in
-                                                                             "ABCD"][:-2]
-df_lcms["target_volumes"] = [1000, ] * len(df_lcms)
+df_lcms.loc[df_lcms["source_plate"] == "initiator_lcms", "target_wells"] = [
+    f"{r}{c}" for c in range(1, 5) for r in "ABCD"
+]
+df_lcms.loc[df_lcms["source_plate"] == "monomer_lcms", "target_wells"] = [
+    f"{r}{c}" for c in range(5, 8) for r in "ABCD"
+]
+df_lcms.loc[df_lcms["source_plate"] == "terminator_lcms", "target_wells"] = [
+                                                                                f"{r}{c}" for c in range(1, 4) for r in
+                                                                                "ABCD"
+                                                                            ][:-2]
+df_lcms["target_volumes"] = [
+                                1000,
+                            ] * len(df_lcms)
 
 df = pd.concat((df, df_lcms), ignore_index=True)
 
 print(f"Writing transfers to {transfer_file}...")
 
-df[["step", "source_plate", "source_well", "target_wells", "target_volumes"]].to_csv(transfer_file, index=False)
+df[["step", "source_plate", "source_well", "target_wells", "target_volumes"]].to_csv(
+    transfer_file, index=False
+)
 
 print("Done.")

@@ -28,93 +28,108 @@ import math
 from src.definitions import BUILDING_BLOCKS_DIR, IMAGES_DIR, LIB_SDF_DIR, LIB_INFO_DIR
 
 """Generate a DataFrame with all relevant information from inventory data"""
-print('Importing inventory data...')
-compounds = pd.read_csv(BUILDING_BLOCKS_DIR / 'inventory_compounds.csv')  # read df from inventory data
-compounds['mol'] = compounds['SMILES'].apply(Chem.MolFromSmiles)  # generate rdkit mol objects
-compounds['mol'] = compounds['mol'].apply(PropertyMol)
-compounds.apply(lambda x: x['mol'].SetProp('_Name', x['Compound Name']),
-                axis=1)  # add the name to mol for later saving to sdf
-compounds['img'] = compounds['mol'].apply(Draw.MolToImage)  # generate molecule images
-compounds['exact mass'] = compounds['mol'].apply(Descriptors.ExactMolWt)
-compounds['MW_from_mol'] = compounds['mol'].apply(Descriptors.MolWt)
-compounds['weigh-in [mg] / 100 µL'] = compounds['MW_from_mol']\
-    .apply(lambda x: round(x * 1e-4 * 0.05 * 1000, 2))  # calculate the weigh-in mass from MW from structure
+print("Importing inventory data...")
+compounds = pd.read_csv(
+    BUILDING_BLOCKS_DIR / "inventory_compounds.csv"
+)  # read df from inventory data
+compounds["mol"] = compounds["SMILES"].apply(
+    Chem.MolFromSmiles
+)  # generate rdkit mol objects
+compounds["mol"] = compounds["mol"].apply(PropertyMol)
+compounds.apply(
+    lambda x: x["mol"].SetProp("_Name", x["Compound Name"]), axis=1
+)  # add the name to mol for later saving to sdf
+compounds["img"] = compounds["mol"].apply(Draw.MolToImage)  # generate molecule images
+compounds["exact mass"] = compounds["mol"].apply(Descriptors.ExactMolWt)
+compounds["MW_from_mol"] = compounds["mol"].apply(Descriptors.MolWt)
+compounds["weigh-in [mg] / 100 µL"] = compounds["MW_from_mol"].apply(
+    lambda x: round(x * 1e-4 * 0.05 * 1000, 2)
+)  # calculate the weigh-in mass from MW from structure
 
 """Control: Check if ChemInventory MW and MW from structure align"""
-print('Verifying molecular weights...')
+print("Verifying molecular weights...")
 for i, data in compounds.iterrows():
-    if not math.isclose(data['MW [g/mol]'], data['MW_from_mol'], abs_tol=0.1):
-        print('WARNING: Molecular weight for the following compound is not in agreement with the value in ChemInventory')
+    if not math.isclose(data["MW [g/mol]"], data["MW_from_mol"], abs_tol=0.1):
+        print(
+            "WARNING: Molecular weight for the following compound is not in agreement with the value in ChemInventory"
+        )
         print(f'Cheminventory MW: {data["MW [g/mol]"]}')
         print(f'Calculate MW from mol: {data["MW_from_mol"]}')
         print(data)
-compounds.drop(columns=['MW [g/mol]'], inplace=True)  # we won't use this. Calculation from structure is more reliable.
+compounds.drop(
+    columns=["MW [g/mol]"], inplace=True
+)  # we won't use this. Calculation from structure is more reliable.
 
 """Generate outputs"""
 # output to Excel
-print('Generating Excel printout...')
-compounds.drop(columns=['mol', 'img'], inplace=False).to_excel(
-    BUILDING_BLOCKS_DIR / 'inventory_compounds_extended.xlsx')
+print("Generating Excel printout...")
+compounds.drop(columns=["mol", "img"], inplace=False).to_excel(
+    BUILDING_BLOCKS_DIR / "inventory_compounds_extended.xlsx"
+)
 
 # write the molecule images to files
-print('Generating molecule images...')
+print("Generating molecule images...")
 for i, data in compounds.iterrows():
-    with open(IMAGES_DIR / ''.join([data.loc['Compound Name'], '.png']), 'wb') as file:
-        data.loc['img'].save(file)
+    with open(IMAGES_DIR / "".join([data.loc["Compound Name"], ".png"]), "wb") as file:
+        data.loc["img"].save(file)
 
-img = Draw.MolsToGridImage(compounds['mol'].tolist(),
-                           molsPerRow=6,
-                           subImgSize=(400, 400),
-                           legends=compounds['Compound Name'].tolist(),
-                           )
-img_I = Draw.MolsToGridImage(compounds['mol'].loc[compounds['Category'] == 'I'].tolist(),
-                           molsPerRow=4,
-                           subImgSize=(600, 600),
-                           legends=compounds['Compound Name'].loc[compounds['Category'] == 'I'].tolist(),
-                           )
-img_M = Draw.MolsToGridImage(compounds['mol'].loc[compounds['Category'] == 'M'].tolist(),
-                           molsPerRow=4,
-                           subImgSize=(600, 600),
-                           legends=compounds['Compound Name'].loc[compounds['Category'] == 'M'].tolist(),
-                           )
-img_T = Draw.MolsToGridImage(compounds['mol'].loc[compounds['Category'] == 'T'].tolist(),
-                           molsPerRow=4,
-                           subImgSize=(600, 600),
-                           legends=compounds['Compound Name'].loc[compounds['Category'] == 'T'].tolist(),
-                           )
+img = Draw.MolsToGridImage(
+    compounds["mol"].tolist(),
+    molsPerRow=6,
+    subImgSize=(400, 400),
+    legends=compounds["Compound Name"].tolist(),
+)
+img_I = Draw.MolsToGridImage(
+    compounds["mol"].loc[compounds["Category"] == "I"].tolist(),
+    molsPerRow=4,
+    subImgSize=(600, 600),
+    legends=compounds["Compound Name"].loc[compounds["Category"] == "I"].tolist(),
+)
+img_M = Draw.MolsToGridImage(
+    compounds["mol"].loc[compounds["Category"] == "M"].tolist(),
+    molsPerRow=4,
+    subImgSize=(600, 600),
+    legends=compounds["Compound Name"].loc[compounds["Category"] == "M"].tolist(),
+)
+img_T = Draw.MolsToGridImage(
+    compounds["mol"].loc[compounds["Category"] == "T"].tolist(),
+    molsPerRow=4,
+    subImgSize=(600, 600),
+    legends=compounds["Compound Name"].loc[compounds["Category"] == "T"].tolist(),
+)
 
 # write a big overview
-with open(IMAGES_DIR / '_overview.png', 'wb') as file:
+with open(IMAGES_DIR / "_overview.png", "wb") as file:
     img.save(file)
-with open(IMAGES_DIR / '_I.png', 'wb') as file:
+with open(IMAGES_DIR / "_I.png", "wb") as file:
     img_I.save(file)
-with open(IMAGES_DIR / '_M.png', 'wb') as file:
+with open(IMAGES_DIR / "_M.png", "wb") as file:
     img_M.save(file)
-with open(IMAGES_DIR / '_T.png', 'wb') as file:
+with open(IMAGES_DIR / "_T.png", "wb") as file:
     img_T.save(file)
 
 # output to SDF
-print('Generating SDFs...')
-with open(LIB_SDF_DIR / 'initiators.sdf', 'w') as file_i, \
-        open(LIB_SDF_DIR / 'monomers.sdf', 'w') as file_m, \
-        open(LIB_SDF_DIR / 'terminators.sdf', 'w') as file_t:
+print("Generating SDFs...")
+with open(LIB_SDF_DIR / "initiators.sdf", "w") as file_i, open(
+        LIB_SDF_DIR / "monomers.sdf", "w"
+) as file_m, open(LIB_SDF_DIR / "terminators.sdf", "w") as file_t:
     writer_i = Chem.SDWriter(file_i)
     writer_m = Chem.SDWriter(file_m)
     writer_t = Chem.SDWriter(file_t)
     for i, data in compounds.iterrows():
-        if data.loc['Category'] == 'I':
-            writer_i.write(data.loc['mol'])
-        if data.loc['Category'] == 'M':
-            writer_m.write(data.loc['mol'])
-        if data.loc['Category'] == 'T':
-            writer_t.write(data.loc['mol'])
+        if data.loc["Category"] == "I":
+            writer_i.write(data.loc["mol"])
+        if data.loc["Category"] == "M":
+            writer_m.write(data.loc["mol"])
+        if data.loc["Category"] == "T":
+            writer_t.write(data.loc["mol"])
     """It is necessary to close the SDWriters manually to prevent an exception during garbage collection"""
     writer_i.close()
     writer_m.close()
     writer_t.close()
 
 # dump df
-print('Generating pickle dump...')
-compounds.to_pickle(LIB_INFO_DIR / 'library_constituents_dataframe.pkl')
+print("Generating pickle dump...")
+compounds.to_pickle(LIB_INFO_DIR / "library_constituents_dataframe.pkl")
 
-print('\nFinished. Exiting...')
+print("\nFinished. Exiting...")

@@ -15,25 +15,27 @@ import json
 from src.definitions import LIB_INFO_DIR, PLATES_DIR
 from labware.plates import Plate384
 
-with open(LIB_INFO_DIR / 'synthesis_plan.json', 'r') as file:
+with open(LIB_INFO_DIR / "synthesis_plan.json", "r") as file:
     synthesis_plan = json.load(file)
 
 for exp_nr, exp in enumerate(synthesis_plan):
-    print(f'{exp_nr}  |  {exp}')
+    print(f"{exp_nr}  |  {exp}")
 
 for exp_nr, exp in enumerate(synthesis_plan):
     # skip for plates that were already run when the skript was changed
     if exp_nr < 12:  # (starts at 0)
         continue
 
-    print(f'Experiment Nr. {exp_nr + 1}:')
+    print(f"Experiment Nr. {exp_nr + 1}:")
     print(exp[0])  # I
     print(exp[1])  # M
     print(exp[2])  # T
 
     # some controls
     assert len(exp[0]) == 16  # the 16 KAT will be spread over rows
-    assert len(exp[1]) == 12  # the 12 Mon will be spread into 16x10 blocks, giving 2 blocks per plate
+    assert (
+            len(exp[1]) == 12
+    )  # the 12 Mon will be spread into 16x10 blocks, giving 2 blocks per plate
     assert len(exp[2]) == 10  # the 10 Ter will be spread over columns
 
     # instantiate source plate
@@ -48,8 +50,8 @@ for exp_nr, exp in enumerate(synthesis_plan):
 
     # to be able to use Plate.free() for the Monomers and Terminators as well, we use a little trick and fill the empty
     # rows with placeholders that we will get rid of later
-    source_plate.fill_span('C1', 'E24', 'placeholder', 65000)
-    source_plate.fill_span('H1', 'J24', 'placeholder', 65000)
+    source_plate.fill_span("C1", "E24", "placeholder", 65000)
+    source_plate.fill_span("H1", "J24", "placeholder", 65000)
 
     # now we fill monomers into rows F and G. 4 wells per monomer, again in latin reading order.
     # volumes are 63 uL for the first three and 25 uL for the last well
@@ -67,14 +69,14 @@ for exp_nr, exp in enumerate(synthesis_plan):
         source_plate.fill_well(source_plate.free(), terminator, 30000)
 
     # as the last source compound, we fill oxalic acid (X) into the entire bottom row P (more than needed, as fallback)
-    source_plate.fill_span('P1', 'P24', 'X', 65000)
+    source_plate.fill_span("P1", "P24", "X", 65000)
 
     # finally, we empty the placeholder rows.
-    source_plate.empty_span('C1', 'E24')
-    source_plate.empty_span('H1', 'J24')
+    source_plate.empty_span("C1", "E24")
+    source_plate.empty_span("H1", "J24")
 
     print(source_plate)
 
-    exp_dir = PLATES_DIR / 'new' / f'exp{exp_nr + 1}'
+    exp_dir = PLATES_DIR / "new" / f"exp{exp_nr + 1}"
     # print plates to csv files
-    source_plate.to_csv(exp_dir / f'source_plate_layout.csv', save_volumes=True)
+    source_plate.to_csv(exp_dir / f"source_plate_layout.csv", save_volumes=True)

@@ -20,31 +20,38 @@ class Plate:
     --------------------
     The state of a plate instance is fully defined by the compounds and volume every well holds.
     """
+
     def __init__(self, n_rows: int, n_cols: int, max_vol: int, dead_vol: int):
         if dead_vol > max_vol:
-            raise ValueError('Dead volume cannot exceed maximum volume')
+            raise ValueError("Dead volume cannot exceed maximum volume")
         if n_rows < 1 or n_cols < 1:
-            raise ValueError('Invalid plate format')
+            raise ValueError("Invalid plate format")
         self.n_rows = n_rows
         self.n_cols = n_cols
         self.max_vol = max_vol  # max max_vol per well in nL
         self.dead_vol = dead_vol  # dead volume per well in nL
-        self._compounds: List[List[List[str]]] = [[[] for _ in range(n_cols)] for _ in range(n_rows)]
-        self._volume: List[List[int]] = [[0 for _ in range(n_cols)] for _ in range(n_rows)]
+        self._compounds: List[List[List[str]]] = [
+            [[] for _ in range(n_cols)] for _ in range(n_rows)
+        ]
+        self._volume: List[List[int]] = [
+            [0 for _ in range(n_cols)] for _ in range(n_rows)
+        ]
 
     def __str__(self):
         """Print an overview of the Plate"""
-        printout = '  '
-        printout += ''.join([f'{i + 1}'.ljust(32) for i in range(self.n_cols)])
-        printout += '\n'
+        printout = "  "
+        printout += "".join([f"{i + 1}".ljust(32) for i in range(self.n_cols)])
+        printout += "\n"
         for row_n, (row_c, row_v) in enumerate(zip(self._compounds, self._volume)):
-            printout += chr(65+row_n)
+            printout += chr(65 + row_n)
             for elem_c, elem_v in zip(row_c, row_v):
-                printout += f' ({elem_c}, {elem_v})'.ljust(32)
-            printout += '\n'
+                printout += f" ({elem_c}, {elem_v})".ljust(32)
+            printout += "\n"
         return printout
 
-    def __sanitize_inputs(self, row: int, col: int, compounds: Union[str, List[str]], vol: int):
+    def __sanitize_inputs(
+            self, row: int, col: int, compounds: Union[str, List[str]], vol: int
+    ):
         """
         Check if user-entered values make sense for the limitations of the current plate.
         Dead volume limitations are not checked here, as some methods (e.g. Plate.empty_well() ar supposed to violate
@@ -52,21 +59,25 @@ class Plate:
         user-entered values to a private method.
         """
         if row > self.n_rows or row < 0:
-            raise IndexError(f'Row index is out-of-bounds for plate with {self.n_rows} rows')
+            raise IndexError(
+                f"Row index is out-of-bounds for plate with {self.n_rows} rows"
+            )
         if col > self.n_cols or col < 0:
-            raise IndexError(f'Column index is out-of-bounds for plate with {self.n_cols} columns')
+            raise IndexError(
+                f"Column index is out-of-bounds for plate with {self.n_cols} columns"
+            )
         if vol < 0:
-            raise ValueError('Volume cannot be negative')
+            raise ValueError("Volume cannot be negative")
         elif vol > self.max_vol:
-            raise ValueError('Volume cannot exceed maximum volume')
+            raise ValueError("Volume cannot exceed maximum volume")
         if vol > 0 and len(compounds) < 1:
-            raise ValueError('Cannot assign non-zero volume without assigning compound')
+            raise ValueError("Cannot assign non-zero volume without assigning compound")
         if type(compounds) is list:
             compounds = [c.strip() for c in compounds]
         else:
             compounds = compounds.strip()
-        if compounds == '' or compounds == ['']:
-            """this fixes a bug where loading/saving would of a plate would change it and provides a standard for how 
+        if compounds == "" or compounds == [""]:
+            """this fixes a bug where loading/saving would of a plate would change it and provides a standard for how
             an empty well should look like"""
             compounds = []
         return row, col, compounds, vol
@@ -91,7 +102,8 @@ class Plate:
         The returned tuple contains two lists of shape (n_rows x n_columns)
         """
         return [[self._compounds[row][col] for col in cols] for row in rows], [
-            [self._volume[row][col] for col in cols] for row in rows]
+            [self._volume[row][col] for col in cols] for row in rows
+        ]
 
     def __set_span(self, rows: list, cols: list, compounds: list, volumes: list):
         """
@@ -107,25 +119,29 @@ class Plate:
             for row in volumes:
                 assert len(row) == len(cols)
         except AssertionError:
-            raise ValueError('Input shape not appropriate')
+            raise ValueError("Input shape not appropriate")
         # set all wells in the span
         for r, row in enumerate(rows):
             for c, col in enumerate(cols):
-                self.__set_well(row, col, compounds[r][c], volumes[r][
-                    c])  # We need the enumeration because row and col refer to the entire plate, but compounds and volumes only refer to the span, so using row and col raises IndexErrors
+                self.__set_well(
+                    row, col, compounds[r][c], volumes[r][c]
+                )  # We need the enumeration because row and col refer to the entire plate, but compounds and volumes only refer to the span, so using row and col raises IndexErrors
 
     # TODO deprecate methods that are redundant with __get_span and __set_span
 
-    @deprecated(reason='Use __get_span() instead')
+    @deprecated(reason="Use __get_span() instead")
     def __get_row(self, row: int) -> Tuple[List, List]:
-        row = [row, ]
+        row = [
+            row,
+        ]
         cmp, vol = self.__get_span(row, self.__indices()[1])
         return cmp[0], vol[0]
 
-    @deprecated(reason='Use __get_span() instead')
+    @deprecated(reason="Use __get_span() instead")
     def __get_column(self, col: int):
         return [self._compounds[row][col] for row in range(self.n_rows)], [
-            self._volume[row][col] for row in range(self.n_rows)]
+            self._volume[row][col] for row in range(self.n_rows)
+        ]
 
     def __is_filled(self, row: int, col: int) -> bool:
         vol = self._volume[row][col]
@@ -134,17 +150,17 @@ class Plate:
         else:
             return True
 
-    @deprecated(reason='Use __set_span() instead')
+    @deprecated(reason="Use __set_span() instead")
     def __set_row(self, row: int, compounds: List[list], vol: List[int]):
         for col in range(self.n_cols):
             self.__set_well(row, col, compounds[col], vol[col])
 
-    @deprecated(reason='Use __set_span() instead')
+    @deprecated(reason="Use __set_span() instead")
     def __set_column(self, col: int, compounds: List[list], vol: List[int]):
         for row in range(self.n_rows):
             self.__set_well(row, col, compounds[row], vol[row])
 
-    @deprecated(reason='Use __set_span() instead')
+    @deprecated(reason="Use __set_span() instead")
     def __set_plate(self, compounds: list, vol: int):
         for row in range(self.n_rows):
             for col in range(self.n_cols):
@@ -152,7 +168,7 @@ class Plate:
 
     @staticmethod
     def __to_index(pos_str: str) -> Tuple[int, int]:
-        """Convert a location string of the form [A-Z][0-9]{n} to indices for row and column """
+        """Convert a location string of the form [A-Z][0-9]{n} to indices for row and column"""
         row_str, col_str = pos_str[0], pos_str[1:]
         row_idx = string.ascii_uppercase.index(row_str)
         col_idx = int(col_str) - 1
@@ -163,7 +179,7 @@ class Plate:
         """Reverse method of self.__to_index()"""
         row_str = string.ascii_uppercase[row_idx]
         col_str = str(col_idx + 1)
-        return ''.join([row_str, col_str])
+        return "".join([row_str, col_str])
 
     def shape(self) -> Tuple[int, int]:
         """Return dimension of the plate"""
@@ -175,12 +191,17 @@ class Plate:
 
     def columns(self) -> Tuple[str, ...]:
         """Return the column identifiers of the plate"""
-        return tuple(self.__from_index(0, col_idx)[1:] for col_idx in range(self.n_cols))
+        return tuple(
+            self.__from_index(0, col_idx)[1:] for col_idx in range(self.n_cols)
+        )
 
     def wells(self) -> Tuple[str, ...]:
         """Return the well identifiers of the plate"""
-        return tuple(self.__from_index(row_idx, col_idx)
-                     for row_idx in range(self.n_rows) for col_idx in range(self.n_cols))
+        return tuple(
+            self.__from_index(row_idx, col_idx)
+            for row_idx in range(self.n_rows)
+            for col_idx in range(self.n_cols)
+        )
 
     def fill_well(self, pos: str, compound: Union[str, list], vol: int):
         """Add single compound to well"""
@@ -205,13 +226,14 @@ class Plate:
         row, col = self.__to_index(pos)
         cmp_cur, vol_cur = self.__get_well(row, col)
         if vol_cur < self.dead_vol and force is False:
-            raise ValueError('Cannot consume well below dead volume level')
+            raise ValueError("Cannot consume well below dead volume level")
         self.__set_well(row, col, cmp_cur, vol_cur - vol)
 
     def empty_well(self, pos):
         """Set well volume to zero and delete compounds"""
         row, col = self.__to_index(pos)
         self.__set_well(row, col, [], 0)
+
     # TODO fill_span(start_well, end_well, cmp, vol) could superseed fill_row, fill_column and fill_block
 
     def fill_span(self, well_start: str, well_end: str, compound: str, vol: int):
@@ -236,14 +258,22 @@ class Plate:
         new_vol = [[0 for well in row] for row in cur_vol]
         self.__set_span(rows, cols, new_cmp, new_vol)
 
-    def fill_column(self, col: str, compound: str, vol: int):  # TODO rewrite to use span logic
+    def fill_column(
+            self, col: str, compound: str, vol: int
+    ):  # TODO rewrite to use span logic
         """Add single compound to all wells in a column"""
         col = self.rows()[0] + col  # auxiliary row, no influence
         col = self.__to_index(col)[1]
         cmp_cur_list, vol_cur_list = self.__get_column(col)
-        self.__set_column(col, [cmp + [compound] for cmp in cmp_cur_list], [v + vol for v in vol_cur_list])
+        self.__set_column(
+            col,
+            [cmp + [compound] for cmp in cmp_cur_list],
+            [v + vol for v in vol_cur_list],
+        )
 
-    def fill_block(self, rows: Tuple[str], cols: Tuple[str], compound: str, vol: int):  # TODO rewrite to use span logic
+    def fill_block(
+            self, rows: Tuple[str], cols: Tuple[str], compound: str, vol: int
+    ):  # TODO rewrite to use span logic
         """Add single compound to all wells in a block that spans one or more rows and one or more columns"""
         for row_str in rows:
             for col_str in cols:
@@ -259,7 +289,7 @@ class Plate:
             for col in range(self.n_cols):
                 cmp_cur, vol_cur = self.__get_well(row, col)
                 if vol_cur < self.dead_vol and force is False:
-                    raise ValueError('Cannot consume well below dead volume level')
+                    raise ValueError("Cannot consume well below dead volume level")
                 self.__set_well(row, col, cmp_cur, vol_cur - vol)
 
     def empty_plate(self):
@@ -320,28 +350,36 @@ class Plate:
 
     def to_csv(self, file, save_volumes=False):
         """Save the components in the plate into a csv file. Volumes are not saved by default."""
-        if isinstance(file, Path): # convert any Path to str
+        if isinstance(file, Path):  # convert any Path to str
             file = str(file.resolve())
 
-        with open(file, 'w') as csv_file:
+        with open(file, "w") as csv_file:
             writer = csv.writer(csv_file)
             # write header
-            header = ['', ]
+            header = [
+                "",
+            ]
             header += self.columns()
             writer.writerow(header)
             for row_str in self.rows():
-                text = [f'{row_str}', ] + [', '.join(elem) for elem in self.row(row_str)[0]]
+                text = [
+                           f"{row_str}",
+                       ] + [", ".join(elem) for elem in self.row(row_str)[0]]
                 writer.writerow(text)
         if save_volumes:
-            vol_file = file.strip('.csv') + '_volumes.csv'
-            with open(vol_file, 'w') as csv_file:
+            vol_file = file.strip(".csv") + "_volumes.csv"
+            with open(vol_file, "w") as csv_file:
                 writer = csv.writer(csv_file)
                 # write header
-                header = ['', ]
+                header = [
+                    "",
+                ]
                 header += self.columns()
                 writer.writerow(header)
                 for row_str in self.rows():
-                    text = [f'{row_str}', ] + [str(elem) for elem in self.row(row_str)[1]]
+                    text = [
+                               f"{row_str}",
+                           ] + [str(elem) for elem in self.row(row_str)[1]]
                     writer.writerow(text)
 
     def from_csv(self, file, vol=None):
@@ -361,10 +399,10 @@ class Plate:
         if isinstance(file, Path):  # convert any Path to str
             file = str(file.resolve())
 
-        vol_file = file.strip('.csv') + '_volumes.csv'
+        vol_file = file.strip(".csv") + "_volumes.csv"
         """parse files"""
         parsed = []
-        with open(file, 'r') as csv_file:  # compound file
+        with open(file, "r") as csv_file:  # compound file
             reader = csv.reader(csv_file)
             content = [row for row in reader]
         col_str = content.pop(0)  # the first line must be column names
@@ -372,8 +410,10 @@ class Plate:
         row_str = [row.pop(0) for row in content]
         parsed.append([row_str, col_str, content])
 
-        if vol is None:  # standard case: a volume file was supplied but no optional parameter vol
-            with open(vol_file, 'r') as csv_file:  # same as above for vol file
+        if (
+                vol is None
+        ):  # standard case: a volume file was supplied but no optional parameter vol
+            with open(vol_file, "r") as csv_file:  # same as above for vol file
                 reader = csv.reader(csv_file)
                 content = [row for row in reader]
             col_str = content.pop(0)  # the first line must be column names
@@ -386,33 +426,39 @@ class Plate:
             parsed.append([row_str, col_str, static_volumes])
 
         """control if inputs are valid"""
-        if parsed[0][0] != parsed[1][0] or parsed[0][1] != parsed[1][
-            1]:  # equal dimensions for compound and volume files
-            raise ValueError(f'Plate shape in {file} does not fit plate shape in {vol_file}')
+        if (
+                parsed[0][0] != parsed[1][0] or parsed[0][1] != parsed[1][1]
+        ):  # equal dimensions for compound and volume files
+            raise ValueError(
+                f"Plate shape in {file} does not fit plate shape in {vol_file}"
+            )
         else:
-            row_str, col_str, compounds, volumes = parsed[0][0], parsed[0][1], parsed[0][2], parsed[1][2]
+            row_str, col_str, compounds, volumes = (
+                parsed[0][0],
+                parsed[0][1],
+                parsed[0][2],
+                parsed[1][2],
+            )
 
         # rows are alphabetic values from 0 (A) to 8*n-1
-        valid_rows = [[string.ascii_uppercase[i] for i in range(0, 8)],
-                      [string.ascii_uppercase[i] for i in range(0, 16)],
-                      ]
+        valid_rows = [
+            [string.ascii_uppercase[i] for i in range(0, 8)],
+            [string.ascii_uppercase[i] for i in range(0, 16)],
+        ]
         # cols are int from 1 to 12*n
-        valid_cols = [[str(i + 1) for i in range(0, 12)],
-                      [str(i + 1) for i in range(0, 24)],
-                      ]
+        valid_cols = [
+            [str(i + 1) for i in range(0, 12)],
+            [str(i + 1) for i in range(0, 24)],
+        ]
 
         if tuple(row_str) != self.rows():
-            raise ValueError('Invalid row')
+            raise ValueError("Invalid row")
         if tuple(col_str) != self.columns():
-            raise ValueError('Invalid column')
-        compounds = [[s.split(sep=',') for s in row] for row in compounds]
+            raise ValueError("Invalid column")
+        compounds = [[s.split(sep=",") for s in row] for row in compounds]
         volumes = [[int(i) for i in row] for row in volumes]  # cast to int
         """now that the plate format is validated, set the new plate"""
-        self.__set_span(self.__indices()[0],
-                        self.__indices()[1],
-                        compounds,
-                        volumes
-                        )
+        self.__set_span(self.__indices()[0], self.__indices()[1], compounds, volumes)
 
     def to_dict(self, include_volumes=False):
         """
@@ -435,6 +481,7 @@ class Plate:
                 dic[well] = self.compounds(well)
         return dic
 
+
 class Plate96(Plate):
     def __init__(self, max_vol: int, dead_vol: int):
         super().__init__(8, 12, max_vol, dead_vol)
@@ -450,13 +497,6 @@ class Plate384Echo(Plate384):
         super().__init__(max_vol=12000, dead_vol=2500)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # debugging commands go here
     pass
-
-
-
-
-
-
-

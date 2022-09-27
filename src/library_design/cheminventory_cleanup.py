@@ -28,79 +28,115 @@ from src.definitions import INPUT_DIR, BUILDING_BLOCKS_DIR, LOG_DIR, MANUAL_SETT
 
 
 def import_from_xlsx():
-    file = INPUT_DIR / 'InventoryExport.xlsx'
-    df = pd.read_excel(file, engine='openpyxl')
+    file = INPUT_DIR / "InventoryExport.xlsx"
+    df = pd.read_excel(file, engine="openpyxl")
 
     return df
 
 
 def import_blacklist(path):
-    with open(path, 'r') as f:
-        exceptions = [line.split(',')[0].strip('\n')
-                      for line in f.readlines()
-                      if line.startswith('#') is False and line != '\n'
-                      ]
+    with open(path, "r") as f:
+        exceptions = [
+            line.split(",")[0].strip("\n")
+            for line in f.readlines()
+            if line.startswith("#") is False and line != "\n"
+        ]
     # ensure exceptions is not empty (otherwise it will delete entire df downstream)
     if not exceptions:
-        exceptions = ['PLACEHOLDER: No exceptions specified']
+        exceptions = ["PLACEHOLDER: No exceptions specified"]
     return exceptions
 
 
 def filter_relevant_columns(df):
-    df.drop(columns=['Substance CAS',
-                     'Supplier',
-                     'Date Acquired',
-                     'Molecular Formula',
-                     'Molecular Weight',
-                     'References',
-                     'References.1',
-                     'KAT',
-                     'Class',
-                     ],
-            inplace=True
-            )
+    df.drop(
+        columns=[
+            "Substance CAS",
+            "Supplier",
+            "Date Acquired",
+            "Molecular Formula",
+            "Molecular Weight",
+            "References",
+            "References.1",
+            "KAT",
+            "Class",
+        ],
+        inplace=True,
+    )
     return
 
 
 def filter_relevant_categories(df):
-    df.drop(df.loc[~df['Location'].str.contains('KATs|Monomers|Aminobenzenethiol|Thiohydrazide', regex=True), :].index,
-            inplace=True)
+    df.drop(
+        df.loc[
+        ~df["Location"].str.contains(
+            "KATs|Monomers|Aminobenzenethiol|Thiohydrazide", regex=True
+        ),
+        :,
+        ].index,
+        inplace=True,
+    )
     return
 
 
 def convert_dtypes(df):
     # check if MW is not N/A
-    if df['MW [g/mol]'].isnull().sum() != 0:
-        print('Warning: MW is not set for some bottles')
-    df['MW [g/mol]'] = pd.to_numeric(df['MW [g/mol]'])
-    df['Container Size'] = df['Container Size'].str.strip('<> ')
-    df['Container Size'] = pd.to_numeric(df['Container Size'])
+    if df["MW [g/mol]"].isnull().sum() != 0:
+        print("Warning: MW is not set for some bottles")
+    df["MW [g/mol]"] = pd.to_numeric(df["MW [g/mol]"])
+    df["Container Size"] = df["Container Size"].str.strip("<> ")
+    df["Container Size"] = pd.to_numeric(df["Container Size"])
 
 
 def filter_mass(df):
-    df.dropna(axis=0, subset=['Container Size'], inplace=True)
-    df.loc[(df['Container Size'] <= 10) & (df['Unit'] == 'mg')].loc[:, 'Container Name'] \
-        .to_csv(LOG_DIR / 'removed_small_amount.csv', index=False)
-    df.drop(df.loc[(df['Container Size'] <= 10) & (df['Unit'] == 'mg')].index, axis=0, inplace=True)
+    df.dropna(axis=0, subset=["Container Size"], inplace=True)
+    df.loc[(df["Container Size"] <= 10) & (df["Unit"] == "mg")].loc[
+    :, "Container Name"
+    ].to_csv(LOG_DIR / "removed_small_amount.csv", index=False)
+    df.drop(
+        df.loc[(df["Container Size"] <= 10) & (df["Unit"] == "mg")].index,
+        axis=0,
+        inplace=True,
+    )
 
 
 def filter_dimer(df):
-    df.loc[df['Container Name'].str.contains('Dimer', regex=False, case=False)].loc[:, 'Container Name'] \
-        .to_csv(LOG_DIR / 'removed_dimers.csv', index=False)
-    df.drop(df.loc[df['Container Name'].str.contains('Dimer', regex=False, case=False), :].index, axis=0, inplace=True)
+    df.loc[df["Container Name"].str.contains("Dimer", regex=False, case=False)].loc[
+    :, "Container Name"
+    ].to_csv(LOG_DIR / "removed_dimers.csv", index=False)
+    df.drop(
+        df.loc[
+        df["Container Name"].str.contains("Dimer", regex=False, case=False), :
+        ].index,
+        axis=0,
+        inplace=True,
+    )
 
 
 def filter_blacklist(df):
     # import manual blacklist
-    blacklist = import_blacklist(MANUAL_SETTINGS_DIR / 'blacklist.txt')  # TODO consider removing global
-    df.drop(df.loc[df['Container Name'].str.contains('|'.join(blacklist), regex=True)].index, axis=0, inplace=True)
+    blacklist = import_blacklist(
+        MANUAL_SETTINGS_DIR / "blacklist.txt"
+    )  # TODO consider removing global
+    df.drop(
+        df.loc[
+            df["Container Name"].str.contains("|".join(blacklist), regex=True)
+        ].index,
+        axis=0,
+        inplace=True,
+    )
 
 
 def filter_purity(df):
-    df.loc[df['Comments'].str.contains('impure', regex=False, na=False, case=False)].loc[:, 'Container Name'] \
-        .to_csv(LOG_DIR / 'removed_impure.csv', index=False)
-    df.drop(df.loc[df['Comments'].str.contains('impure', regex=False, na=False, case=False)].index, axis=0,
-            inplace=True)
+    df.loc[
+        df["Comments"].str.contains("impure", regex=False, na=False, case=False)
+    ].loc[:, "Container Name"].to_csv(LOG_DIR / "removed_impure.csv", index=False)
+    df.drop(
+        df.loc[
+            df["Comments"].str.contains("impure", regex=False, na=False, case=False)
+        ].index,
+        axis=0,
+        inplace=True,
+    )
 
 
 def apply_filters(df):
@@ -133,22 +169,24 @@ df = import_from_xlsx()
 apply_filters(df)
 
 # introduce new column 'Compound Name' without trailing supplier initials or numbers
-df['Compound Name'] = df['Container Name'].str.split('_', expand=True)[0]
+df["Compound Name"] = df["Container Name"].str.split("_", expand=True)[0]
 
 # introduce new column 'Category' to distinguish I, M, T
-df['Category'] = 'I'
-df.loc[df['Location'].str.contains('Monomers', regex=False), 'Category'] = 'M'
-df.loc[df['Location'].str.contains('Terminator', regex=False), 'Category'] = 'T'
+df["Category"] = "I"
+df.loc[df["Location"].str.contains("Monomers", regex=False), "Category"] = "M"
+df.loc[df["Location"].str.contains("Terminator", regex=False), "Category"] = "T"
 
 # group by Compound Name
-df_compounds = df.drop_duplicates(subset=['Compound Name'])
-df_compounds = df_compounds[['Compound Name', 'SMILES', 'MW [g/mol]', 'Category']]
+df_compounds = df.drop_duplicates(subset=["Compound Name"])
+df_compounds = df_compounds[["Compound Name", "SMILES", "MW [g/mol]", "Category"]]
 
 # report data
 freq = df_compounds["Category"].value_counts()
-print(f'The Virtual Library contains {freq["I"]} Initiators, {freq["M"]} Monomers, {freq["T"]} Terminators.\n'
-      f'This results in a total of {freq["I"] * freq["M"] * freq["T"]:,} possible products.')
+print(
+    f'The Virtual Library contains {freq["I"]} Initiators, {freq["M"]} Monomers, {freq["T"]} Terminators.\n'
+    f'This results in a total of {freq["I"] * freq["M"] * freq["T"]:,} possible products.'
+)
 
 # save results
-df.to_csv(BUILDING_BLOCKS_DIR / 'inventory_containers.csv', index=False)
-df_compounds.to_csv(BUILDING_BLOCKS_DIR / 'inventory_compounds.csv', index=False)
+df.to_csv(BUILDING_BLOCKS_DIR / "inventory_containers.csv", index=False)
+df_compounds.to_csv(BUILDING_BLOCKS_DIR / "inventory_compounds.csv", index=False)

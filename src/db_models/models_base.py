@@ -24,7 +24,8 @@ class BuildingBlockBase(Base):
         - bottles: Reference to bottles containing this
 
     """
-    __tablename__ = 'buildingblock'
+
+    __tablename__ = "buildingblock"
 
     id = Column(Integer, primary_key=True)
     name = Column(String)
@@ -34,20 +35,21 @@ class BuildingBlockBase(Base):
     molblock = Column(String)
     customization = Column(String)
 
-    bottles = relationship('BottleBase', back_populates='buildingblock')
+    bottles = relationship("BottleBase", back_populates="buildingblock")
 
     __mapper_args__ = {
-        'polymorphic_on':       customization,
-        'polymorphic_identity': 'buildingblockbase'
+        "polymorphic_on": customization,
+        "polymorphic_identity": "buildingblockbase",
     }
 
-    def __init__(self,
-                 name,
-                 smiles,
-                 nickname='auto',
-                 reactant_class='generic',
-                 id_int=None,
-                 ):
+    def __init__(
+            self,
+            name,
+            smiles,
+            nickname="auto",
+            reactant_class="generic",
+            id_int=None,
+    ):
         self.name = name
         self.smiles = smiles
         self.nickname = nickname
@@ -56,7 +58,7 @@ class BuildingBlockBase(Base):
         self.mol = self.__get_mol()
 
     def __repr__(self):
-        return f'BuildingBlock(id={self.id}, name={self.name}, smiles={self.smiles})'
+        return f"BuildingBlock(id={self.id}, name={self.name}, smiles={self.smiles})"
 
     def __get_mol(self):
         """Return a molblock from SMILES"""
@@ -74,20 +76,21 @@ class BottleBase(Base):
     - barcode (nullable)
     -
     """
-    __tablename__ = 'bottle'
+
+    __tablename__ = "bottle"
 
     id = Column(Integer, primary_key=True)
-    buildingblock_id = Column(Integer, ForeignKey('buildingblock.id'))
+    buildingblock_id = Column(Integer, ForeignKey("buildingblock.id"))
     barcode = Column(Integer)
     customization = Column(String)
 
-    buildingblock = relationship('BuildingBlockBase', back_populates='bottles')
+    buildingblock = relationship("BuildingBlockBase", back_populates="bottles")
     # TODO are these relationships a problem? Do I need to overwrite them in child classes?
 
     __mapper_args__ = {
-        'polymorphic_on':       customization,
-        'polymorphic_identity': 'bottlebase'
+        "polymorphic_on": customization,
+        "polymorphic_identity": "bottlebase",
     }
 
     def __repr__(self):
-        return f'Bottle(id={self.id}, barcode={self.barcode}, buildingblock={self.buildingblock})'
+        return f"Bottle(id={self.id}, barcode={self.barcode}, buildingblock={self.buildingblock})"

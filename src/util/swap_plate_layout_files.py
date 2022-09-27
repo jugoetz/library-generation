@@ -26,7 +26,9 @@ backup_dir = exp_dir / "legacy_2022-08-12"
 try:
     backup_dir.mkdir()
 except FileExistsError:
-    raise FileExistsError(f"Backup directory {backup_dir} already exists. Please remove it and try again.")
+    raise FileExistsError(
+        f"Backup directory {backup_dir} already exists. Please remove it and try again."
+    )
 
 for file in plate_layout_files:
     shutil.copy(file, backup_dir)

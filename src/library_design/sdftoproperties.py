@@ -20,7 +20,7 @@ from rdkit.Chem.rdMolDescriptors import CalcExactMolWt, CalcMolFormula
 from src.definitions import LIB_STATIC_DIR
 
 """GLOBALS"""
-OUTPUT_JSON = LIB_STATIC_DIR / 'static_mol_prop_dict.json.gz'
+OUTPUT_JSON = LIB_STATIC_DIR / "static_mol_prop_dict.json.gz"
 
 
 def import_mol(file):
@@ -29,7 +29,7 @@ def import_mol(file):
     :param file: str or Path-like
     :return: generator
     """
-    if str(file).endswith('.sdf.gz'):
+    if str(file).endswith(".sdf.gz"):
         supply = ForwardSDMolSupplier(gzip.open(file))
     else:
         raise ValueError(f'Invalid file "{file}". User must supply .sdf.gz file.')
@@ -40,31 +40,33 @@ def import_mol(file):
 #                                                        MAIN                                                          #
 ########################################################################################################################
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """Generate mol suppliers to import from SDF"""
-    mol_prop_dict = {} # will hold the data
+    mol_prop_dict = {}  # will hold the data
     files_to_process = []  # a helper to follow progress
 
     for path, _, files in os.walk(LIB_STATIC_DIR):
         # find which files we are interested in
         for f in files:
-            if f.startswith('product_') and f.endswith('.sdf.gz'):
+            if f.startswith("product_") and f.endswith(".sdf.gz"):
                 files_to_process.append(f)
         # extract data from those files
         for i, f in enumerate(files_to_process):
-            print(f'Now converting file {f}... [{i + 1}/{len(files_to_process)}]')
-            letter = f.split('_')[1].split('.')[0]
+            print(f"Now converting file {f}... [{i + 1}/{len(files_to_process)}]")
+            letter = f.split("_")[1].split(".")[0]
             supplier = import_mol(Path(path, f))
             mol_props = {}
             for mol in supplier:
                 if mol is not None:
-                    mol_props[mol.GetProp('_Name')] = [CalcExactMolWt(mol), CalcMolFormula(mol)]
+                    mol_props[mol.GetProp("_Name")] = [
+                        CalcExactMolWt(mol),
+                        CalcMolFormula(mol),
+                    ]
             mol_prop_dict[letter] = mol_props
-            print(f'>> Done converting file {f}')
+            print(f">> Done converting file {f}")
 
     # save
-    print('All files converted. Saving to JSON...')
-    with gzip.open(OUTPUT_JSON, 'wt', encoding='ascii') as zipfile:
+    print("All files converted. Saving to JSON...")
+    with gzip.open(OUTPUT_JSON, "wt", encoding="ascii") as zipfile:
         json.dump(mol_prop_dict, zipfile)
-    print('### DONE! ###')
-
+    print("### DONE! ###")

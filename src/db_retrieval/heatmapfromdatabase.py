@@ -29,19 +29,30 @@ def read_yields_from_database(db_path, labjournal_nr):
     # PART 1: Query database to obtain a list of lists
     con = sqlite3.connect(db_path)
     cur = con.cursor()
-    query_result = cur.execute('SELECT well, product_A_lcms_ratio, product_B_lcms_ratio, product_C_lcms_ratio, '
-                               'product_D_lcms_ratio, product_E_lcms_ratio, product_F_lcms_ratio, product_G_lcms_ratio,'
-                               'product_H_lcms_ratio '
-                               'FROM main.experiments '
-                               'WHERE lab_journal_number = ?;',
-                               (labjournal_nr,)
-                               ).fetchall()
+    query_result = cur.execute(
+        "SELECT well, product_A_lcms_ratio, product_B_lcms_ratio, product_C_lcms_ratio, "
+        "product_D_lcms_ratio, product_E_lcms_ratio, product_F_lcms_ratio, product_G_lcms_ratio,"
+        "product_H_lcms_ratio "
+        "FROM main.experiments "
+        "WHERE lab_journal_number = ?;",
+        (labjournal_nr,),
+    ).fetchall()
     con.close()
     # PART 2: Turn the list of lists into a dataframe. Split the 'well' into row and column
-    df = pd.DataFrame(data=query_result,
-                      columns=['well', 'product_A_lcms_ratio', 'product_B_lcms_ratio', 'product_C_lcms_ratio',
-                               'product_D_lcms_ratio', 'product_E_lcms_ratio', 'product_F_lcms_ratio',
-                               'product_G_lcms_ratio', 'product_H_lcms_ratio'])
+    df = pd.DataFrame(
+        data=query_result,
+        columns=[
+            "well",
+            "product_A_lcms_ratio",
+            "product_B_lcms_ratio",
+            "product_C_lcms_ratio",
+            "product_D_lcms_ratio",
+            "product_E_lcms_ratio",
+            "product_F_lcms_ratio",
+            "product_G_lcms_ratio",
+            "product_H_lcms_ratio",
+        ],
+    )
     # a little trick to swap a few wells if necessary bc of minor errors:
     # df['well'] = df['well'].replace({'N14': 'O14',
     #                                        'O14': 'N14',
@@ -56,15 +67,15 @@ def read_yields_from_database(db_path, labjournal_nr):
     #                                        'N24': 'O24',
     #                                        'O24': 'N24',
     #                                        })
-    df['row'] = df['well'].str[0]
-    df['column'] = df['well'].str[1:]
+    df["row"] = df["well"].str[0]
+    df["column"] = df["well"].str[1:]
     return df
 
 
 def normalize_yields(df, normalization_constant):
     """Divide every value in a product column by a constant"""
     for column in df.columns:
-        if column.startswith('product'):
+        if column.startswith("product"):
             df[column] = df[column].div(normalization_constant)
     return df
 
@@ -74,19 +85,20 @@ def get_plot(df, product_type, ax=None):
     if ax is None:
         ax = plt.gca()
     # create the heatmap axis
-    sns.heatmap(df * 100,
-                vmin=0,
-                vmax=100,
-                annot=True,
-                cbar=False,
-                cmap=sns.color_palette(
-                    'viridis',
-                    as_cmap=True,
-                ),
-                fmt=".1f",
-                square=True,
-                ax=ax
-                )  # this cmap should work for the colorblind
+    sns.heatmap(
+        df * 100,
+        vmin=0,
+        vmax=100,
+        annot=True,
+        cbar=False,
+        cmap=sns.color_palette(
+            "viridis",
+            as_cmap=True,
+        ),
+        fmt=".1f",
+        square=True,
+        ax=ax,
+    )  # this cmap should work for the colorblind
 
     # style the heatmap
     ax.xaxis.tick_top()  # move column names to top
@@ -123,13 +135,18 @@ def plot_heatmap_overview(df, save_path):
     fig, axs = plt.subplots(4, 2, figsize=(21, 35))
 
     # pass all axes to the get_plot function to have a heatmap generated inside
-    for ax, product_type in zip(np.nditer(axs, flags=['refs_ok']), 'ABCDEFGH'):
-        ax = get_plot(df[['row', 'column', f'product_{product_type}_lcms_ratio']]
-                      .pivot(columns='column', index='row', values=f'product_{product_type}_lcms_ratio')
-                      .sort_index(axis=1, key=lambda x: [int(y) for y in x]),
-                      product_type,
-                      ax.tolist()  # tolist is necessary bc ax is a np.0darray so tolist returns the value
-                      )
+    for ax, product_type in zip(np.nditer(axs, flags=["refs_ok"]), "ABCDEFGH"):
+        ax = get_plot(
+            df[["row", "column", f"product_{product_type}_lcms_ratio"]]
+            .pivot(
+                columns="column",
+                index="row",
+                values=f"product_{product_type}_lcms_ratio",
+            )
+            .sort_index(axis=1, key=lambda x: [int(y) for y in x]),
+            product_type,
+            ax.tolist(),  # tolist is necessary bc ax is a np.0darray so tolist returns the value
+        )
     fig.tight_layout()
 
     # save to file and show
@@ -138,7 +155,9 @@ def plot_heatmap_overview(df, save_path):
     return
 
 
-def plot_experiment_heatmap_from_database(db_path, exp_nr, exp_dir, normalization_constant, plate_size):
+def plot_experiment_heatmap_from_database(
+        db_path, exp_nr, exp_dir, normalization_constant, plate_size
+):
     """Main function for plotting yield heatmaps from values stored in 'experiments' database"""
     yields = read_yields_from_database(db_path, exp_nr)
     yields = normalize_yields(yields, normalization_constant)
@@ -147,21 +166,33 @@ def plot_experiment_heatmap_from_database(db_path, exp_nr, exp_dir, normalizatio
     plot_heatmap_overview(yields, exp_dir / f"heatmap_{exp_nr}_overview.png")
 
     # plot all heatmaps
-    for product_type in 'ABCDEFGH':
-        df = yields[['row', 'column', f'product_{product_type}_lcms_ratio']]
+    for product_type in "ABCDEFGH":
+        df = yields[["row", "column", f"product_{product_type}_lcms_ratio"]]
 
-        plot_df = df \
-            .pivot(columns='column', index='row', values=f'product_{product_type}_lcms_ratio') \
-            .sort_index(axis=1, key=lambda x: [int(y) for y in x])  # generate individual df for every plot
+        plot_df = df.pivot(
+            columns="column", index="row", values=f"product_{product_type}_lcms_ratio"
+        ).sort_index(
+            axis=1, key=lambda x: [int(y) for y in x]
+        )  # generate individual df for every plot
         # plot the heatmap
-        plot_heatmap(plot_df, product_type, exp_dir / f"heatmap_{exp_nr}_{product_type}.png", plate_size)
+        plot_heatmap(
+            plot_df,
+            product_type,
+            exp_dir / f"heatmap_{exp_nr}_{product_type}.png",
+            plate_size,
+        )
     return
 
 
-if __name__ == '__main__':
-    for exp_nr in conf['lab_journal_numbers']:
-        print(f'Now plotting {exp_nr}...')
+if __name__ == "__main__":
+    for exp_nr in conf["lab_journal_numbers"]:
+        print(f"Now plotting {exp_nr}...")
         exp_dir = PLATES_DIR / exp_nr
-        plot_experiment_heatmap_from_database(DB_PATH, exp_nr, exp_dir, conf['heatmap']['normalization_constant'],
-                                              conf['heatmap']['well_plate_size'])
-    print('Finished plotting!')
+        plot_experiment_heatmap_from_database(
+            DB_PATH,
+            exp_nr,
+            exp_dir,
+            conf["heatmap"]["normalization_constant"],
+            conf["heatmap"]["well_plate_size"],
+        )
+    print("Finished plotting!")

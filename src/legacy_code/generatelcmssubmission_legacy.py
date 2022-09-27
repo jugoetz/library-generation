@@ -114,10 +114,10 @@ def import_pl():
                 wells.append(line)  # put everything from csv file into list
         # prepare the dictionary
         for i in range(
-                1, len(rows)
+            1, len(rows)
         ):  # iterate excluding the first row (column numbers)
             for j in range(
-                    1, len(columns)
+                1, len(columns)
             ):  # iterate excluding the first column (row letters)
                 # construct key as e.g. "1-A,1" and assign value e.g. "I1, M1, T1"
                 layout["".join([str(plate), "-", rows[i], ",", columns[j]])] = wells[i][

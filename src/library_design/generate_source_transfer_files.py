@@ -174,12 +174,11 @@ df_lcms.loc[df_lcms["source_plate"] == "monomer_lcms", "target_wells"] = [
     f"{r}{c}" for c in range(5, 8) for r in "ABCD"
 ]
 df_lcms.loc[df_lcms["source_plate"] == "terminator_lcms", "target_wells"] = [
-                                                                                f"{r}{c}" for c in range(1, 4) for r in
-                                                                                "ABCD"
-                                                                            ][:-2]
+    f"{r}{c}" for c in range(1, 4) for r in "ABCD"
+][:-2]
 df_lcms["target_volumes"] = [
-                                1000,
-                            ] * len(df_lcms)
+    1000,
+] * len(df_lcms)
 
 df = pd.concat((df, df_lcms), ignore_index=True)
 

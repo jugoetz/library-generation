@@ -30,14 +30,14 @@ class MyBuildingBlock(BuildingBlockBase):
     weigh_in = Column(String)
 
     def __init__(
-            self,
-            name,
-            smiles,
-            category,
-            nickname="auto",
-            reactant_class="generic",
-            id_int=None,
-            comment=None,
+        self,
+        name,
+        smiles,
+        category,
+        nickname="auto",
+        reactant_class="generic",
+        id_int=None,
+        comment=None,
     ):
         super().__init__(name, smiles, nickname, reactant_class, id_int)
         self.category = category

@@ -68,10 +68,10 @@ def filter_relevant_columns(df):
 def filter_relevant_categories(df):
     df.drop(
         df.loc[
-        ~df["Location"].str.contains(
-            "KATs|Monomers|Aminobenzenethiol|Thiohydrazide", regex=True
-        ),
-        :,
+            ~df["Location"].str.contains(
+                "KATs|Monomers|Aminobenzenethiol|Thiohydrazide", regex=True
+            ),
+            :,
         ].index,
         inplace=True,
     )
@@ -90,7 +90,7 @@ def convert_dtypes(df):
 def filter_mass(df):
     df.dropna(axis=0, subset=["Container Size"], inplace=True)
     df.loc[(df["Container Size"] <= 10) & (df["Unit"] == "mg")].loc[
-    :, "Container Name"
+        :, "Container Name"
     ].to_csv(LOG_DIR / "removed_small_amount.csv", index=False)
     df.drop(
         df.loc[(df["Container Size"] <= 10) & (df["Unit"] == "mg")].index,
@@ -101,11 +101,11 @@ def filter_mass(df):
 
 def filter_dimer(df):
     df.loc[df["Container Name"].str.contains("Dimer", regex=False, case=False)].loc[
-    :, "Container Name"
+        :, "Container Name"
     ].to_csv(LOG_DIR / "removed_dimers.csv", index=False)
     df.drop(
         df.loc[
-        df["Container Name"].str.contains("Dimer", regex=False, case=False), :
+            df["Container Name"].str.contains("Dimer", regex=False, case=False), :
         ].index,
         axis=0,
         inplace=True,

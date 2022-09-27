@@ -92,15 +92,15 @@ print(f"Using Terminators: {terminators}")
 
 """split the randomized lists into portions of size <bb>_per_run"""
 initiator_sets = [
-    initiators[i: i + initiators_per_run]
+    initiators[i : i + initiators_per_run]
     for i in range(0, len(initiators), initiators_per_run)
 ]
 monomers_sets = [
-    monomers[i: i + monomers_per_run]
+    monomers[i : i + monomers_per_run]
     for i in range(0, len(monomers), monomers_per_run)
 ]
 terminators_sets = [
-    terminators[i: i + terminators_per_run]
+    terminators[i : i + terminators_per_run]
     for i in range(0, len(terminators), terminators_per_run)
 ]
 

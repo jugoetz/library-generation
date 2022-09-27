@@ -84,7 +84,7 @@ def get_plates_for_experiment(exp_dir):
 
 
 def bulk_data_retrieval_from_virtuallibrary(
-        con, initiators: list, monomers: list, terminators: list
+    con, initiators: list, monomers: list, terminators: list
 ):
     """
     From the virtuallibrary table, retrieve all combinations of the all initiators,

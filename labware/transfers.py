@@ -6,12 +6,12 @@ from plates import Plate, Plate96, Plate384, Plate384Echo
 
 class TransferStep:
     def __init__(
-            self,
-            source_id: str,
-            source_well: str,
-            destination_id: str,
-            destination_well: str,
-            volume: int,
+        self,
+        source_id: str,
+        source_well: str,
+        destination_id: str,
+        destination_well: str,
+        volume: int,
     ):
         """
         :param source_id: source plate identifier
@@ -43,11 +43,11 @@ class Transfer:
         return s
 
     def simulate(
-            self,
-            source_plates: Dict[str, Plate],
-            destination_well_number: int,
-            save_plate=False,
-            save_dir="",
+        self,
+        source_plates: Dict[str, Plate],
+        destination_well_number: int,
+        save_plate=False,
+        save_dir="",
     ):
         destination_plates = {}
         for transfer_step in self.transfer_steps:
@@ -117,7 +117,7 @@ class Transfer:
         return destination_plates
 
     def check_correct(
-            self, source_plates: Dict[str, Plate], destination_plates: Dict[str, Plate]
+        self, source_plates: Dict[str, Plate], destination_plates: Dict[str, Plate]
     ):
         pass
 
@@ -130,7 +130,6 @@ if __name__ == "__main__":
 
     import csv
 
-
     def import_echo_transfer_file(file):
         with open(file, "r") as file:
             reader = csv.reader(file)
@@ -141,7 +140,6 @@ if __name__ == "__main__":
                     TransferStep(line[0], line[1], line[2], line[3], int(line[4]))
                 )
         return transfer_steps
-
 
     transfer_steps = []
     transfer_steps += import_echo_transfer_file("../data/plates/exp25/step1.csv")
@@ -181,7 +179,7 @@ if __name__ == "__main__":
         planned_plate = planned_destination_plates[key]
         print(plate)
         for well, well_planned in zip(
-                plate.iterate_wells(), planned_plate.iterate_wells()
+            plate.iterate_wells(), planned_plate.iterate_wells()
         ):
             well_planned[1].insert(2, "X")
             if well != well_planned:

@@ -125,7 +125,7 @@ def add_name_prop_to_mol(reactant1, reactant2, reactant3, product_library):
         for t in reactant3
     ]  # generate the names from reactant properties
     if len(product_library) != len(
-            names
+        names
     ):  # check if the correct number of names was generated
         raise ValueError(
             f"Number of products ({len(product_library)}) does not fit number of inferred names ({len(names)})"

@@ -156,7 +156,7 @@ def plot_heatmap_overview(df, save_path):
 
 
 def plot_experiment_heatmap_from_database(
-        db_path, exp_nr, exp_dir, normalization_constant, plate_size
+    db_path, exp_nr, exp_dir, normalization_constant, plate_size
 ):
     """Main function for plotting yield heatmaps from values stored in 'experiments' database"""
     yields = read_yields_from_database(db_path, exp_nr)

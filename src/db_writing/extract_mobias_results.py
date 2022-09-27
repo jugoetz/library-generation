@@ -67,7 +67,7 @@ def check_mobias_input_output_equivalent(df, mobias_input):
         )
         known_missing = ["JG239-265"]
         if set(missing_indices) != set(
-                known_missing
+            known_missing
         ):  # don't raise error if problem is known
             raise ValueError(
                 f"Values for Mobias input and output do not align. These indices are missing in the "

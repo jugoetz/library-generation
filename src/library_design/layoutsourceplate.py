@@ -34,7 +34,7 @@ for exp_nr, exp in enumerate(synthesis_plan):
     # some controls
     assert len(exp[0]) == 16  # the 16 KAT will be spread over rows
     assert (
-            len(exp[1]) == 12
+        len(exp[1]) == 12
     )  # the 12 Mon will be spread into 16x10 blocks, giving 2 blocks per plate
     assert len(exp[2]) == 10  # the 10 Ter will be spread over columns
 

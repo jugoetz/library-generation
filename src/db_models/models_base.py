@@ -43,12 +43,12 @@ class BuildingBlockBase(Base):
     }
 
     def __init__(
-            self,
-            name,
-            smiles,
-            nickname="auto",
-            reactant_class="generic",
-            id_int=None,
+        self,
+        name,
+        smiles,
+        nickname="auto",
+        reactant_class="generic",
+        id_int=None,
     ):
         self.name = name
         self.smiles = smiles

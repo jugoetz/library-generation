@@ -81,7 +81,7 @@ def read_nexus_transfer_errors(path: Path, error_string: str) -> list:
     if "[EXCEPTIONS]" in transfers.values:
         exceptions_idx = transfers.loc[
             transfers["Source Plate Name"] == "[EXCEPTIONS]"
-            ].index
+        ].index
         details_idx = transfers.loc[transfers["Source Plate Name"] == "[DETAILS]"].index
         transfers["plate"] = (
             transfers["Destination Plate Barcode"]
@@ -92,7 +92,7 @@ def read_nexus_transfer_errors(path: Path, error_string: str) -> list:
         transfers["row"] = transfers["Destination Well"].str[0]
         transfers["column"] = transfers["Destination Well"].str[1:]
         transfers["error"] = error_string
-        exceptions = transfers.iloc[exceptions_idx[0] + 2: details_idx[0]]
+        exceptions = transfers.iloc[exceptions_idx[0] + 2 : details_idx[0]]
         return exceptions[["plate", "row", "column", "error"]].values.tolist()
     else:
         return []
@@ -137,14 +137,14 @@ def read_nexus_repeated_tranfers(path: Path, error_string: str) -> list:
         transfers["row"] = transfers["Destination Well"].str[0]
         transfers["column"] = transfers["Destination Well"].str[1:]
         transfers["error"] = error_string
-        successes = transfers.iloc[details_idx[0] + 2:]
+        successes = transfers.iloc[details_idx[0] + 2 :]
         return successes[["plate", "row", "column", "error"]].values.tolist()
     else:
         return []
 
 
 def read_nexus_survey_errors(
-        path: Path, error_string: str, volume_threshold: float
+    path: Path, error_string: str, volume_threshold: float
 ) -> list:
     """
     Import a CSV survey file and add all wells below the threshold volume to error records.
@@ -162,7 +162,7 @@ def read_nexus_survey_errors(
     exceptions = volumes.loc[
         (volumes["Survey Fluid Volume"] < volume_threshold)
         & (volumes["column"].astype(int).between(3, 22))
-        ]
+    ]
     return exceptions[["plate", "row", "column", "error"]].values.tolist()
 
 
@@ -191,20 +191,20 @@ def read_mobias_analysis_errors(path: Path, plate_number: int) -> list:
     results.loc[
         (results["SumF1 Cmp"] > 1) & (results["SumF1 Cmp"] <= 4), ["error_1"]
     ] = (
-            f"WARNING: multiple peaks for product A ("
-            + results["SumF1 Cmp"].astype("str")
-            + ")"
+        f"WARNING: multiple peaks for product A ("
+        + results["SumF1 Cmp"].astype("str")
+        + ")"
     )
     results.loc[(results["SumF1 Cmp"] > 4), ["error_1"]] = (
-            f"ERROR: too many peaks for product A ("
-            + results["SumF1 Cmp"].astype("str")
-            + ")"
+        f"ERROR: too many peaks for product A ("
+        + results["SumF1 Cmp"].astype("str")
+        + ")"
     )
     # identify where IS gives to many peaks
     results.loc[(results[f"{internal_standard_number} Cmp"] > 1), ["error_2"]] = (
-            f"ERROR: too many peaks for IS ("
-            + results[f"{internal_standard_number} Cmp"].astype("str")
-            + ")"
+        f"ERROR: too many peaks for IS ("
+        + results[f"{internal_standard_number} Cmp"].astype("str")
+        + ")"
     )
     # identify where IS response deviates >50% from mean
     mean_response_area = results[f"{internal_standard_number} Area"].mean()
@@ -253,7 +253,7 @@ def get_nexus_errors(nexus_dir: Path) -> list:
         for child in (nexus_dir / "I_M" / "repeated_transfers").iterdir():
             if child.is_file() and "transfer" in child.name:
                 for successful_transfer in read_nexus_repeated_tranfers(
-                        child, "ERROR: I/M transfer error"
+                    child, "ERROR: I/M transfer error"
                 ):
                     error_list.remove(successful_transfer)
     # task 2: Iterate T transfers
@@ -264,7 +264,7 @@ def get_nexus_errors(nexus_dir: Path) -> list:
         for child in (nexus_dir / "T" / "repeated_transfers").iterdir():
             if child.is_file() and "transfer" in child.name:
                 for successful_transfer in read_nexus_repeated_tranfers(
-                        child, "ERROR: T transfer error"
+                    child, "ERROR: T transfer error"
                 ):
                     error_list.remove(successful_transfer)
     # task 3: Iterate dilution transfers
@@ -348,7 +348,7 @@ def main(exp_dir: Path, exp_nr: int, skip_nexus=False):
         error_df.loc[
             (error_df["errors"].str.contains("WARNING"))
             & ~(error_df["errors"].str.contains("ERROR"))
-            ]
+        ]
     )
     print(
         f"Found {n_errors} wells with errors and {n_warnings} wells with warnings for experiment #{exp_nr}"

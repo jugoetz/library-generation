@@ -11,3 +11,5 @@
 *.pkl
 # backups
 *_backup_*
+# cache
+*__pycache__*

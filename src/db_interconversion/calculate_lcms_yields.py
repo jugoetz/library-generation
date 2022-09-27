@@ -94,7 +94,7 @@ def calculate_lcms_yield(dict_df):
     # divide all values by the IS value
     for key, df in dict_df.items():
         df.loc[:, "yield"] = (
-                df.loc[:, "yield"].astype("float64") / dict_df["IS"].loc[:, "yield"]
+            df.loc[:, "yield"].astype("float64") / dict_df["IS"].loc[:, "yield"]
         )
 
     return dict_df

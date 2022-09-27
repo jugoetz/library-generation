@@ -95,10 +95,10 @@ def get_long_name(row, dictionary):
     long = []
     for col in ["I", "M", "T"]:
         if (
-                row[col] is None
-                or row[col] == "None"
-                or row[col] == ""
-                or row[col] == "n/a"
+            row[col] is None
+            or row[col] == "None"
+            or row[col] == ""
+            or row[col] == "n/a"
         ):
             pass  # catch empty fields (this will usually happen)
         else:
@@ -129,10 +129,10 @@ def get_prop_from_db(dbpath):
     cur = con.cursor()
     prop_dict = {}
     for row in cur.execute(
-            "SELECT id, long_name, type, molecular_formula_1, molecular_formula_alt, lcms_mass_1, lcms_mass_alt FROM virtuallibrary"
+        "SELECT id, long_name, type, molecular_formula_1, molecular_formula_alt, lcms_mass_1, lcms_mass_alt FROM virtuallibrary"
     ).fetchall():
         if (
-                not row[1] in prop_dict
+            not row[1] in prop_dict
         ):  # if we have not encountered this long name before, make a dictionary as the entry
             prop_dict[row[1]] = {}
         prop_dict[row[1]][row[2]] = (
@@ -143,7 +143,7 @@ def get_prop_from_db(dbpath):
             for i, (f, m) in enumerate(zip(row[4].split(","), row[6].split(","))):
                 prop_dict[row[1]][f"{row[2]}_{i + 2}"] = (f, m)
     con.close()
-    """reorder mol_prop_dict so that letters are in the outer level and long_names in the inner. Lets keep this out 
+    """reorder mol_prop_dict so that letters are in the outer level and long_names in the inner. Lets keep this out
     for now and try to find a better way """
     # m_prop_dict = {}
     # for long, val in prop_dict.items():

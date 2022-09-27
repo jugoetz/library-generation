@@ -111,7 +111,7 @@ with open(IMAGES_DIR / "_T.png", "wb") as file:
 # output to SDF
 print("Generating SDFs...")
 with open(LIB_SDF_DIR / "initiators.sdf", "w") as file_i, open(
-        LIB_SDF_DIR / "monomers.sdf", "w"
+    LIB_SDF_DIR / "monomers.sdf", "w"
 ) as file_m, open(LIB_SDF_DIR / "terminators.sdf", "w") as file_t:
     writer_i = Chem.SDWriter(file_i)
     writer_m = Chem.SDWriter(file_m)

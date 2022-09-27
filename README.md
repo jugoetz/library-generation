@@ -55,7 +55,7 @@ Tools for going from building blocks save in an external inventory system to an 
 - **enumerate-library.py**: Take the pickled DataFrame from inventorytosdf.py and enumerate the corresponding virtual
   library. Save to sdf.
 
-- **generatelibraryplan.py**: Take the building block list received from cheminventory_cleanup.py and 
+- **generatelibraryplan.py**: Take the building block list received from cheminventory_cleanup.py and
 draw random combinations for every experiment to give a synthesis plan
 
 - **generateplatelayout.py**: Take the synthesis plan given by generatelibraryplan.py and generate the
@@ -63,7 +63,7 @@ draw random combinations for every experiment to give a synthesis plan
 
 - **sdftoproperties.py**: Take the VL (as sdf.gz files) and extract / calculate names, molecular masses, and
   formulae of the library molecules.
-  
+
 ### Usage scenarios
 #### When additional building blocks are added to the library
 

@@ -94,9 +94,9 @@ def bulk_data_retrieval_from_virtuallibrary(
     print("Retrieving product data from virtuallibrary table...")
     results = cur.execute(
         f"""SELECT id, initiator, monomer, terminator, initiator_long, monomer_long, terminator_long,
-     long_name, type, SMILES FROM main.virtuallibrary 
-     WHERE initiator IN ({(", ".join("?" for _ in initiators))}) 
-     AND monomer IN ({(", ".join("?" for _ in monomers))}) 
+     long_name, type, SMILES FROM main.virtuallibrary
+     WHERE initiator IN ({(", ".join("?" for _ in initiators))})
+     AND monomer IN ({(", ".join("?" for _ in monomers))})
      AND terminator IN ({(", ".join("?" for _ in terminators))});""",
         initiators + monomers + terminators,
     ).fetchall()

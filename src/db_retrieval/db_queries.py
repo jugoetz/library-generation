@@ -112,9 +112,9 @@ class MyDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                    f"SELECT DISTINCT initiator FROM experiments WHERE exp_nr = ?;",
-                    (kwargs["exp_nr"],),
-                ).fetchall()
+                        f"SELECT DISTINCT initiator FROM experiments WHERE exp_nr = ?;",
+                        (kwargs["exp_nr"],),
+                    ).fetchall()
                 ],
                 key=lambda x: int(x[1:]),
             )
@@ -122,9 +122,9 @@ class MyDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                    f"SELECT DISTINCT monomer FROM experiments WHERE exp_nr = ?;",
-                    (kwargs["exp_nr"],),
-                ).fetchall()
+                        f"SELECT DISTINCT monomer FROM experiments WHERE exp_nr = ?;",
+                        (kwargs["exp_nr"],),
+                    ).fetchall()
                 ],
                 key=lambda x: int(x[1:]),
             )
@@ -132,9 +132,9 @@ class MyDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                    f"SELECT DISTINCT terminator FROM experiments WHERE exp_nr = ?;",
-                    (kwargs["exp_nr"],),
-                ).fetchall()
+                        f"SELECT DISTINCT terminator FROM experiments WHERE exp_nr = ?;",
+                        (kwargs["exp_nr"],),
+                    ).fetchall()
                 ],
                 key=lambda x: int(x[1:]),
             )
@@ -143,9 +143,9 @@ class MyDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                    f"SELECT DISTINCT initiator FROM experiments WHERE lab_journal_number = ?;",
-                    (kwargs["lab_journal_number"],),
-                ).fetchall()
+                        f"SELECT DISTINCT initiator FROM experiments WHERE lab_journal_number = ?;",
+                        (kwargs["lab_journal_number"],),
+                    ).fetchall()
                 ],
                 key=lambda x: int(x[1:]),
             )
@@ -153,9 +153,9 @@ class MyDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                    f"SELECT DISTINCT monomer FROM experiments WHERE lab_journal_number = ?;",
-                    (kwargs["lab_journal_number"],),
-                ).fetchall()
+                        f"SELECT DISTINCT monomer FROM experiments WHERE lab_journal_number = ?;",
+                        (kwargs["lab_journal_number"],),
+                    ).fetchall()
                 ],
                 key=lambda x: int(x[1:]),
             )
@@ -163,16 +163,16 @@ class MyDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                    f"SELECT DISTINCT terminator FROM experiments WHERE lab_journal_number = ?;",
-                    (kwargs["lab_journal_number"],),
-                ).fetchall()
+                        f"SELECT DISTINCT terminator FROM experiments WHERE lab_journal_number = ?;",
+                        (kwargs["lab_journal_number"],),
+                    ).fetchall()
                 ],
                 key=lambda x: int(x[1:]),
             )
         return initiators, monomers, terminators
 
     def get_product_mol_by_well(
-            self, lab_journal_number: str, well: str, product_type: str
+        self, lab_journal_number: str, well: str, product_type: str
     ) -> Optional[Mol]:
         """
         Args:

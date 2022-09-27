@@ -50,7 +50,7 @@ class Plate:
         return printout
 
     def __sanitize_inputs(
-            self, row: int, col: int, compounds: Union[str, List[str]], vol: int
+        self, row: int, col: int, compounds: Union[str, List[str]], vol: int
     ):
         """
         Check if user-entered values make sense for the limitations of the current plate.
@@ -259,7 +259,7 @@ class Plate:
         self.__set_span(rows, cols, new_cmp, new_vol)
 
     def fill_column(
-            self, col: str, compound: str, vol: int
+        self, col: str, compound: str, vol: int
     ):  # TODO rewrite to use span logic
         """Add single compound to all wells in a column"""
         col = self.rows()[0] + col  # auxiliary row, no influence
@@ -272,7 +272,7 @@ class Plate:
         )
 
     def fill_block(
-            self, rows: Tuple[str], cols: Tuple[str], compound: str, vol: int
+        self, rows: Tuple[str], cols: Tuple[str], compound: str, vol: int
     ):  # TODO rewrite to use span logic
         """Add single compound to all wells in a block that spans one or more rows and one or more columns"""
         for row_str in rows:
@@ -363,8 +363,8 @@ class Plate:
             writer.writerow(header)
             for row_str in self.rows():
                 text = [
-                           f"{row_str}",
-                       ] + [", ".join(elem) for elem in self.row(row_str)[0]]
+                    f"{row_str}",
+                ] + [", ".join(elem) for elem in self.row(row_str)[0]]
                 writer.writerow(text)
         if save_volumes:
             vol_file = file.strip(".csv") + "_volumes.csv"
@@ -378,8 +378,8 @@ class Plate:
                 writer.writerow(header)
                 for row_str in self.rows():
                     text = [
-                               f"{row_str}",
-                           ] + [str(elem) for elem in self.row(row_str)[1]]
+                        f"{row_str}",
+                    ] + [str(elem) for elem in self.row(row_str)[1]]
                     writer.writerow(text)
 
     def from_csv(self, file, vol=None):
@@ -411,7 +411,7 @@ class Plate:
         parsed.append([row_str, col_str, content])
 
         if (
-                vol is None
+            vol is None
         ):  # standard case: a volume file was supplied but no optional parameter vol
             with open(vol_file, "r") as csv_file:  # same as above for vol file
                 reader = csv.reader(csv_file)
@@ -427,7 +427,7 @@ class Plate:
 
         """control if inputs are valid"""
         if (
-                parsed[0][0] != parsed[1][0] or parsed[0][1] != parsed[1][1]
+            parsed[0][0] != parsed[1][0] or parsed[0][1] != parsed[1][1]
         ):  # equal dimensions for compound and volume files
             raise ValueError(
                 f"Plate shape in {file} does not fit plate shape in {vol_file}"

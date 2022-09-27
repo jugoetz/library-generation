@@ -4,7 +4,7 @@ Provides a class MyDatabaseConnection to facilitate querying the DB.
 """
 
 import sqlite3 as sql
-from typing import Optional
+from typing import Optional, List, Tuple
 
 from PIL import Image
 from rdkit.Chem import MolFromSmiles, Mol
@@ -123,6 +123,10 @@ class MyDatabaseConnection:
         except KeyError:
             return None
         return MolFromSmiles(smiles)
+
+    def get_number_of_experiments_by_date(self) -> List[Tuple[str, int]]:
+        return self.cur.execute(
+            'SELECT synthesis_date_unixepoch, COUNT(*) FROM experiments GROUP BY synthesis_date_unixepoch;').fetchall()
 
     def __delete__(self, instance):
         self.con.close()

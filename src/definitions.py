@@ -14,7 +14,7 @@ LIB_STATIC_DIR = DATA_DIR / 'library_static'
 LOG_DIR = DATA_DIR / 'logs'
 MANUAL_SETTINGS_DIR = DATA_DIR / 'manual_settings'
 PLATES_DIR = DATA_DIR / 'plates'
-UTIL_DIR = DATA_DIR / 'utils'
+UTIL_DIR = DATA_DIR / 'util'
 
 COMPOUND_MAPPING_PATH = BUILDING_BLOCKS_DIR / 'compound_mapping.txt'
 # COMPOUND_MAPPING_PATH = EXP_DIR / 'identity.txt'   # this is sometimes useful for non-canonical experiments

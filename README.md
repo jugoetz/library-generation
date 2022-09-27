@@ -1,16 +1,29 @@
-## Library Generation Tools
+# Library Generation Tools
 
-Tools needed to deal generate HTE compound libraries. Specialized on Synthetic Fermentation.
+A collection of tools needed to deal generate HTE compound libraries. Specialized on Synthetic Fermentation.
+
+## Usage
+
+General usage is as follows:
+
+```bash
+python -m src.<path>.<to>.<submodule> <args>
+```
+
+The configuration file is located in `src/config.yaml`.
+Some modules accept command-line arguments, which override the configuration file.
 
 ### Submodules
 
 #### db_interconversion
 
+Tools that only operate within the database and do not produce other outputs.
+
 - **calculate_lcms_yields.py**: Conversion from raw LCMS data to ratios against internal standard
 
 #### db_models
 
-ORM models for database. Currently not used in production
+ORM models for database. Currently not used in production, but may be useful for future development.
 
 #### db_retrieval
 
@@ -18,10 +31,12 @@ Tools to retrieve data from db, e.g., for visualization, or experiment planning
 
 - **generatelcmssubmission.py**: Generate the submission file for Mobias
 - **heatmapfromdatabase.py**: Obtain a visual representation of results from LCMS peak areas
+- **show_product.py**: Show the product(s) in a given well as SMILES or image
+- **weighin_calculator.py**: Produce a weigh-in sheet for a given experiment
 
 #### db_writing
 
-Addition of raw and processed data to database
+Addition of raw and processed data to database.
 
 #### legacy_code
 
@@ -42,12 +57,12 @@ Tools for going from building blocks save in an external inventory system to an 
 
 - **generatelibraryplan.py**: Take the building block list received from cheminventory_cleanup.py and 
 draw random combinations for every experiment to give a synthesis plan
-  
-- **generateplatelayout.py**: Take the synthesis plan given by generatelibraryplan.py and generate the 
-target plates for every experiment.
-  
-- **sdf-to-properties.py**: Take the VL (as sdf.gz files) and extract / calculate names, molecular masses, and
-formulae of the library molecules.
+
+- **generateplatelayout.py**: Take the synthesis plan given by generatelibraryplan.py and generate the
+  target plates for every experiment.
+
+- **sdftoproperties.py**: Take the VL (as sdf.gz files) and extract / calculate names, molecular masses, and
+  formulae of the library molecules.
   
 ### Usage scenarios
 #### When additional building blocks are added to the library
@@ -59,7 +74,7 @@ Put the ChemInventory export file into <root>/data/inputs/ and run library_desig
 Change enumerate_reaction.py and rerun:
 
 - enumerate_reaction.py
-- sdf-to-properties.py
+- sdftoproperties.py
 - generatelcmssubmission.py
 
 #### When the synthesis plan has to be changed (e.g. compound cannot be located)

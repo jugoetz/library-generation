@@ -3,6 +3,7 @@ Evaluate yields of a plate from MoBiAS output. Save the yields to the DB.
 
 This script will overwrite existing records in the lcms table (with the same synthesis_id).
 """
+import argparse
 import re
 import sqlite3
 
@@ -165,7 +166,17 @@ def extract_mobias_results(path, db_path, exp_nr, mobias_input):
 
 
 if __name__ == "__main__":
-    for lcms_nr in conf["lab_journal_numbers"]:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "lab_journal_numbers",
+        type=str,
+        default=conf["lab_journal_numbers"],
+        nargs="*",
+        help="Lab journal numbers to process",
+    )
+    args = parser.parse_args()
+
+    for lcms_nr in args.lab_journal_numbers:
         exp_dir = PLATES_DIR / lcms_nr
         results_file_name = get_lcms_file_name(lcms_nr)
 

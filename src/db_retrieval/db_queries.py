@@ -1,6 +1,5 @@
 """
-Module to query our specific DB implementation.
-Provides a class MyDatabaseConnection to facilitate querying the DB.
+This module provides a class MyDatabaseConnection to facilitate querying the SQLite DB used for this project.
 """
 
 import sqlite3 as sql
@@ -14,6 +13,11 @@ from src.definitions import DB_PATH
 
 
 class MyDatabaseConnection:
+    """
+    This class provides methods to query the SQLite database.
+    Popular queries are provided as methods, but arbitrary SELECT queries can be executed using the
+    execute_arbitrary_simple_query.
+    """
 
     def __init__(self):
         self.con = sql.connect(DB_PATH)
@@ -72,8 +76,12 @@ class MyDatabaseConnection:
         """
         Return unique building blocks in an experiment. The experiment can be defined by either an exp_nr
         or a lab_journal_number.
-        :param kwargs: Exactly one of lab_journal_nr or exp_nr must be given.
-        :return: 3-tuple of sorted building block lists: ([initiators], [monomers], [terminators])
+
+        Args:
+            kwargs (dict): Exactly one key of lab_journal_nr or exp_nr must be given.
+
+        Returns:
+            tuple, 3-tuple of sorted building block lists: ([initiators], [monomers], [terminators])
         """
         # if-clause checks whether exactly one of the possible two kwargs(and no other kwargs) was given
         if not set() < kwargs.keys() < {'lab_journal_number', 'exp_nr'}:
@@ -106,10 +114,13 @@ class MyDatabaseConnection:
 
     def get_product_mol_by_well(self, lab_journal_number: str, well: str, product_type: str) -> Optional[Mol]:
         """
-        :param lab_journal_number: Unique identifier for the plate
-        :param well: Identifier for the well within the plate
-        :param product_type: [A-H]
-        :return: rdkit mol object, or None if no match was found
+        Args:
+            lab_journal_number (str): Unique identifier for the plate
+            well (str): Well identifier within the plate
+            product_type (str): [A-H]
+
+        Returns:
+            Mol (optional): rdkit mol object, or None if no match was found
         """
         product_mapping = dict(zip('ABCDEFGH', range(8)))
         product_idx = product_mapping[product_type]
@@ -130,9 +141,3 @@ class MyDatabaseConnection:
 
     def __delete__(self, instance):
         self.con.close()
-
-
-if __name__ == '__main__':
-    # add debugging statements here
-    mycon = MyDatabaseConnection()
-    print(mycon.show_image('M40'))

@@ -12,7 +12,7 @@ Outputs:
 """
 import json
 
-from definitions import LIB_INFO_DIR, PLATES_DIR
+from src.definitions import LIB_INFO_DIR, PLATES_DIR
 from labware.plates import Plate384
 
 with open(LIB_INFO_DIR / 'synthesis_plan.json', 'r') as file:

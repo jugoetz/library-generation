@@ -20,8 +20,8 @@ from functools import reduce
 
 import pandas as pd
 
-from definitions import PLATES_DIR, DB_PATH
-from utils import get_product_dict, get_internal_standard_number, get_conf
+from src.definitions import PLATES_DIR, DB_PATH
+from src.util.utils import get_product_dict, get_internal_standard_number, get_conf
 
 # configurations
 # edit config.yaml before running

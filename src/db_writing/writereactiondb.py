@@ -13,13 +13,12 @@ import os
 import csv
 import sqlite3
 import shutil
-from pathlib import Path
 
 import pandas as pd
 
-from definitions import PLATES_DIR, DB_PATH, PLATE_LIST_PATH
-from db_retrieval.generatelcmssubmission import import_pl
-from utils import get_conf
+from src.definitions import PLATES_DIR, DB_PATH, PLATE_LIST_PATH
+from src.db_retrieval.generatelcmssubmission import import_pl
+from src.util.utils import get_conf
 
 # configuration
 # edit config.yaml to change

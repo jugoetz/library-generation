@@ -2,7 +2,7 @@ import json
 from yaml import safe_load
 import pandas as pd
 
-from definitions import CONF_PATH, PLATE_LIST_PATH
+from src.definitions import CONF_PATH, PLATE_LIST_PATH
 
 
 def get_conf():

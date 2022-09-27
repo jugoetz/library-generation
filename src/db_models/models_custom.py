@@ -1,11 +1,11 @@
 """
-Custom models to to interact with the database.
+Custom models to interact with the database.
 """
 
 from sqlalchemy import Column, String, Integer, Date, ForeignKey, Float
 from rdkit import Chem
 from rdkit.Chem.Descriptors import MolWt
-from .models_base import Base, BottleBase, BuildingBlockBase
+from src.db_models.models_base import Base, BottleBase, BuildingBlockBase
 
 
 class MyBuildingBlock(BuildingBlockBase):

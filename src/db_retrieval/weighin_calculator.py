@@ -10,9 +10,9 @@ from pathlib import Path
 
 import xlsxwriter
 
-from definitions import PLATES_DIR
-from db_queries import MyDatabaseConnection
-from utils import get_conf
+from src.definitions import PLATES_DIR
+from src.db_retrieval.db_queries import MyDatabaseConnection
+from src.util.utils import get_conf
 
 # configuration
 # edit config.yaml to change

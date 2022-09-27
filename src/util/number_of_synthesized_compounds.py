@@ -7,7 +7,7 @@ import datetime
 import pandas as pd
 
 from src.db_retrieval.db_queries import MyDatabaseConnection
-from definitions import UTIL_DIR
+from src.definitions import UTIL_DIR
 
 con = MyDatabaseConnection()
 

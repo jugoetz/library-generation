@@ -16,8 +16,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 
-from definitions import PLATES_DIR, DB_PATH
-from utils import get_conf
+from src.definitions import PLATES_DIR, DB_PATH
+from src.util.utils import get_conf
 
 # configuration
 # edit config.yaml to change

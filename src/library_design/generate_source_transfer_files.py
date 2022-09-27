@@ -19,8 +19,8 @@ from collections import defaultdict
 import pandas as pd
 
 from labware.plates import Plate384
-from definitions import PLATES_DIR
-from utils import get_conf
+from src.definitions import PLATES_DIR
+from src.util.utils import get_conf
 
 # configuration
 # edit config.yaml to change

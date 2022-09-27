@@ -25,7 +25,7 @@ from rdkit.Chem.PropertyMol import PropertyMol
 import pandas as pd
 import math
 
-from definitions import BUILDING_BLOCKS_DIR, IMAGES_DIR, LIB_SDF_DIR, LIB_INFO_DIR
+from src.definitions import BUILDING_BLOCKS_DIR, IMAGES_DIR, LIB_SDF_DIR, LIB_INFO_DIR
 
 """Generate a DataFrame with all relevant information from inventory data"""
 print('Importing inventory data...')

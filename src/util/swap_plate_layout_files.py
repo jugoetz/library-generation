@@ -12,11 +12,11 @@ them according to
 """
 import shutil
 
-from definitions import PLATES_DIR
+from src.definitions import PLATES_DIR
 
 #################################
 # set this directory before use #
-exp_dir = PLATES_DIR / "exp23"  #
+exp_dir = PLATES_DIR / "exp18"  #
 #################################
 
 filenames = [f"plate_layout_plate{i + 1}.csv" for i in range(3)]

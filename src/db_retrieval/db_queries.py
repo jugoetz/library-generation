@@ -10,7 +10,7 @@ from PIL import Image
 from rdkit.Chem import MolFromSmiles, Mol
 from rdkit.Chem.Descriptors import MolWt
 
-from definitions import DB_PATH
+from src.definitions import DB_PATH
 
 
 class MyDatabaseConnection:

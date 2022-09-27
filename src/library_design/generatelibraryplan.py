@@ -19,7 +19,7 @@ import csv
 import json
 import pandas as pd
 
-from definitions import BUILDING_BLOCKS_DIR, LIB_INFO_DIR, LOG_DIR
+from src.definitions import BUILDING_BLOCKS_DIR, LIB_INFO_DIR, LOG_DIR
 
 """seed randomizer for reproducible result"""
 seed = 42

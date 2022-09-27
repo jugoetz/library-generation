@@ -17,14 +17,15 @@ The following are considered WARNINGS::
 - 2-4 peaks for the main product in MoBiAS analysis
 - Deviations of IS peak area by 50-80% from the mean for the plate
 """
+import argparse
 import sqlite3
 import warnings
 from pathlib import Path
 
 import pandas as pd
 
-from definitions import PLATES_DIR, PLATE_LIST_PATH, DB_PATH
-from utils import get_internal_standard_number, get_conf
+from src.definitions import PLATES_DIR, PLATE_LIST_PATH, DB_PATH
+from src.util.utils import get_internal_standard_number, get_conf
 
 # configuration
 # edit config.yaml to change
@@ -279,4 +280,13 @@ def main(exp_dir: Path, exp_nr: int, skip_nexus=False):
 
 if __name__ == '__main__':
     exp_dir = PLATES_DIR / conf['exp_dir']
-    main(exp_dir, conf['exp_nr'], skip_nexus=conf['errors']['skip_nexus'])
+    parser = argparse.ArgumentParser(
+        description='Extract errors from manual error list, NEXUS transfer files and MoBiAS output')
+
+    parser.add_argument('--exp_nr', type=int, help='Number of the experiment under consideration',
+                        default=conf['exp_nr'])
+    parser.add_argument('--exp_dir', type=Path, help='Path to the experiment directory', default=exp_dir)
+    parser.add_argument('--skip_nexus', action='store_true', help='Skip NEXUS transfer file analysis',
+                        default=conf['errors']['skip_nexus'])
+    args = parser.parse_args()
+    main(args.exp_dir, args.exp_nr, args.skip_nexus)

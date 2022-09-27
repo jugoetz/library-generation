@@ -35,9 +35,9 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from definitions import PLATES_DIR, COMPOUND_MAPPING_PATH, DB_PATH
+from src.definitions import PLATES_DIR, COMPOUND_MAPPING_PATH, DB_PATH
 from labware.plates import Plate384, Plate96
-from utils import get_conf
+from src.util.utils import get_conf
 
 # configuration
 # edit config.yaml to change

@@ -17,7 +17,7 @@ from pathlib import Path
 from rdkit.Chem.rdmolfiles import ForwardSDMolSupplier
 from rdkit.Chem.rdMolDescriptors import CalcExactMolWt, CalcMolFormula
 
-from definitions import LIB_STATIC_DIR
+from src.definitions import LIB_STATIC_DIR
 
 """GLOBALS"""
 OUTPUT_JSON = LIB_STATIC_DIR / 'static_mol_prop_dict.json.gz'

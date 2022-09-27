@@ -24,7 +24,7 @@ Outputs:
 
 import pandas as pd
 
-from definitions import INPUT_DIR, BUILDING_BLOCKS_DIR, LOG_DIR, MANUAL_SETTINGS_DIR
+from src.definitions import INPUT_DIR, BUILDING_BLOCKS_DIR, LOG_DIR, MANUAL_SETTINGS_DIR
 
 
 def import_from_xlsx():

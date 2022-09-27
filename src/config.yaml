@@ -1,19 +1,11 @@
 # global options applying to most scripts
-exp_nr: 16
-exp_dir: exp16
+exp_nr: 25
+exp_dir: exp25
 lab_journal_numbers:
-  #  - JG315
-  #  - JG316
-  #  - JG317
-  #  - JG318
-  #  - JG319
-  #  - JG320
-  - JG321
-  - JG322
-  - JG323
-  - JG324
-  - JG325
-  - JG326
+  - JG386
+#  - JG384
+#  - JG385
+#  - JG386
 
 # configuration for extract_experiment_errors.py
 errors:
@@ -41,7 +33,7 @@ weight:
 
 # configuration for writereactiondb.py
 db:
-  synthesis_date: !!timestamp "2022-05-03"
+  synthesis_date: !!timestamp 2022-09-20
   plate_nrs: # these need to align with lab_journal_numbers
     - 1
     - 2

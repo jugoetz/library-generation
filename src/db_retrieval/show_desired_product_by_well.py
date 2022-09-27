@@ -1,6 +1,6 @@
 from rdkit.Chem import Draw, MolToSmiles
 
-from db_queries import MyDatabaseConnection
+from src.db_retrieval.db_queries import MyDatabaseConnection
 
 con = MyDatabaseConnection()
 

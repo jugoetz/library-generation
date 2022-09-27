@@ -37,7 +37,7 @@ from rdkit import Chem
 from rdkit.Chem import Draw, SaltRemover, AllChem
 from rdkit.Chem.SimpleEnum.Enumerator import EnumerateReaction
 
-from definitions import LIB_INFO_DIR, LIB_SDF_DIR
+from src.definitions import LIB_INFO_DIR, LIB_SDF_DIR
 
 """GLOBALS"""
 POSTPROCESSING_ONLY = True

@@ -9,8 +9,8 @@ import sqlite3
 import pandas as pd
 import numpy as np
 
-from definitions import PLATES_DIR, DB_PATH
-from utils import get_lcms_file_name, get_conf
+from src.definitions import PLATES_DIR, DB_PATH
+from src.util.utils import get_lcms_file_name, get_conf
 
 # configuration
 # edit config.yaml to change

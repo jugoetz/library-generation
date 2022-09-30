@@ -13,3 +13,5 @@
 *_backup_*
 # cache
 *__pycache__*
+# configuration
+src/config.yaml

@@ -8,7 +8,7 @@ TODO I need a possibility to produce heatmaps for arbitrary data, not just plate
       - Plot other formats than a plate (e.g. one monomer, all i, all t on the two axes)
      Currently, this is realized in generate_arbitrary_heatmaps.ipynb
 """
-
+import argparse
 import sqlite3
 
 import pandas as pd
@@ -185,12 +185,22 @@ def plot_experiment_heatmap_from_database(
 
 
 if __name__ == "__main__":
-    for exp_nr in conf["lab_journal_numbers"]:
-        print(f"Now plotting {exp_nr}...")
-        exp_dir = PLATES_DIR / exp_nr
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "lab_journal_numbers",
+        type=str,
+        default=conf["lab_journal_numbers"],
+        nargs="*",
+        help="Lab journal numbers to process",
+    )
+    args = parser.parse_args()
+
+    for lab_journal_nr in args.lab_journal_numbers:
+        print(f"Now plotting {lab_journal_nr}...")
+        exp_dir = PLATES_DIR / lab_journal_nr
         plot_experiment_heatmap_from_database(
             DB_PATH,
-            exp_nr,
+            lab_journal_nr,
             exp_dir,
             conf["heatmap"]["normalization_constant"],
             conf["heatmap"]["well_plate_size"],

@@ -13,7 +13,7 @@ This script raises a RuntimeError if there are multiple entries for a given synt
 
 edit config.yaml before running
 """
-
+import argparse
 import re
 import sqlite3
 from functools import reduce
@@ -151,7 +151,17 @@ def calculate_lcms_yields(db_path, exp_dir, lab_journal_nr):
 
 
 if __name__ == "__main__":
-    for lab_journal_nr in conf["lab_journal_numbers"]:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "lab_journal_numbers",
+        type=str,
+        default=conf["lab_journal_numbers"],
+        nargs="*",
+        help="Lab journal numbers to process",
+    )
+    args = parser.parse_args()
+
+    for lab_journal_nr in args.lab_journal_numbers:
         print(f"Now calculating LCMS ratios for {lab_journal_nr}...")
         exp_dir = PLATES_DIR / lab_journal_nr
         calculate_lcms_yields(DB_PATH, exp_dir, lab_journal_nr)

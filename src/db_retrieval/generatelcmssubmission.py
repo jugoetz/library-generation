@@ -24,7 +24,7 @@ Output:
 
 TODO this is in dire need of refactoring (but it works)
 """
-
+import argparse
 import json
 import re
 import os
@@ -42,6 +42,7 @@ from src.util.utils import get_conf
 # configuration
 # edit config.yaml to change
 conf = get_conf()
+debug = False
 
 
 def import_sm(file):
@@ -261,17 +262,6 @@ def main(exp_dir):
                 plate_dict = import_pl(Path(path, f))
                 plates_dict[m.group(1)] = plate_dict
 
-    # print the input values for double checking
-    print("########## INPUT VALUES ###########\n")
-    for k, v in mol_prop_dict.items():
-        print(f"Products {k}:\n{v}\n")
-    print(f"Used starting materials: \n{starting_material_dict}\n\n")
-    for k, v in plates_dict.items():
-        print(f"Plate layout {k}:\n{v}\n")
-
-    # start printing terminal output
-    print("########## OUTPUT ###########\n")
-
     """Put everything in df for ease of use"""
     dfs = []
     for plate, plate_content in plates_dict.items():
@@ -291,8 +281,21 @@ def main(exp_dir):
         get_long_name, axis=1, dictionary=starting_material_dict
     )
 
-    for i, data in df.iterrows():
-        print(f'Plate {data["plate"]}, Well {data["well"]}, Product: {data["long"]}')
+    if debug:
+        # print the input values for double-checking
+        print("########## INPUT VALUES ###########\n")
+        for k, v in mol_prop_dict.items():
+            print(f"Products {k}:\n{v}\n")
+        print(f"Used starting materials: \n{starting_material_dict}\n\n")
+        for k, v in plates_dict.items():
+            print(f"Plate layout {k}:\n{v}\n")
+
+        # start printing terminal output
+        print("########## OUTPUT ###########\n")
+        for i, data in df.iterrows():
+            print(
+                f'Plate {data["plate"]}, Well {data["well"]}, Product: {data["long"]}'
+            )
 
     """
     Add molecular formulae and exact masses to dataframe
@@ -382,7 +385,17 @@ def main(exp_dir):
 
 
 if __name__ == "__main__":
-    for exp_nr in conf["lab_journal_numbers"]:
-        print(f"Generating submission file for {exp_nr}...")
-        main(PLATES_DIR / exp_nr)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "lab_journal_numbers",
+        type=str,
+        default=conf["lab_journal_numbers"],
+        nargs="*",
+        help="Lab journal numbers to process",
+    )
+    args = parser.parse_args()
+
+    for lab_journal_nr in args.lab_journal_numbers:
+        print(f"Generating submission file for {lab_journal_nr}...")
+        main(PLATES_DIR / lab_journal_nr)
     print("End of script. Exiting...")

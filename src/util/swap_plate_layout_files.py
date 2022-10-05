@@ -14,11 +14,15 @@ import shutil
 
 from src.definitions import PLATES_DIR
 
-#################################
-# set this directory before use #
-exp_dir = PLATES_DIR / "exp18"  #
-#################################
+import argparse
 
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "exp_nr", type=str, help="Experiment number to process (e.g. 'exp18')"
+)
+args = parser.parse_args()
+
+exp_dir = PLATES_DIR / args.exp_nr
 filenames = [f"plate_layout_plate{i + 1}.csv" for i in range(3)]
 plate_layout_files = [exp_dir / f for f in filenames]
 backup_dir = exp_dir / "legacy_2022-08-12"

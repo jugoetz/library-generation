@@ -110,7 +110,7 @@ def get_plot(df, product_type, ax=None):
     return ax
 
 
-def plot_heatmap(df, product_type, save_path, plate_size):
+def plot_heatmap(df, product_type, save_path, plate_size, silent=True):
     """Plot an individual plate-sized heatmap from dataframe"""
     if plate_size == 96:
         plt.figure(figsize=(7.5, 5))  # this size works for 96 wells plates
@@ -125,11 +125,14 @@ def plot_heatmap(df, product_type, save_path, plate_size):
     fig.savefig(save_path, dpi=100)
 
     # show the plot
-    plt.show()
+    if silent:
+        plt.close()
+    else:
+        plt.show()
     return
 
 
-def plot_heatmap_overview(df, save_path):
+def plot_heatmap_overview(df, save_path, silent=True):
     """Plot an overview of all products of one plate in a 4x2 grid from dataframe"""
     # Generate figure and 8 axes inside
     fig, axs = plt.subplots(4, 2, figsize=(21, 35))
@@ -149,21 +152,28 @@ def plot_heatmap_overview(df, save_path):
         )
     fig.tight_layout()
 
-    # save to file and show
+    # save to file
     fig.savefig(save_path, dpi=100)
-    plt.show()
+
+    # show the plot
+    if silent:
+        plt.close()
+    else:
+        plt.show()
     return
 
 
 def plot_experiment_heatmap_from_database(
-    db_path, exp_nr, exp_dir, normalization_constant, plate_size
+    db_path, exp_nr, exp_dir, normalization_constant, plate_size, silent=True
 ):
     """Main function for plotting yield heatmaps from values stored in 'experiments' database"""
     yields = read_yields_from_database(db_path, exp_nr)
     yields = normalize_yields(yields, normalization_constant)
 
     # plot an overview with all individual heatmaps in a 4x2 grid
-    plot_heatmap_overview(yields, exp_dir / f"heatmap_{exp_nr}_overview.png")
+    plot_heatmap_overview(
+        yields, exp_dir / f"heatmap_{exp_nr}_overview.png", silent=silent
+    )
 
     # plot all heatmaps
     for product_type in "ABCDEFGH":
@@ -180,6 +190,7 @@ def plot_experiment_heatmap_from_database(
             product_type,
             exp_dir / f"heatmap_{exp_nr}_{product_type}.png",
             plate_size,
+            silent=silent,
         )
     return
 
@@ -193,7 +204,15 @@ if __name__ == "__main__":
         nargs="*",
         help="Lab journal numbers to process",
     )
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Verbose mode. Show plots during execution",
+    )
+
     args = parser.parse_args()
+    silent = not args.verbose
 
     for lab_journal_nr in args.lab_journal_numbers:
         print(f"Now plotting {lab_journal_nr}...")
@@ -204,5 +223,6 @@ if __name__ == "__main__":
             exp_dir,
             conf["heatmap"]["normalization_constant"],
             conf["heatmap"]["well_plate_size"],
+            silent=silent,
         )
     print("Finished plotting!")

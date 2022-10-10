@@ -5,7 +5,7 @@ Saves a CSV file that contains the synthesis dates with the number of compounds 
 """
 import pandas as pd
 
-from src.db_retrieval.db_queries import MyDatabaseConnection
+from src.util.db_utils import MyDatabaseConnection
 from src.definitions import UTIL_DIR
 
 con = MyDatabaseConnection()

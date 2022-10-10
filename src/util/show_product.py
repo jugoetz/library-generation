@@ -2,7 +2,7 @@ import argparse
 
 from rdkit.Chem import Draw, MolToSmiles
 
-from src.db_retrieval.db_queries import MyDatabaseConnection
+from src.util.db_utils import MyDatabaseConnection
 
 defaults = {
     "lab_journal_nr": "JG290",

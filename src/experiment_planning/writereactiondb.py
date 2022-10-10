@@ -17,7 +17,7 @@ import shutil
 import pandas as pd
 
 from src.definitions import PLATES_DIR, DB_PATH, PLATE_LIST_PATH
-from src.db_retrieval.generatelcmssubmission import import_pl
+from src.experiment_planning.generatelcmssubmission import import_pl
 from src.util.utils import get_conf
 
 # configuration

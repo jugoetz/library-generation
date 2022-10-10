@@ -11,7 +11,7 @@ from pathlib import Path
 import xlsxwriter
 
 from src.definitions import PLATES_DIR
-from src.db_retrieval.db_queries import MyDatabaseConnection
+from src.util.db_utils import MyDatabaseConnection
 from src.util.utils import get_conf
 
 # configuration

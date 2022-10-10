@@ -11,32 +11,27 @@ python -m src.<path>.<to>.<submodule> <args>
 ```
 
 The configuration file is located in `src/config.yaml`.
-Some modules accept command-line arguments, which override the configuration file.
+Some modules accept command-line arguments, which, if given, override the configuration file.
 
 ### Submodules
 
-#### db_interconversion
+#### analysis
 
-Tools that only operate within the database and do not produce other outputs.
+Tools to evaluate experiments.
 
-- **calculate_lcms_yields.py**: Conversion from raw LCMS data to ratios against internal standard
+- **calculatelcmsyields**: Conversion from raw LCMS data to ratios against internal standard
+- **extracterrors**: Extracts errors from MoBiAS output, NEXUS logs.
+- **extractmobiasresults**: Extracts raw LCMS data from MoBiAS output.
+- **heatmapfromdb**: Generates yield heatmaps from processed LCMS data.
 
-#### db_models
+#### experiment_planning
 
-ORM models for database. Currently not used in production, but may be useful for future development.
+Tools to set up individual experiments.
 
-#### db_retrieval
+- **generatelcmssubmission**: Generate the submission file for MoBiAS.
 
-Tools to retrieve data from db, e.g., for visualization, or experiment planning
-
-- **generatelcmssubmission.py**: Generate the submission file for Mobias
-- **heatmapfromdatabase.py**: Obtain a visual representation of results from LCMS peak areas
-- **show_product.py**: Show the product(s) in a given well as SMILES or image
-- **weighin_calculator.py**: Produce a weigh-in sheet for a given experiment
-
-#### db_writing
-
-Addition of raw and processed data to database.
+- **weighincalculator**: Produce a weigh-in sheet for a given experiment
+- **writereactiondb**: Populate the reaction database with a given experiment.
 
 #### legacy_code
 
@@ -46,23 +41,32 @@ as the name suggests...
 
 Tools for going from building blocks save in an external inventory system to an experiment library
 
-- **cheminventory-cleanup.py**: Prune the building blocks stored in cheminventory to remove duplicates, scarce, and
-  impure material
+- **cheminventorycleanup**: Prune the building blocks stored in cheminventory to remove duplicates, scarce, and
+  impure material.
 
-- **inventorytosdf.py**: Take the building block list received from cheminventory_cleanup.py and amend it with
+- **enumeratelibrary**: Enumerate the virtual library from a set of building blocks.
+
+- **generateexperiment**: This is an experimental script for experiment design that is not used in production.
+
+- **inventorytosdf**: Take the building block list received from cheminventory_cleanup.py and amend it with
   additional information (e.g. MW, weigh-in). Gives sdf of building blocks and serializes DataFrame of mols to pickle
 
-- **enumerate-library.py**: Take the pickled DataFrame from inventorytosdf.py and enumerate the corresponding virtual
+- **enumeratelibrary**: Take the pickled DataFrame from inventorytosdf.py and enumerate the corresponding virtual
   library. Save to sdf.
 
-- **generatelibraryplan.py**: Take the building block list received from cheminventory_cleanup.py and
+- **generatelibraryplan**: Take the building block list received from cheminventory_cleanup.py and
 draw random combinations for every experiment to give a synthesis plan
 
-- **generateplatelayout.py**: Take the synthesis plan given by generatelibraryplan.py and generate the
+- **generateplatelayout**: Take the synthesis plan given by generatelibraryplan.py and generate the
   target plates for every experiment.
 
-- **sdftoproperties.py**: Take the VL (as sdf.gz files) and extract / calculate names, molecular masses, and
+- **sdftoproperties**: Take the VL (as sdf.gz files) and extract / calculate names, molecular masses, and
   formulae of the library molecules.
+
+#### utils
+- **db_utils**: Contains DB connection class which defines many popular queries.
+- **number_of_synthesized_compounds**: Calculates the number of synthesized compounds from the reaction database.
+- **show_product**: Show the product(s) in a given well as SMILES or image
 
 ### Usage scenarios
 #### When additional building blocks are added to the library

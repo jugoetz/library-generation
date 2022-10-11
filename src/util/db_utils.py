@@ -3,7 +3,7 @@ This module provides a class MyDatabaseConnection to facilitate querying the SQL
 """
 
 import sqlite3 as sql
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Any
 
 from PIL import Image
 from rdkit.Chem import MolFromSmiles, Mol
@@ -200,6 +200,18 @@ class MyDatabaseConnection:
     def get_number_of_experiments_by_date(self) -> List[Tuple[str, int]]:
         return self.cur.execute(
             "SELECT synthesis_date_unixepoch, COUNT(*) FROM experiments GROUP BY synthesis_date_unixepoch;"
+        ).fetchall()
+
+    def get_experiments_with_buildingblock(self, short) -> List[Tuple[Any]]:
+        """
+        Returns a list of experiments that contain the given building block.
+        Each entry is a tuple consisting of exp_nr, plate_nr, well, lab_journal_number, initiator, monomer, terminator,
+        product_A_lcms_ratio, product_B_lcms_ratio, product_C_lcms_ratio, product_D_lcms_ratio, product_E_lcms_ratio,
+        product_F_lcms_ratio, product_G_lcms_ratio, product_H_lcms_ratio, vl_id, valid
+        """
+        return self.cur.execute(
+            "SELECT exp_nr, plate_nr, well, lab_journal_number, initiator, monomer, terminator, product_A_lcms_ratio, product_B_lcms_ratio, product_C_lcms_ratio, product_D_lcms_ratio, product_E_lcms_ratio, product_F_lcms_ratio, product_G_lcms_ratio, product_H_lcms_ratio, vl_id, valid FROM experiments WHERE initiator = ? OR monomer = ? OR terminator = ?;",
+            (short, short, short),
         ).fetchall()
 
     def __delete__(self, instance):

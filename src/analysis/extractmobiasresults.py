@@ -26,7 +26,7 @@ def import_lcms_results(path):
     # read data
     df = pd.read_csv(
         path, header=3, encoding="latin-1", skip_blank_lines=False
-    )  # read results.csv file from Mobias
+    )  # read results.csv file from MoBiAS
     # extract the sample ID (the JG2xx-001 part). It is part after the last whitespace in that field
     df["Sample ID"] = df["Sample ID"].str.split(" ").str[-1]
     # remove any accidental whitespaces in column names
@@ -34,9 +34,9 @@ def import_lcms_results(path):
     return df
 
 
-def check_mobias_input_output_equivalent(df, mobias_input):
+def check_mobias_input_output_equivalent(df, mobias_input, exp_nr):
     """
-    Check if the sum formulae in the Mobias output are the same that I had entered in my submission.
+    Check if the sum formulae in the MoBiAS output are the same that I had entered in my submission.
     (Basically a test against copy-paste or accidental editing errors)
     """
 
@@ -52,7 +52,7 @@ def check_mobias_input_output_equivalent(df, mobias_input):
     df_input.set_index("Sample-Ident", inplace=True)
     for col in area_columns:
         if col not in df_input.columns:
-            raise KeyError(f"Column {col} was not found in mobias submission file")
+            raise KeyError(f"Column {col} was not found in MoBiAS submission file")
     df_input = df_input[area_columns]
     df_input.drop("Blank", inplace=True)
     # df_input has empty values as float('nan'), df has them as '-'. Set all to '-'
@@ -63,17 +63,18 @@ def check_mobias_input_output_equivalent(df, mobias_input):
         # we are fine
         pass
     else:
-        missing_indices = set([f"JG239-{i:03d}" for i in range(1, 321)]) - set(
+        missing_indices = set([f"{exp_nr}-{i:03d}" for i in range(1, 321)]) - set(
             df.index.to_list()
         )
-        known_missing = ["JG239-265"]
-        if set(missing_indices) != set(
-            known_missing
-        ):  # don't raise error if problem is known
-            raise ValueError(
-                f"Values for Mobias input and output do not align. These indices are missing in the "
-                f"output: {missing_indices}"
-            )
+        if len(missing_indices) > 0:
+            known_missing = ["JG239-102"]
+            if set(missing_indices) != set(
+                known_missing
+            ):  # don't raise error if problem is known
+                raise ValueError(
+                    f"Values for MoBiAS input and output do not align. These indices are missing in the "
+                    f"output: {missing_indices}"
+                )
 
     return
 
@@ -155,11 +156,11 @@ def save_mobias_data_to_db(df, db_path, exp_nr):
 
 def extract_mobias_results(path, db_path, exp_nr, mobias_input):
     """
-    Main function. Extract the csv supplied by mobias, verify against my submission file, clean up the data,
+    Main function. Extract the csv supplied by MoBiAS, verify against my submission file, clean up the data,
     and save the extracted data to a database.
     """
     results_df = import_lcms_results(path)
-    check_mobias_input_output_equivalent(results_df, mobias_input)
+    check_mobias_input_output_equivalent(results_df, mobias_input, exp_nr)
     results_df = clean_result_df(results_df)
     save_mobias_data_to_db(results_df, db_path, exp_nr)
     return

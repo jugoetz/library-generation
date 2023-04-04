@@ -139,7 +139,6 @@ def add_name_prop_to_mol(reactant1, reactant2, reactant3, product_library):
 
 
 if POSTPROCESSING_ONLY is False:
-
     """Import from pickle"""
     compounds = pd.read_pickle(LIB_INFO_DIR / "library_constituents_dataframe.pkl")
 

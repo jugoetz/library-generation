@@ -123,7 +123,6 @@ class Transfer:
 
 
 if __name__ == "__main__":
-
     """
     This routine checks whether given Echo transfer files generate the correct target plates from a given source plate.
     """

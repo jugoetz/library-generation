@@ -84,25 +84,32 @@ def read_nexus_transfer_errors(path: Path, error_string: str) -> List[str]:
         ],
     )
     if "[EXCEPTIONS]" in transfers.values:
+        # find the indices of the exceptions and details sections
         exceptions_idx = transfers.loc[
             transfers["Source Plate Name"] == "[EXCEPTIONS]"
         ].index
         details_idx = transfers.loc[transfers["Source Plate Name"] == "[DETAILS]"].index
+        # clean the destination plate name
         transfers["plate"] = (
             transfers["Destination Plate Barcode"]
             .str.strip("Synthesis")
             .str.strip("Analysis")
+            .str.strip(
+                "_"
+            )  # remove leading underscore (NEXUS accidentally placed this for some files)
         )
         # ^ we can do this since the analysis plate is a 1:1 copy
         transfers["row"] = transfers["Destination Well"].str[0]
         transfers["column"] = transfers["Destination Well"].str[1:]
         transfers["error"] = error_string
-        exceptions = transfers.iloc[exceptions_idx[0] + 2 : details_idx[0]]
-        return (
-            exceptions[["plate", "row", "column", "error"]]
-            .to_numpy(dtype="str")
-            .tolist()
-        )
+        exceptions = transfers.loc[
+            exceptions_idx[0] + 2 : details_idx[0] - 1,
+            ["plate", "row", "column", "error"],
+        ]  # +2 for the [EXCEPTIONS] line and the repeated header. -1 because loc is inclusive
+        exceptions["plate"] = (
+            exceptions["plate"].astype(int) - 1
+        ) % 6 + 1  # convert to 1-6 (necessary because of inconsistent naming of analysis plates at NEXUS)
+        return exceptions.to_numpy(dtype="str").tolist()
     else:
         return []
 
@@ -141,18 +148,19 @@ def read_nexus_repeated_tranfers(path: Path, error_string: str) -> List[str]:
     )
     if "[DETAILS]" in transfers.values:
         details_idx = transfers.loc[transfers["Source Plate Name"] == "[DETAILS]"].index
-        transfers["plate"] = transfers["Destination Plate Barcode"].str.strip(
-            "Synthesis"
-        )
+        transfers["plate"] = (
+            transfers["Destination Plate Barcode"].str.strip("Synthesis").str.strip("_")
+        )  # remove leading underscore (NEXUS accidentally placed this for some files)
         transfers["row"] = transfers["Destination Well"].str[0]
         transfers["column"] = transfers["Destination Well"].str[1:]
         transfers["error"] = error_string
-        successes = transfers.iloc[details_idx[0] + 2 :]
-        return (
-            successes[["plate", "row", "column", "error"]]
-            .to_numpy(dtype="str")
-            .tolist()
-        )
+        successes = transfers.loc[
+            details_idx[0] + 2 :, ["plate", "row", "column", "error"]
+        ]
+        successes["plate"] = (
+            successes["plate"].astype(int) - 1
+        ) % 6 + 1  # convert to 1-6 (necessary because of inconsistent naming of analysis plates at NEXUS)
+        return successes.to_numpy(dtype="str").tolist()
     else:
         return []
 
@@ -169,7 +177,9 @@ def read_nexus_survey_errors(
     """
     volumes = pd.read_csv(path, header=7)
     volumes = volumes.drop(columns=["Survey Status"]).dropna(how="any", axis=0)
-    volumes["plate"] = volumes["Source Plate Barcode"].str.strip("Synthesis")
+    volumes["plate"] = (
+        volumes["Source Plate Barcode"].str.strip("Synthesis").str.strip("_")
+    )  # remove leading underscore (NEXUS accidentally placed this for some files)
     volumes["row"] = volumes["Source Well"].str[0]
     volumes["column"] = volumes["Source Well"].str[1:]
     volumes["error"] = error_string
@@ -177,7 +187,10 @@ def read_nexus_survey_errors(
         (volumes["Survey Fluid Volume"] < volume_threshold)
         & (volumes["column"].astype(int).between(3, 22)),
         ["plate", "row", "column", "error"],
-    ].astype(object)
+    ]
+    exceptions["plate"] = (
+        exceptions["plate"].astype(int) - 1
+    ) % 6 + 1  # convert to 1-6 (necessary because of inconsistent naming of analysis plates at NEXUS)
     return exceptions.to_numpy(dtype="str").tolist()
 
 

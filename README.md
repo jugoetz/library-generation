@@ -7,11 +7,11 @@ A collection of tools needed to deal generate HTE compound libraries. Specialize
 General usage is as follows:
 
 ```bash
-python -m src.<path>.<to>.<submodule> <args>
+python -m src.path.to.submodule <args>
 ```
 
 The configuration file is located in `src/config.yaml`.
-Some modules accept command-line arguments, which, if given, override the configuration file.
+Some modules accept command-line arguments, which, if given, override the configuration file settings.
 
 ### Submodules
 

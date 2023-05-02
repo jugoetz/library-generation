@@ -109,6 +109,7 @@ def bulk_data_insertion_to_experiments(con, df):
     Insert rows in the experiments table.
     Note that (as per the DB table layout), only one vl_id can be given for a row. We use vl_id_A.
 
+    :param con: sqlite3.Connection object
     :param df: pandas.DataFrame with the columns ['vl_id_A', 'exp_nr', 'plate', 'well', 'lab_journal_nr', 'synthesis_date_unixepoch',
            'initiator', 'monomer', 'terminator', 'initiator_long', 'monomer_long', 'terminator_long', 'long_name', 'SMILES_A',
            'SMILES_B', 'SMILES_C', 'SMILES_D', 'SMILES_E', 'SMILES_F', 'SMILES_G', 'SMILES_H']

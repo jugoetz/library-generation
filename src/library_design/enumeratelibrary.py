@@ -76,8 +76,9 @@ def deprotonate_nitrogen(mol):
 
 def check_reactants(rxn, name, *reactants):
     """
-    check if any of the desired reactants does not work as a reactant in a reaction
+    Check if any of the desired reactants does not work as a reactant in a reaction
     :param rxn: rdkit reaction object
+    :param name: str
     :param reactants: list of pd.DataFrames
     :return passed: bool
     """
@@ -202,13 +203,11 @@ if POSTPROCESSING_ONLY is False:
     print(f" - Fused: {len(fused)}")
     print(f" - Sub: {len(sub)}")
     print(f"TerTHs: {len(T_TH)}")
-    print(f"TerABTs: {len(T_ABT)}")
-    print()
+    print(f"TerABTs: {len(T_ABT)}\n")
     print(f"expected TH (A) products: {len(I) * len(M) * len(T_TH)}")
     print(f" - expected TH (A) products (spiro): {len(I) * len(spiro) * len(T_TH)}")
     print(f" - expected TH (A) products (fused): {len(I) * len(fused) * len(T_TH)}")
-    print(f" - expected TH (A) products (sub): {len(I) * len(sub) * len(T_TH)}")
-    print()
+    print(f" - expected TH (A) products (sub): {len(I) * len(sub) * len(T_TH)}\n")
     print(f"expected ABT (A) products: {len(I) * len(M) * len(T_ABT)}")
     print(f" - expected ABT (A) products (spiro): {len(I) * len(spiro) * len(T_ABT)}")
     print(f" - expected ABT (A) products (fused): {len(I) * len(fused) * len(T_ABT)}")

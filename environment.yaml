@@ -1,7 +1,7 @@
 name: library-generation
 channels:
-  - defaults
   - conda-forge
+  - defaults
 dependencies:
   - deprecated
   - jupyter

@@ -8,6 +8,7 @@ from typing import Optional, List, Tuple, Any
 from PIL import Image
 from rdkit.Chem import MolFromSmiles, Mol
 from rdkit.Chem.Descriptors import MolWt
+import pandas as pd
 
 from src.definitions import DB_PATH
 
@@ -196,6 +197,11 @@ class SynFermDatabaseConnection:
         except KeyError:
             return None
         return MolFromSmiles(smiles)
+
+    def get_experiments_table_as_df(self) -> pd.DataFrame:
+        return pd.read_sql_query(
+            "SELECT * FROM experiments", self.con, index_col="id", coerce_float=False
+        )
 
     def get_number_of_experiments_by_date(self) -> List[Tuple[str, int]]:
         return self.cur.execute(

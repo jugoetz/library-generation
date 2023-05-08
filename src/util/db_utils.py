@@ -1,5 +1,5 @@
 """
-This module provides a class MyDatabaseConnection to facilitate querying the SQLite DB used for this project.
+This module provides a class SynFermDatabaseConnection to facilitate querying the SQLite DB used for this project.
 """
 
 import sqlite3 as sql
@@ -12,7 +12,7 @@ from rdkit.Chem.Descriptors import MolWt
 from src.definitions import DB_PATH
 
 
-class MyDatabaseConnection:
+class SynFermDatabaseConnection:
     """
     This class provides methods to query the SQLite database.
     Popular queries are provided as methods, but arbitrary SELECT queries can be executed using the

@@ -11,7 +11,7 @@ from pathlib import Path
 import xlsxwriter
 
 from src.definitions import PLATES_DIR
-from src.util.db_utils import MyDatabaseConnection
+from src.util.db_utils import SynFermDatabaseConnection
 from src.util.utils import get_conf
 
 # configuration
@@ -22,7 +22,7 @@ conf = get_conf()
 def main():
     exp_dir = conf["exp_dir"]
     print(f"Generating weigh-in for {exp_dir}...")
-    mycon = MyDatabaseConnection()
+    mycon = SynFermDatabaseConnection()
 
     # get the list of compounds of interest
     if "exp_nr" in conf and "lab_journal_number" in conf["weight"]:

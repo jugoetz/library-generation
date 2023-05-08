@@ -5,10 +5,10 @@ Saves a CSV file that contains the synthesis dates with the number of compounds 
 """
 import pandas as pd
 
-from src.util.db_utils import MyDatabaseConnection
+from src.util.db_utils import SynFermDatabaseConnection
 from src.definitions import UTIL_DIR
 
-con = MyDatabaseConnection()
+con = SynFermDatabaseConnection()
 df = pd.DataFrame(con.get_number_of_experiments_by_date())
 df.to_csv(
     UTIL_DIR / "experiment_numbers.csv",

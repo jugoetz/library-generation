@@ -2,7 +2,7 @@ import argparse
 
 from rdkit.Chem import Draw, MolToSmiles
 
-from src.util.db_utils import MyDatabaseConnection
+from src.util.db_utils import SynFermDatabaseConnection
 
 defaults = {
     "lab_journal_nr": "JG290",
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    con = MyDatabaseConnection()
+    con = SynFermDatabaseConnection()
 
     if args.output == "image":
         Draw.MolToImage(

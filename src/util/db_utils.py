@@ -74,12 +74,6 @@ class SynFermDatabaseConnection:
             (short,),
         ).fetchone()
 
-    def get_reactant_class(self, short: str) -> str:
-        """Takes a building block short name and returns the reactant class"""
-        return self.cur.execute(
-            "SELECT reactant_class FROM main.buildingblocks WHERE short = ?;", (short,)
-        ).fetchone()[0]
-
     def get_building_block_class(self, short: str) -> str:
         """
         Takes a building block short name and returns the building block class.

@@ -80,6 +80,24 @@ class SynFermDatabaseConnection:
             "SELECT reactant_class FROM main.buildingblocks WHERE short = ?;", (short,)
         ).fetchone()[0]
 
+    def get_building_block_class(self, short: str) -> str:
+        """
+        Takes a building block short name and returns the building block class.
+
+        Args:
+            short (str): building block short name
+
+        Returns:
+            str: building block class. If short is not found, returns None
+        """
+        res = self.cur.execute(
+            "SELECT reactant_class FROM main.buildingblocks WHERE short = ?;", (short,)
+        ).fetchone()
+        try:
+            return res[0]
+        except TypeError:
+            return None
+
     def get_molecular_weight(self, short: str) -> float:
         """Get molecular weight from a building block short"""
         return MolWt(self.get_mol(short))
@@ -176,6 +194,7 @@ class SynFermDatabaseConnection:
         self, lab_journal_number: str, well: str, product_type: str
     ) -> Optional[Mol]:
         """
+        Get the product mol for a given well in a given plate.
         Args:
             lab_journal_number (str): Unique identifier for the plate
             well (str): Well identifier within the plate
@@ -199,11 +218,13 @@ class SynFermDatabaseConnection:
         return MolFromSmiles(smiles)
 
     def get_experiments_table_as_df(self) -> pd.DataFrame:
+        """Returns the experiments table as a pandas.Dataframe"""
         return pd.read_sql_query(
             "SELECT * FROM experiments", self.con, index_col="id", coerce_float=False
         )
 
     def get_number_of_experiments_by_date(self) -> List[Tuple[str, int]]:
+        """Returns a list of tuples consisting of (date, number of experiments on that date)"""
         return self.cur.execute(
             "SELECT synthesis_date_unixepoch, COUNT(*) FROM experiments GROUP BY synthesis_date_unixepoch;"
         ).fetchall()

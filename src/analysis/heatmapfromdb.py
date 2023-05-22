@@ -80,10 +80,12 @@ def normalize_yields(df, normalization_constant):
     return df
 
 
-def get_plot(df, product_type, ax=None):
+def get_plot(df, product_type, ax=None, cmap=None, norm=None):
     """Generate a heatmap from dataframe in a matplotlib.pyplot.axis"""
     if ax is None:
         ax = plt.gca()
+    if cmap is None:
+        cmap = sns.color_palette("viridis", as_cmap=True)
     # create the heatmap axis
     sns.heatmap(
         df * 100,
@@ -91,14 +93,12 @@ def get_plot(df, product_type, ax=None):
         vmax=100,
         annot=True,
         cbar=False,
-        cmap=sns.color_palette(
-            "viridis",
-            as_cmap=True,
-        ),
+        cmap=cmap,
         fmt=".1f",
         square=True,
         ax=ax,
-    )  # this cmap should work for the colorblind
+        norm=norm,
+    )
 
     # style the heatmap
     ax.xaxis.tick_top()  # move column names to top

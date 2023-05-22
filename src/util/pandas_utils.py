@@ -2,6 +2,11 @@ import numpy as np
 import pandas as pd
 
 
+def alphanumeric_index_sort(index):
+    """custom sorting function to sort an alphanumeric index with one letter and arbitrary digits only by the number part"""
+    return index.str[1:].astype(int)
+
+
 def sort_by_sparsity(df: pd.DataFrame, axis: int = 0) -> pd.DataFrame:
     """
     Sorts a dataframe with NaN values by sparsity of its columns or rows.

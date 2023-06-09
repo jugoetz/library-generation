@@ -1,8 +1,37 @@
 #Pycharm
 /.idea
+
 # Custom directories
 /data/*
-!library_static/
+
+!/data/buildingblocks/
+/data/buildingblocks/*
+!/data/buildingblocks/.gitkeep
+
+!/data/db/
+/data/db/*
+!data/db/.gitkeep
+
+!/data/inputs/
+/data/inputs/*
+!/data/inputs/.gitkeep
+
+!/data/library_static/
+
+!/data/logs/
+/data/logs/*
+!/data/logs/.gitkeep
+
+!/data/plates/
+/data/plates/*
+!/data/plates/.gitkeep
+
+!/data/util
+/data/util/*
+!/data/util/bash_sample_to_copy_SampleTable.txt
+!/data/util/transfer_files_folder_template
+
+
 # Jupyter
 .ipynb_checkpoints
 # MacOS
@@ -13,5 +42,3 @@
 *_backup_*
 # cache
 *__pycache__*
-# configuration
-src/config.yaml

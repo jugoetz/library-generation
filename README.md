@@ -2,6 +2,13 @@
 
 A collection of tools needed to deal generate HTE compound libraries. Specialized on Synthetic Fermentation.
 
+## Installation
+
+```bash
+conda env create -f environment.yml
+```
+Place the ChemInventory export file into `data/inputs/IventoryExport.xlsx`.
+
 ## Usage
 
 General usage is as follows:

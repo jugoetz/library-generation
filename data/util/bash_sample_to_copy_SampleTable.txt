@@ -1,0 +1,3 @@
+# use this in the `plates` directory to copy the empty sample table to a range of directories
+
+for i in {393..404}; do cp ../util/BMIIyyyyyy-SampleTable.xls "JG${i}/BMIIyyyyyy-SampleTable_JG${i}.xls"; done

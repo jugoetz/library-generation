@@ -43,18 +43,29 @@ class SynFermDatabaseConnection:
         return self.cur.execute(query).fetchall()
 
     def get_reaction_id(
-        self, identifier: Union[Tuple[str, str], Tuple[int, int, str]]
+        self, identifier: Union[int, Tuple[str, str], Tuple[int, int, str]]
     ) -> int:
         """
         Get reaction id (primary key in experiments table) from a tuple of (lab_journal_number, well)
-        or (exp_nr, plate_nr, well)
+        or (exp_nr, plate_nr, well). If an integer is passed, checks if it is a valid reaction id.
 
         Args:
-            identifier: tuple of (lab_journal_number, well) or (exp_nr, plate_nr, well)
+            identifier: tuple of (lab_journal_number, well) or (exp_nr, plate_nr, well) or a single integer (reaction id)
 
         Returns:
             int: ID of the reaction instance in the experiments table
+
+        Raises:
+            ValueError: if an integer is passed that is not a valid reaction id
         """
+        if isinstance(identifier, int):
+            if self.cur.execute(
+                "SELECT COUNT(*) FROM main.experiments WHERE id = ?;", (identifier,)
+            ).fetchone()[0]:
+                return identifier
+            else:
+                raise ValueError("Reaction ID not found in database")
+
         if len(identifier) == 2:
             return self.cur.execute(
                 "SELECT id FROM main.experiments WHERE lab_journal_number = ? AND well = ?;",
@@ -223,37 +234,15 @@ class SynFermDatabaseConnection:
         Returns:
             list: list of starting material SMILES ([initiator, monomer, terminator])
         """
-        if isinstance(identifier, int):
-            result = self.cur.execute(
-                """
-                SELECT initiator, monomer, terminator
-                FROM experiments
-                WHERE id = ?;
-                """,
-                (identifier,),
-            ).fetchone()
-        elif isinstance(identifier, tuple) and len(identifier) == 2:
-            result = self.cur.execute(
-                """
-                SELECT initiator, monomer, terminator
-                FROM experiments
-                WHERE lab_journal_number = ? AND well = ?;
-                """,
-                identifier,
-            ).fetchone()
-        elif isinstance(identifier, tuple) and len(identifier) == 3:
-            result = self.cur.execute(
-                """
-                SELECT initiator, monomer, terminator
-                FROM experiments
-                WHERE exp_nr = ? AND plate_nr = ? AND well = ?;
-                """,
-                identifier,
-            ).fetchone()
-        else:
-            raise ValueError(
-                "identifier must be either int or a tuple of length 2 or 3"
-            )
+        reaction_id = self.get_reaction_id(identifier)
+        result = self.cur.execute(
+            """
+            SELECT initiator, monomer, terminator
+            FROM experiments
+            WHERE id = ?;
+            """,
+            (reaction_id,),
+        ).fetchone()
 
         if result is None:
             raise ValueError(f"No reaction found for {identifier}")
@@ -261,20 +250,22 @@ class SynFermDatabaseConnection:
         return [self.get_smiles(i) for i in result]
 
     def get_product_mol(
-        self, lab_journal_number: str, well: str, product_type: str
+        self,
+        identifier: Union[int, Tuple[str, str], Tuple[int, int, str]],
+        product_type: str,
     ) -> Optional[Mol]:
         """
         Get the product mol for a given well in a given plate.
         Args:
-            lab_journal_number (str): Unique identifier for the plate
-            well (str): Well identifier within the plate
+            identifier (int or tuple): Either the reaction id or a tuple of (lab_journal_number, well)
+                or (exp_nr, plate_nr, well)
             product_type (str): [A-H]
 
         Returns:
             Mol (optional): rdkit mol object, or None if no match was found
         """
         product_mapping = dict(zip("ABCDEFGH", range(8)))
-        result = self.get_product_smiles(lab_journal_number, well)
+        result = self.get_product_smiles(identifier)
 
         for pt in product_type:
             try:
@@ -284,30 +275,25 @@ class SynFermDatabaseConnection:
             yield MolFromSmiles(smiles)
 
     def get_product_smiles(
-        self, exp_id: Union[str, Tuple[int, int]], well: str
+        self, identifier: Union[int, Tuple[str, str], Tuple[int, int, str]]
     ) -> Tuple[str]:
         """
         Get all product formulae for a given experiment and well.
-        :param exp_id: Either lab_journal_number (str) or a tuple of exp_nr and plate_nr (int, int)
-        :param well:
-        :return: tuple of product formulae
-        """
-        if isinstance(exp_id, tuple):
-            result = self.cur.execute(
-                "SELECT product_A_smiles, product_B_smiles, product_C_smiles, product_D_smiles, product_E_smiles, \
-                product_F_smiles, product_G_smiles, product_H_smiles \
-                FROM experiments WHERE exp_nr = ? AND plate_nr = ? AND well = ?;",
-                (exp_id[0], exp_id[1], well),
-            ).fetchall()
-        else:
-            result = self.cur.execute(
-                "SELECT product_A_smiles, product_B_smiles, product_C_smiles, product_D_smiles, product_E_smiles, \
-                product_F_smiles, product_G_smiles, product_H_smiles \
-                FROM experiments WHERE lab_journal_number = ? AND well = ?;",
-                (exp_id, well),
-            ).fetchall()
+        Args:
+            identifier (int or tuple): Either the reaction id or a tuple of (lab_journal_number, well)
+                or (exp_nr, plate_nr, well)
 
-        return result[0]
+        Returns:
+            tuple of product formulae
+        """
+        reaction_id = self.get_reaction_id(identifier)
+
+        return self.cur.execute(
+            "SELECT product_A_smiles, product_B_smiles, product_C_smiles, product_D_smiles, product_E_smiles, \
+            product_F_smiles, product_G_smiles, product_H_smiles \
+            FROM experiments WHERE id = ?;",
+            (reaction_id,),
+        ).fetchall()[0]
 
     def get_experiments_table_as_df(self) -> pd.DataFrame:
         """Returns the experiments table as a pandas.Dataframe"""

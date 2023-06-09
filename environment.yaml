@@ -4,13 +4,14 @@ channels:
   - defaults
 dependencies:
   - deprecated
-  - jupyter
+  - jupyterlab
   - matplotlib=3.7.*
   - mpl-scatter-density=0.7.*
   - numpy=1.24.*
   - pandas=1.5.*
   - pip
   - pre-commit=3.2.*
+  - pypdf=3.9.*
   - python=3.9.*
   - rdkit=2021.09.*
   - scikit-image=0.19.*

@@ -24,7 +24,7 @@
 
 !/data/plates/
 /data/plates/*
-!/data/plates/.gitkeep
+!/data/plates/plate_list.csv
 
 !/data/util
 /data/util/*

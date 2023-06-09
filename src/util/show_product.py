@@ -45,15 +45,13 @@ if __name__ == "__main__":
 
     if args.output == "image":
         Draw.MolToImage(
-            con.get_product_mol_by_well(
-                args.lab_journal_number, args.well, args.product_type
-            ),
+            con.get_product_mol(args.lab_journal_number, args.well, args.product_type),
             size=(500, 500),
         ).show()
     elif args.output == "smiles":
         print(
             MolToSmiles(
-                con.get_product_mol_by_well(
+                con.get_product_mol(
                     args.lab_journal_number, args.well, args.product_type
                 )
             )

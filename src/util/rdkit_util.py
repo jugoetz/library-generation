@@ -1,5 +1,6 @@
-from rdkit.Chem import MolFromSmarts
+from rdkit.Chem import MolFromSmarts, MolFromSmiles, GetFormalCharge
 from rdkit.Chem.SaltRemover import SaltRemover
+from rdkit.Chem.rdMolDescriptors import CalcExactMolWt
 
 
 def desalt_building_block(mol):
@@ -34,3 +35,28 @@ def desalt_building_block(mol):
     # neutralize ammoniums
     deprotonate_nitrogen(mol_desalt)
     return mol_desalt
+
+
+def smiles_to_lcms_mass(smiles: str) -> float:
+    """
+    Calculates the mass of most likely LCMS adduct from the SMILES string of the molecule.
+
+    For neutral molecules, we expect the protonated adduct (M+H)+.
+    For positively charged molecules, we expect M+.
+
+    Args:
+        smiles (str): The SMILES string of the molecule.
+
+    Returns:
+        float: The mass of the expected adduct.
+    """
+    mol = MolFromSmiles(smiles)
+    remover = SaltRemover()
+    mol_desalt = remover.StripMol(mol)
+    charge = GetFormalCharge(mol_desalt)
+    if charge == 0:
+        return CalcExactMolWt(mol_desalt) + 1.00728  # proton mass
+    elif charge == 1:
+        return CalcExactMolWt(mol_desalt)
+    else:
+        raise ValueError(f"Unexpected charge value: {charge}")

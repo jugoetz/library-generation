@@ -3,7 +3,7 @@ This module provides a class SynFermDatabaseConnection to facilitate querying th
 """
 
 import sqlite3 as sql
-from typing import Optional, List, Tuple, Any
+from typing import Optional, List, Tuple, Any, Union
 
 from PIL import Image
 from rdkit.Chem import MolFromSmiles, Mol
@@ -41,6 +41,32 @@ class SynFermDatabaseConnection:
             if disallowed_statement.lower() in query.lower():
                 raise ValueError("forbidden")
         return self.cur.execute(query).fetchall()
+
+    def get_reaction_id(
+        self, identifier: Union[Tuple[str, str], Tuple[int, int, str]]
+    ) -> int:
+        """
+        Get reaction id (primary key in experiments table) from a tuple of (lab_journal_number, well)
+        or (exp_nr, plate_nr, well)
+
+        Args:
+            identifier: tuple of (lab_journal_number, well) or (exp_nr, plate_nr, well)
+
+        Returns:
+            int: ID of the reaction instance in the experiments table
+        """
+        if len(identifier) == 2:
+            return self.cur.execute(
+                "SELECT id FROM main.experiments WHERE lab_journal_number = ? AND well = ?;",
+                identifier,
+            ).fetchone()[0]
+        elif len(identifier) == 3:
+            return self.cur.execute(
+                "SELECT id FROM main.experiments WHERE exp_nr = ? AND plate_nr = ? AND well = ?;",
+                identifier,
+            ).fetchone()[0]
+        else:
+            raise ValueError("Identifier must be a tuple of length 2 or 3")
 
     def get_long_name(self, short: str) -> str:
         """Get long name (e.g. 2-Pyr001) from short name (e.g. I1))"""
@@ -184,7 +210,57 @@ class SynFermDatabaseConnection:
             )
         return initiators, monomers, terminators
 
-    def get_product_mol_by_well(
+    def get_starting_materials_for_reaction(self, identifier) -> list:
+        """
+        Return the SMILES of the starting materials for a given reaction.
+
+        Args:
+            identifier (int): Reaction identifier. This can be either
+                a single int (id in the experiments table) or
+                a 2-tuple of str (lab_journal_nr, well) or
+                a 3-tuple of two int and one str (exp_nr, plate_nr, well)
+
+        Returns:
+            list: list of starting material SMILES ([initiator, monomer, terminator])
+        """
+        if isinstance(identifier, int):
+            result = self.cur.execute(
+                """
+                SELECT initiator, monomer, terminator
+                FROM experiments
+                WHERE id = ?;
+                """,
+                (identifier,),
+            ).fetchone()
+        elif isinstance(identifier, tuple) and len(identifier) == 2:
+            result = self.cur.execute(
+                """
+                SELECT initiator, monomer, terminator
+                FROM experiments
+                WHERE lab_journal_number = ? AND well = ?;
+                """,
+                identifier,
+            ).fetchone()
+        elif isinstance(identifier, tuple) and len(identifier) == 3:
+            result = self.cur.execute(
+                """
+                SELECT initiator, monomer, terminator
+                FROM experiments
+                WHERE exp_nr = ? AND plate_nr = ? AND well = ?;
+                """,
+                identifier,
+            ).fetchone()
+        else:
+            raise ValueError(
+                "identifier must be either int or a tuple of length 2 or 3"
+            )
+
+        if result is None:
+            raise ValueError(f"No reaction found for {identifier}")
+
+        return [self.get_smiles(i) for i in result]
+
+    def get_product_mol(
         self, lab_journal_number: str, well: str, product_type: str
     ) -> Optional[Mol]:
         """
@@ -198,18 +274,40 @@ class SynFermDatabaseConnection:
             Mol (optional): rdkit mol object, or None if no match was found
         """
         product_mapping = dict(zip("ABCDEFGH", range(8)))
-        product_idx = product_mapping[product_type]
-        result = self.cur.execute(
-            "SELECT product_A_smiles, product_B_smiles, product_C_smiles, product_D_smiles, product_E_smiles, \
-            product_F_smiles, product_G_smiles, product_H_smiles \
-            FROM experiments WHERE lab_journal_number = ? AND well = ?;",
-            (lab_journal_number, well),
-        ).fetchall()
-        try:
-            smiles = result[0][product_idx]
-        except KeyError:
-            return None
-        return MolFromSmiles(smiles)
+        result = self.get_product_smiles(lab_journal_number, well)
+
+        for pt in product_type:
+            try:
+                smiles = result[product_mapping[pt]]
+            except KeyError:
+                yield None
+            yield MolFromSmiles(smiles)
+
+    def get_product_smiles(
+        self, exp_id: Union[str, Tuple[int, int]], well: str
+    ) -> Tuple[str]:
+        """
+        Get all product formulae for a given experiment and well.
+        :param exp_id: Either lab_journal_number (str) or a tuple of exp_nr and plate_nr (int, int)
+        :param well:
+        :return: tuple of product formulae
+        """
+        if isinstance(exp_id, tuple):
+            result = self.cur.execute(
+                "SELECT product_A_smiles, product_B_smiles, product_C_smiles, product_D_smiles, product_E_smiles, \
+                product_F_smiles, product_G_smiles, product_H_smiles \
+                FROM experiments WHERE exp_nr = ? AND plate_nr = ? AND well = ?;",
+                (exp_id[0], exp_id[1], well),
+            ).fetchall()
+        else:
+            result = self.cur.execute(
+                "SELECT product_A_smiles, product_B_smiles, product_C_smiles, product_D_smiles, product_E_smiles, \
+                product_F_smiles, product_G_smiles, product_H_smiles \
+                FROM experiments WHERE lab_journal_number = ? AND well = ?;",
+                (exp_id, well),
+            ).fetchall()
+
+        return result[0]
 
     def get_experiments_table_as_df(self) -> pd.DataFrame:
         """Returns the experiments table as a pandas.Dataframe"""

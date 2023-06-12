@@ -85,6 +85,42 @@ class SynFermDatabaseConnection:
             "SELECT long FROM main.buildingblocks WHERE short = ?;", (short,)
         ).fetchone()[0]
 
+    def get_reaction_ids_for_plate(
+        self, identifier: Union[str, Tuple[int, int]]
+    ) -> List[int]:
+        """
+        Get reaction ids (primary keys in experiments table) from a string (lab_journal_number)
+        or a 2-tuple (exp_nr, plate_nr).
+
+        Args:
+            identifier: string (lab_journal_number) or tuple (exp_nr, plate_nr)
+
+        Returns:
+            List[int]: IDs of the reaction instances connected to the given identifier in the experiments table
+
+        Raises:
+            ValueError: If an invalid identifier is passed
+        """
+
+        if isinstance(identifier, str):
+            return [
+                x[0]
+                for x in self.cur.execute(
+                    "SELECT id FROM main.experiments WHERE lab_journal_number = ?;",
+                    (identifier,),
+                ).fetchall()
+            ]
+        elif isinstance(identifier, tuple):
+            return [
+                x[0]
+                for x in self.cur.execute(
+                    "SELECT id FROM main.experiments WHERE exp_nr = ? AND plate_nr = ?;",
+                    identifier,
+                ).fetchall()
+            ]
+        else:
+            raise ValueError("Identifier must be a string or a tuple")
+
     def get_smiles(self, short: str) -> str:
         """Get SMILES from a building block short"""
         smiles = self.cur.execute(
@@ -300,13 +336,14 @@ class SynFermDatabaseConnection:
         reaction_id = self.get_reaction_id(identifier)
 
         result = self.cur.execute(
-            'SELECT peak_nr, retention_time_s, area, intensity, signal_to_noise, mz_max, fwhm_min, "%area", "%intensity" FROM lcms_peaks WHERE experiment_id = ?;',
+            'SELECT experiment_id, peak_nr, retention_time_s, area, intensity, signal_to_noise, mz_max, fwhm_min, "%area", "%intensity" FROM lcms_peaks WHERE experiment_id = ?;',
             (reaction_id,),
         ).fetchall()
 
         return pd.DataFrame(
             result,
             columns=[
+                "reaction_id",
                 "peak_nr",
                 "retention_time_s",
                 "area",

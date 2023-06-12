@@ -58,5 +58,7 @@ def smiles_to_lcms_mass(smiles: str) -> float:
         return CalcExactMolWt(mol_desalt) + 1.00728  # proton mass
     elif charge == 1:
         return CalcExactMolWt(mol_desalt)
+    elif charge == -1:
+        return CalcExactMolWt(mol_desalt) + 2 * 1.00728
     else:
         raise ValueError(f"Unexpected charge value: {charge}")

@@ -295,6 +295,30 @@ class SynFermDatabaseConnection:
             (reaction_id,),
         ).fetchall()[0]
 
+    def get_lcms_peaks(self, identifier) -> pd.DataFrame:
+        """Get the LCMS peaks (as extracted from PDF) for a given reaction."""
+        reaction_id = self.get_reaction_id(identifier)
+
+        result = self.cur.execute(
+            'SELECT peak_nr, retention_time_s, area, intensity, signal_to_noise, mz_max, fwhm_min, "%area", "%intensity" FROM lcms_peaks WHERE experiment_id = ?;',
+            (reaction_id,),
+        ).fetchall()
+
+        return pd.DataFrame(
+            result,
+            columns=[
+                "peak_nr",
+                "retention_time_s",
+                "area",
+                "intensity",
+                "signal_to_noise",
+                "mz_max",
+                "fwhm_min",
+                "%area",
+                "%intensity",
+            ],
+        )
+
     def get_experiments_table_as_df(self) -> pd.DataFrame:
         """Returns the experiments table as a pandas.Dataframe"""
         return pd.read_sql_query(

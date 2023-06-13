@@ -142,15 +142,6 @@ def get_prop_from_db(dbpath):
             for i, (f, m) in enumerate(zip(row[4].split(","), row[6].split(","))):
                 prop_dict[row[1]][f"{row[2]}_{i + 2}"] = (f, m)
     con.close()
-    """reorder mol_prop_dict so that letters are in the outer level and long_names in the inner. Lets keep this out
-    for now and try to find a better way """
-    # m_prop_dict = {}
-    # for long, val in prop_dict.items():
-    #     for letter, value in val.items():
-    #         try:
-    #             m_prop_dict[letter][long] = value
-    #         except KeyError:
-    #             m_prop_dict[letter] = {long: value}
     return prop_dict
 
 
@@ -187,10 +178,9 @@ def add_is(df):
 
 def write_csv(df, file, exp_dir):
     """
-    Generate formatted csv output for Mobias
+    Generate formatted csv output for MoBiAS
     """
 
-    # TODO this may only take one plate (it does, but need to change how it is called)
     def splitwell(df):
         well = df["well"]
         new = f"Py-{str(well)[0]}-{str(well)[1:]}"
@@ -260,7 +250,7 @@ def main(exp_dir):
                 plate_dict = import_pl(Path(path, f))
                 plates_dict[m.group(1)] = plate_dict
 
-    """Put everything in df for ease of use"""
+    # Put everything in df for ease of use
     dfs = []
     for plate, plate_content in plates_dict.items():
         df = pd.DataFrame.from_dict(
@@ -274,7 +264,7 @@ def main(exp_dir):
     df.sort_values(by=["plate"], inplace=True, kind="mergesort")  # mergesort
     df.reset_index(drop=True, inplace=True)
 
-    """Translate product names from shorthand to long names (e.g. 'Al002 + Mon001 + TerTH010')"""
+    # Translate product names from shorthand to long names (e.g. 'Al002 + Mon001 + TerTH010')
     df["long"] = df.loc[:, ["I", "M", "T"]].apply(
         get_long_name, axis=1, dictionary=starting_material_dict
     )
@@ -295,9 +285,7 @@ def main(exp_dir):
                 f'Plate {data["plate"]}, Well {data["well"]}, Product: {data["long"]}'
             )
 
-    """
-    Add molecular formulae and exact masses to dataframe
-    """
+    # Add molecular formulae and exact masses to dataframe:
     # select the subportion of the prop-dict that we need (for this specific plate)
     needed_dict = {k: v for k, v in mol_prop_dict.items() if k in df["long"].values}
     # find how many different submission forms we will need
@@ -361,20 +349,18 @@ def main(exp_dir):
                         df_this["long"] == long_name, f"{letter}_formula"
                     ] = mol_props[0]
 
-    """
-    from the individual dataframes for different -PG product sets, we form one big dataframe and drop the na columns
-    """
+    # from the individual dataframes for different -PG product sets, we form one big dataframe and drop the na columns
     df = dfs[0]
     for i in dfs[1:]:
         df = pd.merge(df, i, how="left")
 
-    """add internal standard if user wishes"""
+    # add internal standard if user wishes
     if conf["lcms"]["add_is"] is True:
         add_is(df)
     else:
         print("You chose not to add internal standard.\n")
 
-    """save to file"""
+    # save to file
     output_file = exp_dir / "mobias_submission.csv"
     write_csv(df, output_file, exp_dir)
     print(f'Data was written to "{output_file}".')

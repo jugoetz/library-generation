@@ -14,15 +14,13 @@ Inputs:
     and the long name (e.g. 2-Pyr003_MT or 2-Pyr003) used in the SDF files
 
 Output:
-  - Submission file (output.csv):
+  - Submission file (mobias_submission.csv):
     One well per row.
     Columns are:
       1 well identifier (e.g. Py-A-3)
     + 8 molecular formulae for SynFerm products A-H
     + a variable number of deprotection product columns (e.g. from Boc removal)
     + 1 column for internal standard
-
-TODO this is in dire need of refactoring (but it works)
 """
 import argparse
 import json

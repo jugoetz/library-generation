@@ -121,6 +121,36 @@ class SynFermDatabaseConnection:
         else:
             raise ValueError("Identifier must be a string or a tuple")
 
+    def get_reaction_ids_for_building_block(
+        self,
+        initiator: str = "I%",
+        monomer: str = "M%",
+        terminator: str = "T%",
+        filter_exp_nr: Tuple[int, int] = (1, 99999),
+    ) -> List[int]:
+        """
+        Get reaction ids (primary keys in experiments table) for a building block, or combination of building blocks.
+        If no building block is specified, all reaction ids are returned.
+
+        Args:
+            initiator (str): short name of the initiator building block
+            monomer (str): short name of the monomer building block
+            terminator (str): short name of the terminator building block
+
+        Returns:
+            List[int]: IDs of the reaction instances connected to the given building blocks in the experiments table
+
+        Raises:
+            ValueError: If no building block is specified
+        """
+        return [
+            x[0]
+            for x in self.cur.execute(
+                "SELECT id FROM experiments WHERE initiator LIKE ? AND monomer LIKE ? AND terminator LIKE ? AND exp_nr BETWEEN ? AND ?;",
+                (initiator, monomer, terminator, filter_exp_nr[0], filter_exp_nr[1]),
+            ).fetchall()
+        ]
+
     def get_smiles(self, short: str) -> str:
         """Get SMILES from a building block short"""
         smiles = self.cur.execute(
@@ -332,7 +362,11 @@ class SynFermDatabaseConnection:
         ).fetchall()[0]
 
     def get_lcms_peaks(
-        self, identifier, with_delta=False, with_assignment=False
+        self,
+        identifier,
+        with_delta=False,
+        with_assignment=False,
+        with_building_blocks=False,
     ) -> pd.DataFrame:
         """
         Get the LCMS peaks (as extracted from PDF) for a given reaction.
@@ -347,115 +381,49 @@ class SynFermDatabaseConnection:
             pd.DataFrame: DataFrame of the peaks, optionally with the mass differences
         """
         reaction_id = self.get_reaction_id(identifier)
-        if with_delta and with_assignment:
-            result = self.cur.execute(
-                'SELECT lcms_peaks.id, lcms_peaks.experiment_id, lcms_peaks.peak_nr, retention_time_s, area, intensity, signal_to_noise, mz_max, fwhm_min, "%area", "%intensity", d.delta_I, d.delta_M, d.delta_T, d.delta_Iacid, d.delta_bAA, d.delta_IM, d.delta_IT, d.delta_MT, d.delta_IMT, a.assignment FROM lcms_peaks LEFT JOIN lcms_peaks_assignment a on lcms_peaks.id = a.peak_id JOIN lcms_peaks_differences d on lcms_peaks.id = d.peak_id WHERE lcms_peaks.experiment_id = ?;',
-                (reaction_id,),
-            ).fetchall()
-
-            return pd.DataFrame(
-                result,
-                columns=[
-                    "peak_id",
-                    "reaction_id",
-                    "peak_nr",
-                    "retention_time_s",
-                    "area",
-                    "intensity",
-                    "signal_to_noise",
-                    "mz_max",
-                    "fwhm_min",
-                    "%area",
-                    "%intensity",
-                    "delta_I",
-                    "delta_M",
-                    "delta_T",
-                    "delta_Iacid",
-                    "delta_bAA",
-                    "delta_IM",
-                    "delta_IT",
-                    "delta_MT",
-                    "delta_IMT",
-                    "assignment",
-                ],
+        columns = [
+            "lcms_peaks.id",
+            "lcms_peaks.experiment_id",
+            "lcms_peaks.peak_nr",
+            "retention_time_s",
+            "area",
+            "intensity",
+            "signal_to_noise",
+            "mz_max",
+            "fwhm_min",
+            '"%area"',
+            '"%intensity"',
+        ]
+        if with_building_blocks:
+            columns.extend(["initiator", "monomer", "terminator"])
+        if with_delta:
+            columns.extend(
+                [
+                    "d.delta_I",
+                    "d.delta_M",
+                    "d.delta_T",
+                    "d.delta_Iacid",
+                    "d.delta_bAA",
+                    "d.delta_IM",
+                    "d.delta_IT",
+                    "d.delta_MT",
+                    "d.delta_IMT",
+                ]
             )
-        elif with_assignment:
-            result = self.cur.execute(
-                'SELECT lcms_peaks.id, lcms_peaks.experiment_id, lcms_peaks.peak_nr, retention_time_s, area, intensity, signal_to_noise, mz_max, fwhm_min, "%area", "%intensity", a.assignment FROM lcms_peaks LEFT JOIN lcms_peaks_assignment a on lcms_peaks.id = a.peak_id WHERE lcms_peaks.experiment_id = ?;',
-                (reaction_id,),
-            ).fetchall()
+        if with_assignment:
+            columns.append("a.assignment")
 
-            return pd.DataFrame(
-                result,
-                columns=[
-                    "peak_id",
-                    "reaction_id",
-                    "peak_nr",
-                    "retention_time_s",
-                    "area",
-                    "intensity",
-                    "signal_to_noise",
-                    "mz_max",
-                    "fwhm_min",
-                    "%area",
-                    "%intensity",
-                    "assignment",
-                ],
-            )
-        elif with_delta:
-            result = self.cur.execute(
-                'SELECT d.id, lcms_peaks.experiment_id, lcms_peaks.peak_nr, retention_time_s, area, intensity, signal_to_noise, mz_max, fwhm_min, "%area", "%intensity", d.delta_I, d.delta_M, d.delta_T, d.delta_Iacid, d.delta_bAA, d.delta_IM, d.delta_IT, d.delta_MT, d.delta_IMT FROM lcms_peaks JOIN lcms_peaks_differences d on lcms_peaks.id = d.peak_id WHERE lcms_peaks.experiment_id = ?;',
-                (reaction_id,),
-            ).fetchall()
-
-            return pd.DataFrame(
-                result,
-                columns=[
-                    "peak_id",
-                    "reaction_id",
-                    "peak_nr",
-                    "retention_time_s",
-                    "area",
-                    "intensity",
-                    "signal_to_noise",
-                    "mz_max",
-                    "fwhm_min",
-                    "%area",
-                    "%intensity",
-                    "delta_I",
-                    "delta_M",
-                    "delta_T",
-                    "delta_Iacid",
-                    "delta_bAA",
-                    "delta_IM",
-                    "delta_IT",
-                    "delta_MT",
-                    "delta_IMT",
-                ],
-            )
-
-        else:
-            result = self.cur.execute(
-                'SELECT id, experiment_id, peak_nr, retention_time_s, area, intensity, signal_to_noise, mz_max, fwhm_min, "%area", "%intensity" FROM lcms_peaks WHERE experiment_id = ?;',
-                (reaction_id,),
-            ).fetchall()
-
-            return pd.DataFrame(
-                result,
-                columns=[
-                    "peak_id",
-                    "reaction_id",
-                    "peak_nr",
-                    "retention_time_s",
-                    "area",
-                    "intensity",
-                    "signal_to_noise",
-                    "mz_max",
-                    "fwhm_min",
-                    "%area",
-                    "%intensity",
-                ],
-            )
+        query = f"SELECT {', '.join(columns)} FROM lcms_peaks"
+        if with_building_blocks:
+            query += " LEFT JOIN experiments e on lcms_peaks.experiment_id = e.id"
+        if with_delta:
+            query += " JOIN lcms_peaks_differences d on lcms_peaks.id = d.peak_id"
+        if with_assignment:
+            query += " LEFT JOIN lcms_peaks_assignment a on lcms_peaks.id = a.peak_id"
+        query += " WHERE lcms_peaks.experiment_id = ?;"
+        result = self.cur.execute(query, (reaction_id,)).fetchall()
+        df = pd.DataFrame(result, columns=[col.split(".")[-1] for col in columns])
+        return df
 
     def get_experiments_table_as_df(self) -> pd.DataFrame:
         """Returns the experiments table as a pandas.Dataframe"""

@@ -92,9 +92,13 @@ def bulk_data_retrieval_from_virtuallibrary(
     """
     cur = con.cursor()
     print("Retrieving product data from virtuallibrary table...")
+    # TODO this query is not functional anymore after changes to the DB table layouts
+    #   (virtuallibrary does not contain the short names anymore)
+    #   To fix this, obtain short names from the building_block_shorts table
+    #   (currently not implemented because this code is not needed any more)
     results = cur.execute(
         f"""SELECT id, initiator, monomer, terminator, initiator_long, monomer_long, terminator_long,
-     long_name, type, SMILES FROM main.virtuallibrary
+     long_name, type, SMILES FROM virtuallibrary
      WHERE initiator IN ({(", ".join("?" for _ in initiators))})
      AND monomer IN ({(", ".join("?" for _ in monomers))})
      AND terminator IN ({(", ".join("?" for _ in terminators))});""",
@@ -118,7 +122,7 @@ def bulk_data_insertion_to_experiments(con, df):
     cur = con.cursor()
     print("Now writing reactions to DB....")
     cur.executemany(
-        "INSERT INTO main.experiments (vl_id, exp_nr, plate_nr, well, lab_journal_number, synthesis_date_unixepoch,\
+        "INSERT INTO experiments (vl_id, exp_nr, plate_nr, well, lab_journal_number, synthesis_date_unixepoch,\
          initiator, monomer, terminator, initiator_long, monomer_long, terminator_long, long_name, product_A_smiles,\
           product_B_smiles, product_C_smiles, product_D_smiles, product_E_smiles, product_F_smiles, product_G_smiles,\
            product_H_smiles) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",

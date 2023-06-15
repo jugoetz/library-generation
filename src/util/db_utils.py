@@ -24,24 +24,6 @@ class SynFermDatabaseConnection:
         self.con = sql.connect(DB_PATH)
         self.cur = self.con.cursor()
 
-    def execute_arbitrary_simple_query(self, query: str) -> list:
-        """Execute simple SELECT statement on the database."""
-        if "SELECT" not in query:
-            raise ValueError("Not a SELECT statement")
-        disallowed = [
-            "INSERT",
-            "CREATE",
-            "ATTACH",
-            "DETACH",
-            "DROP",
-            "UPDATE",
-            "DELETE",
-        ]
-        for disallowed_statement in disallowed:
-            if disallowed_statement.lower() in query.lower():
-                raise ValueError("forbidden")
-        return self.cur.execute(query).fetchall()
-
     def get_reaction_id(
         self, identifier: Union[int, Tuple[str, str], Tuple[int, int, str]]
     ) -> int:
@@ -60,7 +42,7 @@ class SynFermDatabaseConnection:
         """
         if isinstance(identifier, int):
             if self.cur.execute(
-                "SELECT COUNT(*) FROM main.experiments WHERE id = ?;", (identifier,)
+                "SELECT COUNT(*) FROM experiments WHERE id = ?;", (identifier,)
             ).fetchone()[0]:
                 return identifier
             else:
@@ -68,22 +50,36 @@ class SynFermDatabaseConnection:
 
         if len(identifier) == 2:
             return self.cur.execute(
-                "SELECT id FROM main.experiments WHERE lab_journal_number = ? AND well = ?;",
+                "SELECT id FROM experiments WHERE lab_journal_number = ? AND well = ?;",
                 identifier,
             ).fetchone()[0]
         elif len(identifier) == 3:
             return self.cur.execute(
-                "SELECT id FROM main.experiments WHERE exp_nr = ? AND plate_nr = ? AND well = ?;",
+                "SELECT id FROM experiments WHERE exp_nr = ? AND plate_nr = ? AND well = ?;",
                 identifier,
             ).fetchone()[0]
         else:
             raise ValueError("Identifier must be a tuple of length 2 or 3")
 
-    def get_long_name(self, short: str) -> str:
-        """Get long name (e.g. 2-Pyr001) from short name (e.g. I1))"""
-        return self.cur.execute(
-            "SELECT long FROM main.buildingblocks WHERE short = ?;", (short,)
-        ).fetchone()[0]
+    def get_long_name(self, short: str, exp_nr=29) -> str:
+        """
+        Get long name (e.g. 2-Pyr001) from short name (e.g. I1))
+        Since in some cases, the short name changed, it is possible to specify the experiment number.
+        By default, the most recent experiment number is used.
+        """
+        res = self.cur.execute(
+            "SELECT long, first_use_exp_nr FROM building_block_shorts WHERE short = ?;",
+            (short,),
+        ).fetchall()
+
+        # Sort descending by first_use_exp_nr, then return the first one that is <= exp_nr
+        for row in sorted(res, key=lambda x: -x[1]):
+            if row[1] <= exp_nr:
+                return row[0]
+
+        raise ValueError(
+            f"Short name {short} not found in database for exp_nr {exp_nr}"
+        )
 
     def get_reaction_ids_for_plate(
         self, identifier: Union[str, Tuple[int, int]]
@@ -106,7 +102,7 @@ class SynFermDatabaseConnection:
             return [
                 x[0]
                 for x in self.cur.execute(
-                    "SELECT id FROM main.experiments WHERE lab_journal_number = ?;",
+                    "SELECT id FROM experiments WHERE lab_journal_number = ?;",
                     (identifier,),
                 ).fetchall()
             ]
@@ -114,7 +110,7 @@ class SynFermDatabaseConnection:
             return [
                 x[0]
                 for x in self.cur.execute(
-                    "SELECT id FROM main.experiments WHERE exp_nr = ? AND plate_nr = ?;",
+                    "SELECT id FROM experiments WHERE exp_nr = ? AND plate_nr = ?;",
                     identifier,
                 ).fetchall()
             ]
@@ -151,33 +147,40 @@ class SynFermDatabaseConnection:
             ).fetchall()
         ]
 
-    def get_smiles(self, short: str) -> str:
+    def get_smiles(self, short: str = None, long: str = None) -> str:
         """Get SMILES from a building block short"""
+        if not long:
+            long = self.get_long_name(short)
         smiles = self.cur.execute(
-            "SELECT SMILES FROM main.buildingblocks WHERE short = ?;", (short,)
+            "SELECT SMILES FROM building_blocks WHERE long = ?;", (long,)
         ).fetchone()[0]
         return smiles
 
-    def get_mol(self, short: str) -> Mol:
-        """Get MOL from a building block short"""
-        return MolFromSmiles(self.get_smiles(short))
+    def get_mol(self, short: str = None, long: str = None) -> Mol:
+        """Get MOL from a building block"""
+        if not long:
+            long = self.get_long_name(short)
+        return MolFromSmiles(self.get_smiles(long))
 
-    def show_image(self, short: str) -> None:
-        """Show the molecular structure drawing for a building block short"""
+    def show_image(self, short: str = None, long: str = None) -> None:
+        """Show the molecular structure drawing for a building block"""
+        if not long:
+            long = self.get_long_name(short)
         img_path = self.cur.execute(
-            "SELECT image FROM main.buildingblocks WHERE short = ?;", (short,)
+            "SELECT image FROM building_blocks WHERE long = ?;", (long,)
         ).fetchone()[0]
         Image.open(img_path).show()
         return
 
-    def list_pg(self, short: str) -> tuple:
+    def list_pg(self, short: str) -> Tuple[int, int, int, int]:
         """Returns a 4-tuple: (#boc, #cbz, #tbu, #tms)"""
+        long = self.get_long_name(short)
         return self.cur.execute(
-            "SELECT boc, cbz, tbu, tms FROM main.buildingblocks WHERE short = ?;",
-            (short,),
+            "SELECT boc, cbz, tbu, tms FROM building_blocks WHERE long = ?;",
+            (long,),
         ).fetchone()
 
-    def get_building_block_class(self, short: str) -> str:
+    def get_building_block_class(self, short: str) -> Optional[str]:
         """
         Takes a building block short name and returns the building block class.
 
@@ -187,22 +190,25 @@ class SynFermDatabaseConnection:
         Returns:
             str: building block class. If short is not found, returns None
         """
+        long = self.get_long_name(short)
         res = self.cur.execute(
-            "SELECT reactant_class FROM main.buildingblocks WHERE short = ?;", (short,)
+            "SELECT reactant_class FROM building_blocks WHERE long = ?;", (long,)
         ).fetchone()
         try:
             return res[0]
         except TypeError:
             return None
 
-    def get_molecular_weight(self, short: str) -> float:
-        """Get molecular weight from a building block short"""
-        return MolWt(self.get_mol(short))
+    def get_molecular_weight(self, short: str = None, long: str = None) -> float:
+        """Get molecular weight from a building block"""
+        if not long:
+            long = self.get_long_name(short)
+        return MolWt(self.get_mol(long))
 
     def get_vl_member(self, vl_id: int) -> Mol:
-        """Takes a vl_id and returns the product MOL"""
+        """Takes a vl_id and returns the corresponding MOL"""
         smiles = self.cur.execute(
-            "SELECT SMILES FROM main.virtuallibrary WHERE id = ?;", (vl_id,)
+            "SELECT SMILES FROM virtuallibrary WHERE id = ?;", (vl_id,)
         ).fetchone()[0]
         return MolFromSmiles(smiles)
 
@@ -437,7 +443,7 @@ class SynFermDatabaseConnection:
             "SELECT synthesis_date_unixepoch, COUNT(*) FROM experiments GROUP BY synthesis_date_unixepoch;"
         ).fetchall()
 
-    def get_experiments_with_buildingblock(self, short) -> List[Tuple[Any]]:
+    def get_experiments_with_buildingblock(self, long) -> List[Tuple[Any]]:
         """
         Returns a list of experiments that contain the given building block.
         Each entry is a tuple consisting of exp_nr, plate_nr, well, lab_journal_number, initiator, monomer, terminator,
@@ -445,8 +451,8 @@ class SynFermDatabaseConnection:
         product_F_lcms_ratio, product_G_lcms_ratio, product_H_lcms_ratio, vl_id, valid
         """
         return self.cur.execute(
-            "SELECT exp_nr, plate_nr, well, lab_journal_number, initiator, monomer, terminator, product_A_lcms_ratio, product_B_lcms_ratio, product_C_lcms_ratio, product_D_lcms_ratio, product_E_lcms_ratio, product_F_lcms_ratio, product_G_lcms_ratio, product_H_lcms_ratio, vl_id, valid FROM experiments WHERE initiator = ? OR monomer = ? OR terminator = ?;",
-            (short, short, short),
+            "SELECT exp_nr, plate_nr, well, lab_journal_number, initiator_long, monomer_long, terminator_long, product_A_lcms_ratio, product_B_lcms_ratio, product_C_lcms_ratio, product_D_lcms_ratio, product_E_lcms_ratio, product_F_lcms_ratio, product_G_lcms_ratio, product_H_lcms_ratio, vl_id, valid FROM experiments WHERE initiator_long = ? OR monomer_long = ? OR terminator_long = ?;",
+            (long, long, long),
         ).fetchall()
 
     def __delete__(self, instance):

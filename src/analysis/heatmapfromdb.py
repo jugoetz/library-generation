@@ -33,7 +33,7 @@ def read_yields_from_database(db_path, labjournal_nr):
         "SELECT well, product_A_lcms_ratio, product_B_lcms_ratio, product_C_lcms_ratio, "
         "product_D_lcms_ratio, product_E_lcms_ratio, product_F_lcms_ratio, product_G_lcms_ratio,"
         "product_H_lcms_ratio "
-        "FROM main.experiments "
+        "FROM experiments "
         "WHERE lab_journal_number = ?;",
         (labjournal_nr,),
     ).fetchall()

@@ -119,7 +119,7 @@ def save_lcms_yields_to_db(dict_df, db_path):
         # save to DB
         for i, data in yield_df.iterrows():
             cur.execute(
-                f"UPDATE main.experiments SET product_{k}_lcms_ratio = ? WHERE id = ?;",
+                f"UPDATE experiments SET product_{k}_lcms_ratio = ? WHERE id = ?;",
                 (data["yield"], i),
             )
         con.commit()

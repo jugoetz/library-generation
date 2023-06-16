@@ -293,7 +293,7 @@ class SynFermDatabaseConnection:
             )
         return initiators, monomers, terminators
 
-    def get_starting_materials_for_reaction(self, identifier) -> list:
+    def get_starting_materials_for_reaction(self, identifier) -> List[str]:
         """
         Return the SMILES of the starting materials for a given reaction.
 
@@ -304,7 +304,7 @@ class SynFermDatabaseConnection:
                 a 3-tuple of two int and one str (exp_nr, plate_nr, well)
 
         Returns:
-            list: list of starting material SMILES ([initiator, monomer, terminator])
+            List[str]: List of three starting material SMILES (initiator, monomer, terminator)
         """
         reaction_id = self.get_reaction_id(identifier)
         result = self.cur.execute(
@@ -410,10 +410,14 @@ class SynFermDatabaseConnection:
                     "d.delta_T",
                     "d.delta_Iacid",
                     "d.delta_bAA",
-                    "d.delta_IM",
-                    "d.delta_IT",
-                    "d.delta_MT",
-                    "d.delta_IMT",
+                    "d.delta_A",
+                    "d.delta_B",
+                    "d.delta_C",
+                    "d.delta_D",
+                    "d.delta_E",
+                    "d.delta_F",
+                    "d.delta_G",
+                    "d.delta_H",
                 ]
             )
         if with_assignment:

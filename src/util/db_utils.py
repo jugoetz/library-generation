@@ -428,7 +428,9 @@ class SynFermDatabaseConnection:
             query += " LEFT JOIN lcms_peaks_assignment a on lcms_peaks.id = a.peak_id"
         query += " WHERE lcms_peaks.experiment_id = ?;"
         result = self.cur.execute(query, (reaction_id,)).fetchall()
-        df = pd.DataFrame(result, columns=[col.split(".")[-1] for col in columns])
+        df = pd.DataFrame(
+            result, columns=[col.strip('"').split(".")[-1] for col in columns]
+        )
         return df
 
     def get_experiments_table_as_df(self) -> pd.DataFrame:

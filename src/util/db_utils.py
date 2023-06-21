@@ -160,7 +160,7 @@ class SynFermDatabaseConnection:
         """Get MOL from a building block"""
         if not long:
             long = self.get_long_name(short)
-        return MolFromSmiles(self.get_smiles(long))
+        return MolFromSmiles(self.get_smiles(long=long))
 
     def show_image(self, short: str = None, long: str = None) -> None:
         """Show the molecular structure drawing for a building block"""
@@ -203,7 +203,7 @@ class SynFermDatabaseConnection:
         """Get molecular weight from a building block"""
         if not long:
             long = self.get_long_name(short)
-        return MolWt(self.get_mol(long))
+        return MolWt(self.get_mol(long=long))
 
     def get_vl_member(self, vl_id: int) -> Mol:
         """Takes a vl_id and returns the corresponding MOL"""

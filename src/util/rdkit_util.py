@@ -1,5 +1,6 @@
 from rdkit import Chem
 from rdkit.Chem import MolFromSmarts, MolFromSmiles, GetFormalCharge, rdChemReactions
+from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.SaltRemover import SaltRemover
 from rdkit.Chem.rdMolDescriptors import CalcExactMolWt
 
@@ -176,3 +177,29 @@ def map_reactions(rxn, reactant_sets):
             mapped_reactions.append(reaction_inst_cleaned)
 
     return mapped_reactions
+
+
+def draw_chemical_reaction(smiles, highlightByReactant=True, font_scale=1.5):
+    """
+    Draw reactions in a nice fashion with atom map numbers and optional reactant highlighting
+
+    https://gist.github.com/greglandrum/61c1e751b453c623838759609dc41ef1
+    """
+
+    def moveAtomMapsToNotes(m):
+        """Move atom maps to be annotations (so they can be drawn)"""
+        for at in m.GetAtoms():
+            if at.GetAtomMapNum():
+                at.SetProp("atomNote", str(at.GetAtomMapNum()))
+
+    rxn = rdChemReactions.ReactionFromSmarts(smiles, useSmiles=True)
+    trxn = rdChemReactions.ChemicalReaction(rxn)
+    for m in trxn.GetReactants():
+        moveAtomMapsToNotes(m)
+    for m in trxn.GetProducts():
+        moveAtomMapsToNotes(m)
+    d2d = rdMolDraw2D.MolDraw2DSVG(800, 300)
+    d2d.drawOptions().annotationFontScale = font_scale
+    d2d.DrawReaction(trxn, highlightByReactant=highlightByReactant)
+    d2d.FinishDrawing()
+    return d2d.GetDrawingText()

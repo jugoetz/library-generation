@@ -34,10 +34,12 @@ def import_lcms_results(path):
     return df
 
 
-def check_mobias_input_output_equivalent(df, mobias_input, exp_nr):
+def check_mobias_measurements_align_with_input(df, mobias_input, exp_nr):
     """
-    Check if the sum formulae in the MoBiAS output are the same that I had entered in my submission.
+    Check that we received a measurement for all wells that were in the input and that the sum formulae are identical.
     (Basically a test against copy-paste or accidental editing errors)
+
+    Print warnings for missing measurements and for sum formulae that differ between MoBiAS output and submission file.
     """
 
     # find relevant columns (SumFx) and discard everything else
@@ -59,7 +61,7 @@ def check_mobias_input_output_equivalent(df, mobias_input, exp_nr):
     df_input.replace({float("nan"): "-"}, inplace=True)
 
     # check equality of df and df_input
-    if np.alltrue(df.eq(df_input)):
+    if np.all(df.eq(df_input)):
         # we are fine
         pass
     else:
@@ -67,14 +69,21 @@ def check_mobias_input_output_equivalent(df, mobias_input, exp_nr):
             df.index.to_list()
         )
         if len(missing_indices) > 0:
-            known_missing = ["JG239-102"]
-            if set(missing_indices) != set(
-                known_missing
-            ):  # don't raise error if problem is known
-                raise ValueError(
-                    f"Values for MoBiAS input and output do not align. These indices are missing in the "
-                    f"output: {missing_indices}"
-                )
+            # some measurements are missing. We warn about this, but continue.
+            print(
+                f"Measurements missing from MoBiAS output. These measurements are missing in the "
+                f"output: {missing_indices}"
+            )
+
+        else:
+            # no measurements missing, but some sum formulae are different. (This may happen due to reprocessing)
+            # check that the sum formulae are the same, and warn if not
+            for index in df.index:
+                if not np.all(df.loc[index].eq(df_input.loc[index])):
+                    print(
+                        f"Warning: Sum formulae for {index} differ between MoBiAS output and submission file. "
+                        f"MoBiAS: {df.loc[index].to_list()}, Submission: {df_input.loc[index].to_list()}"
+                    )
 
     return
 
@@ -93,7 +102,7 @@ def clean_result_df(df):
     df.replace(to_replace="-", value=np.nan, inplace=True)
     # Since '-' would have induced object dtype, we change to float64. We do this for all Area columns, to be save.
     area_columns = [c for c in df.columns if c.endswith("Area")]
-    df.loc[:, area_columns] = df.loc[:, area_columns].astype("float64")
+    df[area_columns] = df[area_columns].astype("float64")
     # split "Vial Pos" into separate columns for plate, row, column. Discard "Vial Pos"
     df["plate"] = df["Vial Pos"].str.split("-").str[0]
     df["row"] = df["Vial Pos"].str.split("-").str[1]
@@ -135,7 +144,7 @@ def save_mobias_data_to_db(df, db_path, exp_nr):
                 f'No entry in database table "experiments" for lab journal number {exp_nr} and well {well}'
             )
         compounds, areas = [], []
-        for index, value in row.iteritems():
+        for index, value in row.items():
             if index.endswith("Area"):
                 compounds.append(index)
                 areas.append(value)
@@ -160,7 +169,7 @@ def extract_mobias_results(path, db_path, exp_nr, mobias_input):
     and save the extracted data to a database.
     """
     results_df = import_lcms_results(path)
-    check_mobias_input_output_equivalent(results_df, mobias_input, exp_nr)
+    check_mobias_measurements_align_with_input(results_df, mobias_input, exp_nr)
     results_df = clean_result_df(results_df)
     save_mobias_data_to_db(results_df, db_path, exp_nr)
     return

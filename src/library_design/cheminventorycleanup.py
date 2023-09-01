@@ -114,9 +114,7 @@ def filter_dimer(df):
 
 def filter_blacklist(df):
     # import manual blacklist
-    blacklist = import_blacklist(
-        MANUAL_SETTINGS_DIR / "blacklist.txt"
-    )  # TODO consider removing global
+    blacklist = import_blacklist(MANUAL_SETTINGS_DIR / "blacklist.txt")
     df.drop(
         df.loc[
             df["Container Name"].str.contains("|".join(blacklist), regex=True)

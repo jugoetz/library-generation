@@ -17,13 +17,6 @@ Actions:
     - Enumerate library
     - Sanitize + rearrange products for output
     - Output to SDF
-
-TODO to have this use database instead:
- - import reactants from building block db table
- (- potentially this will make some cleanup operations unnecessary)
- - import reactions from a reaction db table
- - output products to the VL db table
-
 """
 
 import pandas as pd

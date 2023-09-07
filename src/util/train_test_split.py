@@ -15,6 +15,31 @@ class GroupShuffleSplitND(ShuffleSplit):
     The train_size or test_size arguments refer to the ratio of groups and not the ratio of samples.
     The ratio is applied along each dimension separately, so if the test_size is 0.1, and n = 3, then the expected
     size of the test set is 0.1^3 = 0.1% of the total data, if all groups are of equal size.
+
+    Parameters
+    ----------
+    n_splits : int, default=5
+        Number of re-shuffling & splitting iterations.
+
+    test_size : float, int, default=0.1
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of groups to include in the test split (rounded up). If int,
+        represents the absolute number of test groups. If None, the value is
+        set to the complement of the train size.
+
+    train_size : float or int, default=None
+        If float, should be between 0.0 and 1.0 and represent the
+        proportion of the groups to include in the train split. If
+        int, represents the absolute number of train groups. If None,
+        the value is automatically set to the complement of the test size.
+
+    random_state : int, RandomState instance or None, default=None
+        Controls the randomness of the training and testing indices produced.
+        Pass an int for reproducible output across multiple function calls.
+        If data passed to split will have n_groups > 1 and random_state is an integer,
+        then the split for all groups use the same seed.
+        To avoid this, pass a numpy RandomState object.
+
     """
 
     def __init__(
@@ -28,7 +53,7 @@ class GroupShuffleSplitND(ShuffleSplit):
         )
         self._default_test_size = 0.1
 
-    def _iter_indices(self, X, y, groups):
+    def _iter_indices(self, X, y=None, groups=None):
         if groups is None:
             raise ValueError("The 'groups' parameter should not be None.")
         # validate input
@@ -57,11 +82,11 @@ class GroupShuffleSplitND(ShuffleSplit):
             group_ind_train, group_ind_test = zip(*fold)
             # determine datapoints that are in the test and train set for each dimension
             test_ind = [
-                X[np.isin(group_ind, ind_test)]
+                np.nonzero(np.isin(group_ind, ind_test))
                 for group_ind, ind_test in zip(group_indices, group_ind_test)
             ]
             train_ind = [
-                X[np.isin(group_ind, ind_train)]
+                np.nonzero(np.isin(group_ind, ind_train))
                 for group_ind, ind_train in zip(group_indices, group_ind_train)
             ]
 

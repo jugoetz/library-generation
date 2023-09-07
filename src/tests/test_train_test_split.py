@@ -52,6 +52,16 @@ class TestGroupShuffleSplitND(unittest.TestCase):
                 with self.subTest(test_group=test_group, fold=i):
                     self.assertFalse((train_groups == test_group).all(axis=1).any())
 
+    def test_returns_indices(self):
+        """Check that the splitter returns indices not samples."""
+        for i, (train, test) in enumerate(
+            self.splitter.split(
+                self.X.astype(str), groups=self.groups_2d
+            )  # we pass X as str
+        ):
+            with self.subTest(fold=i):
+                self.assertIsInstance(train[0], np.int_)
+
 
 if __name__ == "__main__":
     unittest.main()

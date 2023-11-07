@@ -461,5 +461,9 @@ class SynFermDatabaseConnection:
             (long, long, long),
         ).fetchall()
 
+    def building_blocks(self):
+        """Returns a list of tuples consisting of (long, SMILES) for all building blocks"""
+        return self.cur.execute("SELECT long, SMILES FROM building_blocks;").fetchall()
+
     def __delete__(self, instance):
         self.con.close()

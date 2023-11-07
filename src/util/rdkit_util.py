@@ -1,15 +1,18 @@
+import warnings
+from typing import Union
+
 from rdkit import Chem
-from rdkit.Chem import MolFromSmarts, MolFromSmiles, GetFormalCharge, rdChemReactions
+from rdkit.Chem import rdChemReactions
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.SaltRemover import SaltRemover
 from rdkit.Chem.rdMolDescriptors import CalcExactMolWt
 
 
-def desalt_building_block(mol):
+def desalt_building_block(mol: Union[str, Chem.Mol]) -> Chem.Mol:
     def deprotonate_nitrogen(mol):
         """Remove a proton from ammonium species"""
         mol.UpdatePropertyCache()
-        patt = MolFromSmarts(
+        patt = Chem.MolFromSmarts(
             "[#7+;H1,H2,H3,h1,h2,h3]"
         )  # this pattern matches positive N with at least one proton attached
         try:
@@ -31,6 +34,10 @@ def desalt_building_block(mol):
 
         return None
 
+    if isinstance(mol, str):
+        mol = Chem.MolFromSmiles(mol)
+    else:
+        mol = Chem.Mol(mol)
     # desalt the building block library
     remover = SaltRemover()
     mol_desalt = remover.StripMol(mol)
@@ -52,10 +59,10 @@ def smiles_to_lcms_mass(smiles: str) -> float:
     Returns:
         float: The mass of the expected adduct.
     """
-    mol = MolFromSmiles(smiles)
+    mol = Chem.MolFromSmiles(smiles)
     remover = SaltRemover()
     mol_desalt = remover.StripMol(mol)
-    charge = GetFormalCharge(mol_desalt)
+    charge = Chem.GetFormalCharge(mol_desalt)
     if charge == 0:
         return CalcExactMolWt(mol_desalt) + 1.00728  # proton mass
     elif charge == 1:
@@ -148,10 +155,18 @@ def create_reaction_instance(rxn, reactants):
     return mapped_reactions
 
 
-def map_reactions(rxn, reactant_sets):
+def map_reactions(rxn, reactant_sets, error_level="warn"):
     """
     Take a reaction template and a list of reactant sets and return the mapped reactions.
     Adapted from https://github.com/jugoetz/slap-platform-predict/blob/5acb77ff4fdc412f7fd03a8226a4635e086978d7/src/util/rdkit_util.py#L163
+
+    Args:
+        rxn: RDKit reaction object
+        reactant_sets: list of reactant sets
+        error_level: "error" or "warn" - whether to raise RuntimeError or just warn if mapping a reaction fails.
+
+    Returns:
+        list of mapped reactions
     """
     mapped_reactions = []
     for i, reactant_set in enumerate(reactant_sets):
@@ -160,7 +175,12 @@ def map_reactions(rxn, reactant_sets):
             mapped_reactions.append(reaction_inst[0])
         elif len(reaction_inst) == 0:  # failed
             mapped_reactions.append(None)
-            print(f"ERROR: No product for reactant set with index {i}")
+            if error_level == "error":
+                raise RuntimeError(f"ERROR: No product for reactant set with index {i}")
+            elif error_level == "warn":
+                warnings.warn(f"ERROR: No product for reactant set with index {i}")
+            else:
+                raise ValueError(f"Unknown error level: {error_level}")
         else:  # too many resulting reactions
             # remove any duplicates
             idx = []
@@ -172,7 +192,16 @@ def map_reactions(rxn, reactant_sets):
                     unique_reactions.append(reac_smarts)
                 reaction_inst_cleaned = [reaction_inst[j] for j in idx]
                 if len(reaction_inst_cleaned) > 1:
-                    print(f"ERROR: Multiple products for reactant set with index {i}")
+                    if error_level == "error":
+                        raise RuntimeError(
+                            f"ERROR: Multiple products for reactant set with index {i}"
+                        )
+                    elif error_level == "warn":
+                        warnings.warn(
+                            f"ERROR: Multiple products for reactant set with index {i}"
+                        )
+                    else:
+                        raise ValueError(f"Unknown error level: {error_level}")
 
             mapped_reactions.append(reaction_inst_cleaned)
 
@@ -203,3 +232,30 @@ def draw_chemical_reaction(smiles, highlightByReactant=True, font_scale=1.5):
     d2d.DrawReaction(trxn, highlightByReactant=highlightByReactant)
     d2d.FinishDrawing()
     return d2d.GetDrawingText()
+
+
+def remove_monomer_pg_chirality(mol: Union[str, Chem.Mol]) -> Chem.Mol:
+    """
+    Given a monomer building block, remove only the chiral information
+    for the spiro carbon of the protecting group, leaving the rest unchanged.
+
+    Args:
+        mol (Union[str, Chem.Mol]): The monomer given as SMILES string or RDKit Mol
+
+    Returns:
+        Chem.Mol: The monomer with chiral information for the spiro carbon removed
+    """
+    if isinstance(mol, str):
+        mol = Chem.MolFromSmiles(mol)
+    else:
+        mol = Chem.Mol(mol)
+
+    patt = Chem.MolFromSmarts(
+        "[$([CR2](O1)(ONC2)(C2)C(=O)OC1)]"
+    )  # hits a spiro carbon atom between an isoxazolidine and a 5-membered lactone-ether ring
+
+    match = mol.GetSubstructMatches(patt)
+    assert len(match) == 1
+    atom = mol.GetAtomWithIdx(match[0][0])
+    atom.SetChiralTag(Chem.ChiralType.CHI_UNSPECIFIED)
+    return mol

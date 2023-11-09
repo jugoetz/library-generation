@@ -31,6 +31,8 @@
 !/data/util/bash_sample_to_copy_SampleTable.txt
 !/data/util/transfer_files_folder_template
 
+notebooks/plotting/product_images
+
 
 # Jupyter
 .ipynb_checkpoints

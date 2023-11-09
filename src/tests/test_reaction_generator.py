@@ -26,10 +26,7 @@ class TestSFReactionGenerator(unittest.TestCase):
             )
             else Chem.MolToSmiles(desalt_building_block(smiles))
             for long, smiles in self.con.building_blocks()
-        }  # we only do this sanitization once per building block - much faster when we run the entire vl
-        self.building_blocks[
-            "TerTH010"
-        ] = "NNC(=S)C=Cc1ccccc1"  # known error for double bond in VL
+        }
 
     def test_gives_correct_starting_materials(self):
         """
@@ -104,9 +101,9 @@ class TestSFReactionGenerator(unittest.TestCase):
             "COc1cccc(C(=O)NCC2(c3nnc(-c4cn[nH]c4)s3)CCC2)n1",
         ]
         reaction_smiles = [
-            "F[B-](F)(F)[C:2]([c:1]1[cH:13][cH:15][cH:18][cH:17][c:14]1[CH3:16])=[O:3].O=C1OC2(CCCCC2)O[C:7]12O[NH:4][C:5]1([CH2:6]2)[CH2:19][S:21][CH2:20]1.[c:8]1([C:9](=[S:10])[NH:11][NH2:12])[cH:22][cH:24][c:26]2[c:25]([cH:23]1)[O:27][CH2:29][O:28]2>>[c:1]1([C:2](=[O:3])[NH:4][C:5]2([CH2:6][c:7]3[s:10][c:9](-[c:8]4[cH:22][cH:24][c:26]5[c:25]([cH:23]4)[O:27][CH2:29][O:28]5)[n:11][n:12]3)[CH2:19][S:21][CH2:20]2)[cH:13][cH:15][cH:18][cH:17][c:14]1[CH3:16]",
-            "F[B-](F)(F)[C:2]([CH2:1][CH2:13][CH2:14][CH2:15][NH:16][C:17](=[O:18])[O:19][CH2:20][c:21]1[cH:22][cH:24][cH:26][cH:25][cH:23]1)=[O:3].O=C1OC2(CCCCC2)O[C:7]12O[NH:4][CH2:5][C:6]21[CH2:27][CH2:29][CH2:28]1.[c:8]1([C:9](=[S:10])[NH:11][NH2:12])[n:30]([C:32]([O:35][C:39]([CH3:42])([CH3:43])[CH3:44])=[O:36])[c:33]2[c:34]([cH:31]1)[cH:38][cH:41][cH:40][cH:37]2>>[CH2:1]([C:2](=[O:3])[NH:4][CH2:5][C:6]1([c:7]2[s:10][c:9](-[c:8]3[n:30]([C:32]([O:35][C:39]([CH3:42])([CH3:43])[CH3:44])=[O:36])[c:33]4[c:34]([cH:31]3)[cH:38][cH:41][cH:40][cH:37]4)[n:11][n:12]2)[CH2:27][CH2:29][CH2:28]1)[CH2:13][CH2:14][CH2:15][NH:16][C:17](=[O:18])[O:19][CH2:20][c:21]1[cH:22][cH:24][cH:26][cH:25][cH:23]1",
-            "F[B-](F)(F)[C:2]([c:1]1[cH:13][cH:15][cH:17][c:16]([O:18][CH3:19])[n:14]1)=[O:3].O=C1OC2(CCCCC2)O[C:7]12O[NH:4][CH2:5][C:6]21[CH2:20][CH2:22][CH2:21]1.[c:8]1([C:9](=[S:10])[NH:11][NH2:12])[cH:23][n:25][nH:26][cH:24]1>>[c:1]1([C:2](=[O:3])[NH:4][CH2:5][C:6]2([c:7]3[s:10][c:9](-[c:8]4[cH:23][n:25][nH:26][cH:24]4)[n:11][n:12]3)[CH2:20][CH2:22][CH2:21]2)[cH:13][cH:15][cH:17][c:16]([O:18][CH3:19])[n:14]1",
+            "F[B-](F)(F)[C:1](=[O:2])[c:11]1[cH:12][cH:14][cH:17][cH:16][c:13]1[CH3:15].O=C1OC2(CCCCC2)O[C:6]12O[NH:3][C:4]1([CH2:5]2)[CH2:18][S:20][CH2:19]1.[C:7](=[S:8])([NH:9][NH2:10])[c:21]1[cH:22][cH:24][c:26]2[c:25]([cH:23]1)[O:27][CH2:29][O:28]2>>[C:1](=[O:2])([NH:3][C:4]1([CH2:5][c:6]2[s:8][c:7](-[c:21]3[cH:22][cH:24][c:26]4[c:25]([cH:23]3)[O:27][CH2:29][O:28]4)[n:9][n:10]2)[CH2:18][S:20][CH2:19]1)[c:11]1[cH:12][cH:14][cH:17][cH:16][c:13]1[CH3:15]",
+            "F[B-](F)(F)[C:1](=[O:2])[CH2:11][CH2:12][CH2:13][CH2:14][NH:15][C:16](=[O:17])[O:18][CH2:19][c:20]1[cH:21][cH:23][cH:25][cH:24][cH:22]1.O=C1OC2(CCCCC2)O[C:6]12O[NH:3][CH2:4][C:5]21[CH2:26][CH2:28][CH2:27]1.[C:7](=[S:8])([NH:9][NH2:10])[c:29]1[n:30]([C:32]([O:35][C:39]([CH3:42])([CH3:43])[CH3:44])=[O:36])[c:33]2[c:34]([cH:31]1)[cH:38][cH:41][cH:40][cH:37]2>>[C:1](=[O:2])([NH:3][CH2:4][C:5]1([c:6]2[s:8][c:7](-[c:29]3[n:30]([C:32]([O:35][C:39]([CH3:42])([CH3:43])[CH3:44])=[O:36])[c:33]4[c:34]([cH:31]3)[cH:38][cH:41][cH:40][cH:37]4)[n:9][n:10]2)[CH2:26][CH2:28][CH2:27]1)[CH2:11][CH2:12][CH2:13][CH2:14][NH:15][C:16](=[O:17])[O:18][CH2:19][c:20]1[cH:21][cH:23][cH:25][cH:24][cH:22]1",
+            "F[B-](F)(F)[C:1](=[O:2])[c:11]1[cH:12][cH:14][cH:16][c:15]([O:17][CH3:18])[n:13]1.O=C1OC2(CCCCC2)O[C:6]12O[NH:3][CH2:4][C:5]21[CH2:19][CH2:21][CH2:20]1.[C:7](=[S:8])([NH:9][NH2:10])[c:22]1[cH:23][n:25][nH:26][cH:24]1>>[C:1](=[O:2])([NH:3][CH2:4][C:5]1([c:6]2[s:8][c:7](-[c:22]3[cH:23][n:25][nH:26][cH:24]3)[n:9][n:10]2)[CH2:19][CH2:21][CH2:20]1)[c:11]1[cH:12][cH:14][cH:16][c:15]([O:17][CH3:18])[n:13]1",
         ]
 
         for prod, rsmi in zip(

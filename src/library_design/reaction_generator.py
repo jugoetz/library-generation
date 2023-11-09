@@ -15,16 +15,23 @@ from src.util.rdkit_util import (
 
 class SFReactionGenerator:
     # reactants to product A
-    _rxn_abt = "[$(B(-F)(-F)-F)]-[C:2](-[#6:1])=[O:3].O=C1-O-[$(C2CCCCC2)]-O-[C:7]-1-1-[C:6]-[C:5]-[N:4]-O-1.[N:8]-[c:9]1:[c:10]:[c:11]:[c:12]:[c:13]:[c:14]:1-[S:15]>>[#6:1]-[C:2](=[O:3])-[N:4]-[C:5]-[C:6]-[c:7]1:[n:8]:[c:9]2:[c:10]:[c:11]:[c:12]:[c:13]:[c:14]:2:[s:15]:1."
-    _rxn_th = "[$(B(-F)(-F)-F)]-[C:2](-[#6:1])=[O:3].O=C1-O-[$(C2CCCCC2)]-O-[C:7]-1-1-[C:6]-[C:5]-[N:4]-O-1.[#6:8]-[C:9](=[S:10])-[N:11]-[N:12]>>[#6:8]-[c:9]1:[n:11]:[n:12]:[c:7](-[C:6]-[C:5]-[N:4]-[C:2](-[#6:1])=[O:3]):[s:10]:1."
+    _rxn_abt = "[$(B(-F)(-F)-F)]-[$(C-[#6])X3:1]=[O:2].O=C1-O-[$(C2CCCCC2)]-O-[C:6]-1-1-[C:5]-[C:4]-[NH1:3]-O-1.[NH2:7]-[c:8]1:[c:9]:[c:10]:[c:11]:[c:12]:[c:13]:1-[SH1:14]>>[C:1](=[O:2])-[N:3]-[C:4]-[C:5]-[c:6]1:[n:7]:[c:8]2:[c:9]:[c:10]:[c:11]:[c:12]:[c:13]:2:[s:14]:1."
+    _rxn_th = "[$(B(-F)(-F)-F)]-[$(C-[#6])X3:1]=[O:2].O=C1-O-[$(C2CCCCC2)]-O-[C:6]-1-1-[C:5]-[C:4]-[NH1:3]-O-1.[C:7](=[S:8])-[NH1:9]-[NH2:10]>>[c:7]1:[n:9]:[n:10]:[c:6](-[C:5]-[C:4]-[N:3]-[C:1]=[O:2]):[s:8]:1."
 
     # product A to reactants
-    _backwards_rxn_abt = "[#6:1]-[#6](=O)-[NR0]-[#6:2]-[#6:3]-c1nc2[c:4][c:5][c:6][c:7]c2s1>>F[B-](F)(F)[#6](-[#6:1])=O.O=[#6]1-[#8]C2([#6]-[#6]-[#6]-[#6]-[#6]2)[#8]C11[#6:3]-[#6:2]-[#7]-[#8]1.[#7]-c1[c:4][c:5][c:6][c:7]c1-[#16]"
-    _backwards_rxn_th = "[#6:4]-c1nnc(-[C:3]-[C:2]-[NR0]-C(-[#6:1])=O)s1>>F-[B-](-F)(-F)-C(-[#6:1])=O.O=C1-O-C2(-C-C-C-C-C-2)-O-C-1-1-[C:3]-[C:2]-N-O1.[#6:4]-C(=S)-N-N"
-
-    # reactants to product B
+    _backwards_rxn_abt = "[$(C-[#6]):1](=O)-[NR0]-[C:2]-[C:3]-c1nc2[c:4][c:5][c:6][c:7]c2s1>>F-[B-](-F)(-F)-[C:1]=O.O=C1-O-C2(-C-C-C-C-C-2)-O-C-1-1-[C:3]-[C:2]-N-O1.N-c1:[c:4]:[c:5]:[c:6]:[c:7]:c:1-S"
+    _backwards_rxn_th = "[c:4]1nnc(-[C:3]-[C:2]-[NR0]-[$(C-[#6]):1]=O)s1>>F-[B-](-F)(-F)-[C:1]=O.O=C1-O-C2(-C-C-C-C-C-2)-O-C-1-1-[C:3]-[C:2]-N-O1.[C:4](=S)-N-N"
 
     def __init__(self):
+        # Note: the reaction Sanitization warnings are due to the fact that the reaction templates contain dummy atoms
+        # that are not mapped to the products (b/c they are not contained in the products ffs)
+        # I don't get why RDKit does this as it is an intended and necessary use-case, but as usual their documentation
+        # does not help with finding the reason.
+        # Sample warnings:
+        # Could not find RLabel mapping for atom: 0 in template: 0
+        # Mismatched potential rlabels: 1 unmapped reactant dummy atom rlabels,
+        # 0 unmappped (sic!) product dummy atom rlabels
+
         self.backwards_reactions = {
             "abt": ReactionFromSmarts(self._backwards_rxn_abt),
             "th": ReactionFromSmarts(self._backwards_rxn_th),
@@ -91,12 +98,12 @@ class SFReactionGenerator:
 
         return reactants[0]
 
-    def generate_product(self, reactants: Sequence[Chem.Mol]) -> Chem.Mol:
+    def generate_product(self, reactants: List[Chem.Mol]) -> Chem.Mol:
         """
         Generates the product of an SF reaction given the reactants.
 
         Args:
-            reactants (Sequence): Reactants of the Synthetic Fermentation reaction.
+            reactants (list): Reactants of the Synthetic Fermentation reaction.
                 Expects an initiator, monomer, and terminator in this order.
 
         Returns:

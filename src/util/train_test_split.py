@@ -11,10 +11,13 @@ class GroupShuffleSplitND(ShuffleSplit):
 
     Splits data which is grouped along n dimensions (e.g. data from n-component chemical reactions) so that the
     train and test set groups do not overlap on any dimension. Note that this typically means that some data will not
-    be used, neither in the train, nor test set. F
+    be used, neither in the train, nor test set.
     The train_size or test_size arguments refer to the ratio of groups and not the ratio of samples.
     The ratio is applied along each dimension separately, so if the test_size is 0.1, and n = 3, then the expected
     size of the test set is 0.1^3 = 0.1% of the total data, if all groups are of equal size.
+    Note however that if there are at least 2 dimensions, the actual train or test size may be smaller than expected,
+    because the data may not contain a realization of the intersection between drawn groups. In this case, the split
+    is still valid, but the train or test set may be smaller than expected.
 
     Parameters
     ----------

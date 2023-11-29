@@ -341,11 +341,14 @@ class Plate:
             vols.append(vol)
         return compounds, vols
 
-    def free(self) -> Optional[str]:
-        """Return the position of the next free well. Order is left to right, top to bottom."""
+    def free(self, from_well="A1") -> Optional[str]:
+        """Return the position of the next free well. Order is left to right, top to bottom. If from_well is given,
+        the search starts from this well. If no free well is found, None is returned."""
         for well in self.wells():
             if self.volume(well) == 0:
-                return well
+                if ord(well[0]) >= ord(from_well[0]):
+                    if int(well[1:]) >= int(from_well[1:]):
+                        return well
         return None
 
     def to_csv(self, file, save_volumes=False):
@@ -367,7 +370,7 @@ class Plate:
                 ] + [", ".join(elem) for elem in self.row(row_str)[0]]
                 writer.writerow(text)
         if save_volumes:
-            vol_file = file.strip(".csv") + "_volumes.csv"
+            vol_file = file.removesuffix(".csv") + "_volumes.csv"
             with open(vol_file, "w") as csv_file:
                 writer = csv.writer(csv_file)
                 # write header

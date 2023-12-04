@@ -1,7 +1,7 @@
 import os
 from typing import List, Dict
 
-from plates import Plate, Plate96, Plate384, Plate384Echo
+from labware.plates import Plate, Plate96, Plate384, Plate384Echo
 
 
 class TransferStep:
@@ -24,7 +24,7 @@ class TransferStep:
         self.source_well = source_well
         self.destination_id = destination_id
         self.destination_well = destination_well
-        self.volume = volume  # in nL
+        self.volume = int(volume)  # in nL
 
     def __repr__(self):
         return f"TransferStep[{self.source_id}_{self.source_well} --> {self.destination_id}_{self.destination_well}, {self.volume} nL]"
@@ -49,6 +49,16 @@ class Transfer:
         save_plate=False,
         save_dir="",
     ):
+        """
+        Simulate the outcome of the Transfer, given a source plate.
+
+        Args:
+            source_plates (dict): Dictionary of the source plates of the form {"name": labware.plates.Plate}
+            destination_well_number (int): Well count of the destination plate. Can be 96 or 384.
+            save_plate (bool): Whether to save the resulting destination plate. Default False.
+            save_dir (str): Path to save the destination plate.
+        """
+
         destination_plates = {}
         for transfer_step in self.transfer_steps:
             # check if source plate referenced in Echo file is in source_plates

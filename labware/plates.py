@@ -402,7 +402,7 @@ class Plate:
         if isinstance(file, Path):  # convert any Path to str
             file = str(file.resolve())
 
-        vol_file = file.strip(".csv") + "_volumes.csv"
+        vol_file = file.removesuffix(".csv") + "_volumes.csv"
         """parse files"""
         parsed = []
         with open(file, "r") as csv_file:  # compound file

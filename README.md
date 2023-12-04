@@ -78,7 +78,11 @@ draw random combinations for every experiment to give a synthesis plan
 ### Usage scenarios
 #### When additional building blocks are added to the library
 
-Put the ChemInventory export file into <root>/data/inputs/ and run library_design scripts everything
+Two option:
+1. If you want to remake the entire database (probably you don't), put the ChemInventory export file into <root>/data/inputs/ and run library_design scripts everything.
+2. If you just want to add a few buildingblocks to the existing database, use `SynfermDatabaseConnection.add_building_block()` from `src.util.db_utils` to add the building blocks to the database.
+
+In any case, you will next want to add new entries to the `virtuallibrary` table to reflect.
 
 #### When new products are added in the enumeration
 

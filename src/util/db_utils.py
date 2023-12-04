@@ -6,11 +6,15 @@ import sqlite3 as sql
 from typing import Optional, List, Tuple, Any, Union
 
 from PIL import Image
+from rdkit import Chem
 from rdkit.Chem import MolFromSmiles, Mol
 from rdkit.Chem.Descriptors import MolWt
 import pandas as pd
 
-from src.definitions import DB_PATH
+from src.definitions import DB_PATH, DATA_DIR
+from src.util.protecting_groups import pg_dict
+from src.util.rdkit_util import desalt_building_block
+from src.util.sumformula_manipulation import string_formula_substraction
 
 
 class SynFermDatabaseConnection:
@@ -464,6 +468,96 @@ class SynFermDatabaseConnection:
     def building_blocks(self):
         """Returns a list of tuples consisting of (long, SMILES) for all building blocks"""
         return self.cur.execute("SELECT long, SMILES FROM building_blocks;").fetchall()
+
+    def add_building_block(
+        self,
+        long: str,
+        smiles: str,
+        category: str,
+        reactant_class: str,
+        comment: Optional[str] = None,
+    ) -> None:
+        """
+        Add a building block to the database.
+
+        Args:
+            long (str): long name of the building block (e.g. 2-Pyr001)
+            smiles (str): SMILES string of the building block. Will be canonicalized before adding to DB.
+            category (str): category of the building block (e.g. "I" for initiator)
+            reactant_class (str): reactant class of the building block (e.g. "KAT_al" for aliphatic KAT)
+            comment (str): optional comment that will be added to the database. Defaults to None.
+
+        Returns:
+            None
+        """
+        mol = Chem.MolFromSmiles(smiles)
+        mol_desalted = desalt_building_block(mol)
+        canon_smiles = Chem.MolToSmiles(mol)
+        image_path = str(DATA_DIR / "db" / "static" / "image" / f"{long}.png")
+        boc = len(
+            mol.GetSubstructMatches(
+                Chem.MolFromSmarts(
+                    "N-[CX3](=[0X1])-[OX2]-[$(C(-[CH3])(-[CH3])-[CH3]);X4]"
+                )
+            )
+        )
+        cbz = len(
+            mol.GetSubstructMatches(
+                Chem.MolFromSmarts(
+                    "N-[CX3](=[0X1])-[OX2]-[$(C-[cX3]:1:[cX3]:[cX3]:[cX3]:[cX3]:[cX3]:1);X4H2]"
+                )
+            )
+        )
+        tbu = len(
+            mol.GetSubstructMatches(
+                Chem.MolFromSmarts(
+                    "[CX3](=[0X1])-[OX2]-[$([CX4](-[CH3])(-[CH3])-[CH3])]"
+                )
+            )
+        )
+        tms = len(
+            mol.GetSubstructMatches(
+                Chem.MolFromSmarts("[$([SiX4](-[CH3])(-[CH3])-[CH3])]")
+            )
+        )
+        lcms_mass_1 = Chem.Descriptors.ExactMolWt(mol_desalted)
+        lcms_formula_1 = Chem.rdMolDescriptors.CalcMolFormula(mol_desalted)
+        additional_formulae = []
+        additional_masses = []
+        for pg, pgname in zip([boc, cbz, tbu, tms], ["boc", "cbz", "tbu", "tms"]):
+            for i in range(pg):
+                additional_formulae.append(
+                    string_formula_substraction(lcms_formula_1, pg_dict[pgname][0])
+                )
+                additional_masses.append(lcms_mass_1 - pg_dict[pgname][1])
+        additional_masses = [f"{i:.4f}" for i in additional_masses]
+
+        lcms_mass_alt = additional_masses if len(additional_masses) > 0 else None
+        lcms_formula_alt = additional_formulae if len(additional_formulae) > 0 else None
+
+        self.cur.execute(
+            """
+            INSERT INTO building_blocks (long, SMILES, image, category, boc, cbz, tbu, tms, lcms_mass_1, lcms_mass_alt, comment, lcms_formula_1, lcms_formula_alt, reactant_class)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            """,
+            (
+                long,
+                canon_smiles,
+                image_path,
+                category,
+                boc,
+                cbz,
+                tbu,
+                tms,
+                lcms_mass_1,
+                lcms_mass_alt,
+                comment,
+                lcms_formula_1,
+                lcms_formula_alt,
+                reactant_class,
+            ),
+        )
+        self.con.commit()
 
     def __delete__(self, instance):
         self.con.close()

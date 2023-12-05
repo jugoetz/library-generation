@@ -60,7 +60,7 @@ class TestSFReactionGenerator(unittest.TestCase):
                     Chem.MolToSmiles(generated_reactants[2]),
                 )
 
-    def test_gives_correct_product(self):
+    def test_gives_correct_product_A(self):
         """
         Test that the reaction generator gives the correct product for a given set of starting materials
         on a large random subset of the VL.
@@ -86,6 +86,217 @@ class TestSFReactionGenerator(unittest.TestCase):
             with self.subTest(vl_id=row[0]):
                 self.assertEqual(
                     row[4],
+                    generated_product,
+                )
+
+    def test_gives_correct_product_B(self):
+        """
+        Test that the reaction generator gives the correct product for a given set of starting materials
+        on a large random subset of the VL.
+        """
+        res = self.con.con.execute(
+            "SELECT id, initiator_long, monomer_long, terminator_long, SMILES FROM virtuallibrary WHERE type = 'B' AND initiator_long != '4-Pyrazole002';",
+        ).fetchall()  # 4-Pyrazole002 is the bullshit initiator with "urea-KAT"
+
+        for row in random.sample(res, 10000):  # we test 10000 random VL members
+            try:
+                generated_product = Chem.MolToSmiles(
+                    self.rxn_generator.generate_product(
+                        [
+                            Chem.MolFromSmiles(self.building_blocks[bb])
+                            for bb in row[1:4]
+                        ],
+                        product_type="B",
+                    )
+                )
+            except (ValueError, RuntimeError) as e:
+                with self.subTest(vl_id=row[0], msg="Exception raised"):
+                    self.fail(f"Error for vl_id {row[0]}: {e}")
+
+            with self.subTest(vl_id=row[0]):
+                self.assertEqual(
+                    row[4],
+                    generated_product,
+                )
+
+    def test_gives_correct_product_C(self):
+        """
+        Test that the reaction generator gives the correct product for a given set of starting materials
+        on a large random subset of the VL.
+        """
+        res = self.con.con.execute(
+            "SELECT id, initiator_long, monomer_long, terminator_long, SMILES FROM virtuallibrary WHERE type = 'C' AND initiator_long != '4-Pyrazole002';",
+        ).fetchall()  # 4-Pyrazole002 is the bullshit initiator with "urea-KAT"
+
+        for row in random.sample(res, 10000):  # we test 10000 random VL members
+            try:
+                generated_product = Chem.MolToSmiles(
+                    self.rxn_generator.generate_product(
+                        [
+                            Chem.MolFromSmiles(self.building_blocks[bb])
+                            for bb in row[1:4]
+                        ],
+                        product_type="C",
+                    )
+                )
+            except (ValueError, RuntimeError) as e:
+                with self.subTest(vl_id=row[0], msg="Exception raised"):
+                    self.fail(f"Error for vl_id {row[0]}: {e}")
+
+            with self.subTest(vl_id=row[0]):
+                self.assertEqual(
+                    row[4],
+                    generated_product,
+                )
+
+    def test_gives_correct_product_D(self):
+        """
+        Test that the reaction generator gives the correct product for a given set of starting materials
+        on a large random subset of the VL.
+        """
+        res = self.con.con.execute(
+            "SELECT id, initiator_long, monomer_long, terminator_long, SMILES FROM virtuallibrary WHERE type = 'D' AND initiator_long != '4-Pyrazole002';",
+        ).fetchall()  # 4-Pyrazole002 is the bullshit initiator with "urea-KAT"
+
+        for row in random.sample(res, 10000):  # we test 10000 random VL members
+            try:
+                generated_product = Chem.MolToSmiles(
+                    self.rxn_generator.generate_product(
+                        [
+                            Chem.MolFromSmiles(self.building_blocks[bb])
+                            for bb in row[1:4]
+                        ],
+                        product_type="D",
+                    )
+                )
+            except (ValueError, RuntimeError) as e:
+                with self.subTest(vl_id=row[0], msg="Exception raised"):
+                    self.fail(f"Error for vl_id {row[0]}: {e}")
+
+            with self.subTest(vl_id=row[0]):
+                self.assertEqual(
+                    row[4],
+                    generated_product,
+                )
+
+    def test_gives_correct_product_E(self):
+        """
+        Test that the reaction generator gives the correct product for a given set of starting materials
+        on a large random subset of the VL.
+        """
+        res = self.con.con.execute(
+            "SELECT id, initiator_long, monomer_long, terminator_long, SMILES FROM virtuallibrary WHERE type = 'E' AND initiator_long != '4-Pyrazole002';",
+        ).fetchall()  # 4-Pyrazole002 is the bullshit initiator with "urea-KAT"
+
+        for row in random.sample(res, 10000):  # we test 10000 random VL members
+            try:
+                generated_product = Chem.MolToSmiles(
+                    self.rxn_generator.generate_product(
+                        [
+                            Chem.MolFromSmiles(self.building_blocks[bb])
+                            for bb in row[1:4]
+                        ],
+                        product_type="E",
+                    )
+                )
+            except (ValueError, RuntimeError) as e:
+                with self.subTest(vl_id=row[0], msg="Exception raised"):
+                    self.fail(f"Error for vl_id {row[0]}: {e}")
+
+            with self.subTest(vl_id=row[0]):
+                self.assertEqual(
+                    row[4],
+                    generated_product,
+                )
+
+    def test_gives_correct_product_F(self):
+        """
+        Test that the reaction generator gives the correct product for a given set of starting materials
+        on a large random subset of the VL.
+        """
+        res = self.con.con.execute(
+            "SELECT id, initiator_long, monomer_long, terminator_long, SMILES FROM virtuallibrary WHERE type = 'F' AND initiator_long != '4-Pyrazole002';",
+        ).fetchall()  # 4-Pyrazole002 is the bullshit initiator with "urea-KAT"
+
+        for row in random.sample(res, 10000):  # we test 10000 random VL members
+            try:
+                generated_product = Chem.MolToSmiles(
+                    self.rxn_generator.generate_product(
+                        [
+                            Chem.MolFromSmiles(self.building_blocks[bb])
+                            for bb in row[1:4]
+                        ],
+                        product_type="F",
+                    )
+                )
+            except (ValueError, RuntimeError) as e:
+                with self.subTest(vl_id=row[0], msg="Exception raised"):
+                    self.fail(f"Error for vl_id {row[0]}: {e}")
+
+            with self.subTest(vl_id=row[0]):
+                self.assertEqual(
+                    row[4],
+                    generated_product,
+                )
+
+    def test_gives_correct_product_G(self):
+        """
+        Test that the reaction generator gives the correct product for a given set of starting materials
+        on a large random subset of the VL.
+        """
+        res = self.con.con.execute(
+            "SELECT id, initiator_long, monomer_long, terminator_long, SMILES FROM virtuallibrary WHERE type = 'G' AND initiator_long != '4-Pyrazole002';",
+        ).fetchall()  # 4-Pyrazole002 is the bullshit initiator with "urea-KAT"
+
+        for row in random.sample(res, 10000):  # we test 10000 random VL members
+            try:
+                generated_product = Chem.MolToSmiles(
+                    self.rxn_generator.generate_product(
+                        [
+                            Chem.MolFromSmiles(self.building_blocks[bb])
+                            for bb in row[1:4]
+                        ],
+                        product_type="G",
+                    )
+                )
+            except (ValueError, RuntimeError) as e:
+                with self.subTest(vl_id=row[0], msg="Exception raised"):
+                    self.fail(f"Error for vl_id {row[0]}: {e}")
+
+            with self.subTest(vl_id=row[0]):
+                self.assertEqual(
+                    row[4],
+                    generated_product,
+                )
+
+    def test_gives_correct_product_H(self):
+        """
+        Test that the reaction generator gives the correct product for a given set of starting materials
+        on a large random subset of the VL.
+        """
+        res = self.con.con.execute(
+            "SELECT id, initiator_long, monomer_long, terminator_long, SMILES FROM virtuallibrary WHERE type = 'H' AND initiator_long != '4-Pyrazole002';",
+        ).fetchall()  # 4-Pyrazole002 is the bullshit initiator with "urea-KAT"
+
+        for row in random.sample(res, 10000):  # we test 10000 random VL members
+            try:
+                mol = self.rxn_generator.generate_product(
+                    [Chem.MolFromSmiles(self.building_blocks[bb]) for bb in row[1:4]],
+                    product_type="H",
+                )
+                if mol:
+                    generated_product = Chem.MolToSmiles(mol)
+                else:
+                    # skip if the VL also has no product (None or "O" as placeholder)
+                    if row[4] in ["O", None]:
+                        continue
+            except (ValueError, RuntimeError) as e:
+                with self.subTest(vl_id=row[0], msg="Exception raised"):
+                    self.fail(f"Error for vl_id {row[0]}: {e}")
+
+            with self.subTest(vl_id=row[0], i=row[1], m=row[2], t=row[3]):
+                self.assertEqual(
+                    Chem.MolToSmiles(Chem.MolFromSmiles(row[4])),
                     generated_product,
                 )
 

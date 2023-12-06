@@ -13,6 +13,7 @@ import os
 import csv
 import sqlite3
 import shutil
+from typing import Sequence
 
 import pandas as pd
 
@@ -84,25 +85,46 @@ def get_plates_for_experiment(exp_dir):
 
 
 def bulk_data_retrieval_from_virtuallibrary(
-    con, initiators: list, monomers: list, terminators: list
+    con,
+    building_blocks: Sequence[Sequence],
+    exp_nr: int,
 ):
     """
     From the virtuallibrary table, retrieve all combinations of the all initiators,
     monomers and terminators given to the function.
+
+    Args:
+        con: sqlite3.Connection object
+        building_blocks: Sequence of Sequences of building block names. The first element of the inner sequence must
+            be the initiators, the second the monomers and the third the terminators. The outer sequence must contain
+            corresponds to the wells of a plate. Building block names can be either short names (e.g. 'I1', 'M2', 'T3'),
+            long names (e.g. 'Ph031', 'Mon003', 'TerTH005'). The two formats must not be mixed.
+        exp_nr: int, experiment number
     """
     cur = con.cursor()
     print("Retrieving product data from virtuallibrary table...")
-    # TODO this query is not functional anymore after changes to the DB table layouts
-    #   (virtuallibrary does not contain the short names anymore)
-    #   To fix this, obtain short names from the building_block_shorts table
-    #   (currently not implemented because this code is not needed any more)
+    if building_blocks[0][0].startswith("I") and building_blocks[0][0][1:].isdigit():
+        # if the first element of the list is a short name, we assume that all elements are short names
+        # and convert them to long names
+        building_blocks = [
+            [
+                cur.execute(
+                    "SELECT long FROM building_block_shorts WHERE short=? AND first_use_exp_nr <= ? ORDER BY first_use_exp_nr DESC LIMIT 1;",
+                    [bb, exp_nr],
+                ).fetchone()[0]
+                for bb in well
+            ]
+            for well in building_blocks
+        ]
+
+    long_names = [" + ".join(well) for well in building_blocks]
+    # get product data
+    placeholders = ", ".join("?" for _ in long_names)
     results = cur.execute(
-        f"""SELECT id, initiator, monomer, terminator, initiator_long, monomer_long, terminator_long,
-     long_name, type, SMILES FROM virtuallibrary
-     WHERE initiator IN ({(", ".join("?" for _ in initiators))})
-     AND monomer IN ({(", ".join("?" for _ in monomers))})
-     AND terminator IN ({(", ".join("?" for _ in terminators))});""",
-        initiators + monomers + terminators,
+        "SELECT id, initiator_long, monomer_long, terminator_long, long_name, type, SMILES FROM virtuallibrary WHERE long_name IN ({});".format(
+            placeholders
+        ),
+        long_names,
     ).fetchall()
     print(f"Retrieved product data for {len(results)} products.")
     return results
@@ -185,28 +207,41 @@ def main():
     for i, plate in plates_dict.items():
         for well, compounds, volume in plate.iterate_wells():
             well_list.append([i, well] + [c for c in compounds])
+    #
     well_df = pd.DataFrame(
         well_list, columns=["plate", "well", "initiator", "monomer", "terminator"]
     )
-    well_df = well_df.dropna()
-
-    # get unique building blocks
-    initiators = well_df["initiator"].unique().tolist()
-    monomers = well_df["monomer"].unique().tolist()
-    terminators = well_df["terminator"].unique().tolist()
-
+    # if we have short names, we convert them to long names
+    if well_df["initiator"].str.startswith("I").all():
+        well_df[["initiator_long", "monomer_long", "terminator_long"]] = well_df[
+            ["initiator", "monomer", "terminator"]
+        ].applymap(
+            lambda x: con.execute(
+                "SELECT long FROM building_block_shorts WHERE short=? AND first_use_exp_nr <= ? ORDER BY first_use_exp_nr DESC LIMIT 1;",
+                [x, conf["exp_nr"]],
+            ).fetchone()[0]
+        )
+    else:  # if we already have long names, we set the short names to None
+        well_df[["initiator_long", "monomer_long", "terminator_long"]] = well_df[
+            ["initiator", "monomer", "terminator"]
+        ].copy()
+        well_df[["initiator", "monomer", "terminator"]] = None
+    well_df = well_df.dropna(
+        subset=["initiator_long", "monomer_long", "terminator_long"]
+    )  # drop empty wells
     # get product infos from database
     products = bulk_data_retrieval_from_virtuallibrary(
-        con, initiators, monomers, terminators
+        con,
+        well_df[["initiator_long", "monomer_long", "terminator_long"]]
+        .to_numpy()
+        .tolist(),
+        conf["exp_nr"],
     )
     products = (
         pd.DataFrame(
             products,
             columns=[
                 "vl_id",
-                "initiator",
-                "monomer",
-                "terminator",
                 "initiator_long",
                 "monomer_long",
                 "terminator_long",
@@ -217,9 +252,6 @@ def main():
         )
         .pivot(
             index=[
-                "initiator",
-                "monomer",
-                "terminator",
                 "initiator_long",
                 "monomer_long",
                 "terminator_long",
@@ -245,7 +277,10 @@ def main():
     # This behavior is desirable because sometimes, we do not exhaustively synthesise all combinations in 'products'.
     # To alert the user to silent failing, we print the number of reactions below.
     new_df = pd.merge(
-        products, well_df, how="inner", on=["initiator", "monomer", "terminator"]
+        products,
+        well_df,
+        how="inner",
+        on=["initiator_long", "monomer_long", "terminator_long"],
     )
 
     # add experiment info

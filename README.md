@@ -85,6 +85,33 @@ In any case, you will next want to add new entries to the `virtuallibrary` table
 To do so, run the Jupyter notebook `notebooks/virtuallibrary/add_new_products_to_vl.ipynb`.
 This will determine combinations missing from the virtual library and add them.
 
+#### When setting up a new experiment
+
+1. Generate target plate layouts. For this step, there is no general procedure, but some tools that can be helpful:
+  - `generateplatelayout.py` can be used to generate the target plate layouts from a synthesis plan (50k project).
+  - `layoutsourceplate.py` can be used to generate the source plate layouts from the target plate layouts (50k project).
+  - If source plate layout and transfer files are available, the `labware.transfers.Transfer` class has a
+      `simulate()` method that can be used to generate the target plate layouts.
+  - The Jupyter notebooks `notebooks/experiment_design/irregular_Echo_transfer_files_validation.ipynb` and
+      `notebooks/experiment_design/validation_plates.ipynb` were used to generate non-standard source and transfer files.
+2. If any building blocks are used that are not already in the database, follow the instructions above to populate the
+    building_blocks and virtuallibrary tables with the new building blocks.
+3. Use `src.experiment_planning.writereactiondb` to populate the reaction database with the new experiment(s).
+    You only need the target plate layouts (step 1) and the populated virtuallibrary table (step 2).
+4. Use `src.experiment_planning.weighincalculator` to generate the weigh-in sheet (not tested for general use, should work if volumes are adjusted in config file)
+5. Use `src.experiment_planning.generatelcmssubmission` to generate the MoBiAS submission file.
+    You only need the target plate layouts (step 1) and the populated experiments table (step 3).
+
+#### When evaluating an experiment
+At this point you should have received the MoBiAS output files and the NEXUS log files.
+1. Place MoBiAS output files in the plate directory (e.g. `plates/JG404`).
+2. Place NEXUS log files in the experiment directory (e.g. `plates/exp29`). Use the structure of `data/util/transfer_files_folder_template` as a guide.
+3. Run `src.analysis.extractmobiasresults` to extract the raw LCMS data from the MoBiAS output files
+4. Run `src.analysis.extracterrors` to extract the errors from the MoBiAS output files and the NEXUS log files
+5. Run `src.analysis.calculatelcmsyields` to calculate the yields from the raw LCMS data
+6. Run `src.analysis.heatmapfromdb` to generate the yield heatmaps from the processed LCMS data.
+
+
 #### When new products are added in the enumeration (legacy scenario, superseded by enumeration through `SFReactionGenerator` and `add_new_products_to_vl.ipynb`)
 
 Change enumerate_reaction.py and rerun:

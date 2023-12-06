@@ -36,7 +36,6 @@ Tools to evaluate experiments.
 Tools to set up individual experiments.
 
 - **generatelcmssubmission**: Generate the submission file for MoBiAS.
-
 - **weighincalculator**: Produce a weigh-in sheet for a given experiment
 - **writereactiondb**: Populate the reaction database with a given experiment.
 
@@ -82,9 +81,11 @@ Two option:
 1. If you want to remake the entire database (probably you don't), put the ChemInventory export file into <root>/data/inputs/ and run library_design scripts everything.
 2. If you just want to add a few buildingblocks to the existing database, use `SynfermDatabaseConnection.add_building_block()` from `src.util.db_utils` to add the building blocks to the database.
 
-In any case, you will next want to add new entries to the `virtuallibrary` table to reflect.
+In any case, you will next want to add new entries to the `virtuallibrary` table to reflect the updated building blocks.
+To do so, run the Jupyter notebook `notebooks/virtuallibrary/add_new_products_to_vl.ipynb`.
+This will determine combinations missing from the virtual library and add them.
 
-#### When new products are added in the enumeration
+#### When new products are added in the enumeration (legacy scenario, superseded by enumeration through `SFReactionGenerator` and `add_new_products_to_vl.ipynb`)
 
 Change enumerate_reaction.py and rerun:
 

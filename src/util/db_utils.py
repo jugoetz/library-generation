@@ -176,9 +176,10 @@ class SynFermDatabaseConnection:
         Image.open(img_path).show()
         return
 
-    def list_pg(self, short: str) -> Tuple[int, int, int, int]:
+    def list_pg(self, short: str = None, long: str = None) -> Tuple[int, int, int, int]:
         """Returns a 4-tuple: (#boc, #cbz, #tbu, #tms)"""
-        long = self.get_long_name(short)
+        if not long:
+            long = self.get_long_name(short)
         return self.cur.execute(
             "SELECT boc, cbz, tbu, tms FROM building_blocks WHERE long = ?;",
             (long,),

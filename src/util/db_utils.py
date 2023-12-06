@@ -442,6 +442,15 @@ class SynFermDatabaseConnection:
         )
         return df
 
+    def get_exp_nr(self, lab_journal_number: str) -> int:
+        """Get the experiment number for a given lab journal number"""
+        return int(
+            self.cur.execute(
+                "SELECT exp_nr FROM experiments WHERE lab_journal_number = ? LIMIT 1;",
+                (lab_journal_number,),
+            ).fetchone()[0]
+        )
+
     def get_experiments_table_as_df(self) -> pd.DataFrame:
         """Returns the experiments table as a pandas.Dataframe"""
         return pd.read_sql_query(

@@ -5,13 +5,11 @@ Inputs:
   - Plate layout (csv-files, usually 'plate_layout_plateX.csv'):
     One plate per file. Handles arbitrary number of plates/files. X may be any number.
   - EITHER
-     the mol_prop_dict prepared from sdf_to_properties
+     the mol_prop_dict prepared from sdf_to_properties (legacy)
     OR
-     a SQLite DB table of the virtual library
-  - Identity of compounds (txt-file):
-    Space-delimited file with one compound per row.
-    Columns contain short name (e.g. 'M1') used in the plate layout file
-    and the long name (e.g. 2-Pyr003_MT or 2-Pyr003) used in the SDF files
+     a SQLite DB table of the virtual library (standard now)
+
+  If shorthand names are used in the plate layout, the long names are read from the DB.
 
 Output:
   - Submission file (mobias_submission.csv):
@@ -26,39 +24,22 @@ import argparse
 import json
 import re
 import os
-import sqlite3 as sql
 from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-from src.definitions import PLATES_DIR, COMPOUND_MAPPING_PATH, DB_PATH
+from src.definitions import PLATES_DIR
 from labware.plates import Plate384, Plate96
 from src.util.utils import get_conf
+from src.util.db_utils import SynFermDatabaseConnection
 
 # configuration
 # edit config.yaml to change
 conf = get_conf()
 debug = False
-
-
-def import_sm(file):
-    """
-    Import identity of starting materials into a dictionary.
-    Return dictionary that maps shorthand names (e.g. 'T1') to long names (e.g. 'TerTH001')
-    :param file: str or Path-like
-    :return: dict
-    """
-    dictionary = {}
-    with open(file, "r") as f:
-        # iterate txt-file
-        for line in f:
-            # split columns of space-delimited file
-            columns = line.strip("\n").split(sep=" ", maxsplit=1)
-            # remove any "_XX" suffixes from long names
-            dictionary[columns[0]] = columns[1].split("_")[0]
-    return dictionary
+con = SynFermDatabaseConnection()
 
 
 def import_pl(file, return_type="dict"):
@@ -86,7 +67,7 @@ def import_pl(file, return_type="dict"):
         )
 
 
-def get_long_name(row, dictionary):
+def get_long_name(row, exp_nr):
     """
     For use with pandas.DataFrame.apply()
     Convert shorthand names located in different df columns (I, M, T) to one longhand name.
@@ -101,15 +82,15 @@ def get_long_name(row, dictionary):
         ):
             pass  # catch empty fields (this will usually happen)
         else:
-            try:
-                long.append(dictionary[row[col]])
-            except KeyError:  # catch unknown shorthand names (shouldn't usually happen)
-                print(f"WARNING: Building block {row[col]} not found")
-                long.append("n/a")
+            if row[col][1:].isdigit():  # if we have short names, get the long name
+                # if the column contains a long name already, just append it
+                con.get_long_name(short=row[col], exp_nr=exp_nr)
+            else:  # if we have long names, we use that unchanged
+                long.append(row[col])
     return " + ".join(long)
 
 
-def get_prop_from_db(dbpath):
+def get_prop_from_db():
     """
     Get mass and formula from sqlite database. If there are additional formulae/masses in a designated column with _alt
     suffix, get those, too.
@@ -121,11 +102,9 @@ def get_prop_from_db(dbpath):
     consequently these will always be true:
     len(prop_dict) = number of unique long_names in db
     len(prop_dict[X]) = 8 if no protecting group, else 8 + number of deprotection combinations
-    :param dbpath: str or path-like
     :return: dict
     """
-    con = sql.connect(dbpath)
-    cur = con.cursor()
+    cur = con.con.cursor()
     prop_dict = {}
     for row in cur.execute(
         "SELECT id, long_name, type, molecular_formula_1, molecular_formula_alt, lcms_mass_1, lcms_mass_alt FROM virtuallibrary"
@@ -139,9 +118,20 @@ def get_prop_from_db(dbpath):
             row[5],
         )  # these are the "standard" formula and mass
         if row[4] is not None:  # if alternate masses are present
-            for i, (f, m) in enumerate(zip(row[4].split(","), row[6].split(","))):
+            # handle different input formats
+            formulas = [
+                s.strip("[' ]") for s in row[4].split(",")
+            ]  # works for CH4 and ['CH4'] and ['CH4', 'C2H6']
+            if isinstance(row[6], str):
+                masses = [
+                    float(s.strip().strip("[' ]")) for s in row[6].split(",")
+                ]  # works for "150.0, 10.0" and ['150.0', '10.0']
+            elif isinstance(row[6], float):
+                masses = [row[6]]  # works for 150.0
+            else:
+                raise RuntimeError(f"Received unexpected type {type(row[4])}")
+            for i, (f, m) in enumerate(zip(formulas, masses)):
                 prop_dict[row[1]][f"{row[2]}_{i + 2}"] = (f, m)
-    con.close()
     return prop_dict
 
 
@@ -203,9 +193,23 @@ def write_csv(df, file, exp_dir):
     subset = [
         "Vial",
     ]
+
+    def sort_key(s):
+        if s == "Vial":
+            primary = 0
+        elif s.startswith("IS"):
+            primary = 3
+        elif any(c.isdigit() for c in s):
+            primary = 2
+        else:
+            primary = 1
+        return (primary, s)
+
     for s in df.columns:
         if s.endswith(suffix):
             subset.append(s)
+    # we order the subset list according to: Vial, A-H, A2-Ax...H2-Hx, IS
+    subset = sorted(subset, key=sort_key)
     subset_df = df.loc[
         df["long"] != "", subset
     ]  # remove columns with no long name set (those are emtpy wells e.g. A1)
@@ -236,10 +240,7 @@ def write_csv(df, file, exp_dir):
 
 def main(exp_dir):
     # Import Mass and Formula from DB
-    mol_prop_dict = get_prop_from_db(DB_PATH)
-
-    # Import identities
-    starting_material_dict = import_sm(COMPOUND_MAPPING_PATH)
+    mol_prop_dict = get_prop_from_db()
 
     # Import plates
     plates_dict = {}
@@ -266,7 +267,7 @@ def main(exp_dir):
 
     # Translate product names from shorthand to long names (e.g. 'Al002 + Mon001 + TerTH010')
     df["long"] = df.loc[:, ["I", "M", "T"]].apply(
-        get_long_name, axis=1, dictionary=starting_material_dict
+        get_long_name, axis=1, exp_nr=con.get_exp_nr(exp_dir.name)
     )
 
     if debug:
@@ -274,7 +275,9 @@ def main(exp_dir):
         print("########## INPUT VALUES ###########\n")
         for k, v in mol_prop_dict.items():
             print(f"Products {k}:\n{v}\n")
-        print(f"Used starting materials: \n{starting_material_dict}\n\n")
+        print(
+            f"Used starting materials: \n{np.unique(df.loc[:, ['I', 'M', 'T']].to_numpy().flatten()).tolist()}\n\n"
+        )
         for k, v in plates_dict.items():
             print(f"Plate layout {k}:\n{v}\n")
 

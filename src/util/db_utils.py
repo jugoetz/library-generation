@@ -85,6 +85,20 @@ class SynFermDatabaseConnection:
             f"Short name {short} not found in database for exp_nr {exp_nr}"
         )
 
+    def get_paper_name(self, short: str = None, long: str = None) -> str:
+        """
+        Get paper name (e.g. "I66") from short name (e.g. "I77"; not necessarily identical)
+        or long name (e.g. "Pyrazine001").
+        """
+        if not long:
+            long = self.get_long_name(short)
+        paper_name = self.cur.execute(
+            "SELECT paper_short FROM building_blocks_paper_names WHERE long = ?;",
+            (long,),
+        ).fetchone()[0]
+
+        return paper_name
+
     def get_reaction_ids_for_plate(
         self, identifier: Union[str, Tuple[int, int]]
     ) -> List[int]:

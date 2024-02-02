@@ -435,11 +435,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--exp-nr",
         type=int,
-        help="Number of the experiment under consideration",
+        help="Number of the experiment under consideration (e.g. 29 for exp29)",
         default=conf["exp_nr"],
     )
     parser.add_argument(
-        "--exp-dir", type=Path, help="Path to the experiment directory", default=exp_dir
+        "--exp-dir",
+        type=Path,
+        help="Path to the experiment directory (e.g. data/plates/exp29/)",
+        default=exp_dir,
     )
     parser.add_argument(
         "--skip-nexus",

@@ -109,6 +109,9 @@ def read_nexus_transfer_errors(path: Path, error_string: str) -> List[str]:
         exceptions["plate"] = (
             exceptions["plate"].astype(int) - 1
         ) % 6 + 1  # convert to 1-6 (necessary because of inconsistent naming of analysis plates at NEXUS)
+        # handle special case: in exp101, plates where numbered 2-4 on the NEXUS side and 1-3 on our side.
+        if conf["exp_nr"] == 101:
+            exceptions["plate"] = exceptions["plate"] - 1
         return exceptions.to_numpy(dtype="str").tolist()
     else:
         return []
@@ -160,6 +163,9 @@ def read_nexus_repeated_tranfers(path: Path, error_string: str) -> List[str]:
         successes["plate"] = (
             successes["plate"].astype(int) - 1
         ) % 6 + 1  # convert to 1-6 (necessary because of inconsistent naming of analysis plates at NEXUS)
+        # handle special case: in exp101, plates where numbered 2-4 on the NEXUS side and 1-3 on our side.
+        if conf["exp_nr"] == 101:
+            successes["plate"] = successes["plate"] - 1
         return successes.to_numpy(dtype="str").tolist()
     else:
         return []
@@ -191,6 +197,9 @@ def read_nexus_survey_errors(
     exceptions["plate"] = (
         exceptions["plate"].astype(int) - 1
     ) % 6 + 1  # convert to 1-6 (necessary because of inconsistent naming of analysis plates at NEXUS)
+    # handle special case: in exp101, plates where numbered 2-4 on the NEXUS side and 1-3 on our side.
+    if conf["exp_nr"] == 101:
+        exceptions["plate"] = exceptions["plate"] - 1
     return exceptions.to_numpy(dtype="str").tolist()
 
 

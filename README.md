@@ -9,6 +9,14 @@ conda env create -f environment.yml
 ```
 Place the ChemInventory export file into `data/inputs/IventoryExport.xlsx`.
 
+### Development in Jupyter notebooks
+We use [nbstripout](https://pypi.org/project/nbstripout/) to remove output from notebooks before committing to the repository.
+Install with:
+```bash
+conda install -c conda-forge nbstripout # or pip install nbstripout
+nbstripout --install  # configures git filters and attributes for this repo
+```
+
 ## Usage
 
 General usage is as follows:

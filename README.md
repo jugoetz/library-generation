@@ -1,23 +1,31 @@
-# Library Generation Tools
+# Library Generation Tools for Synthetic Fermentation
 
 <a href="https://github.com/jugoetz/library-generation/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 
-A collection of tools needed to deal generate HTE compound libraries. Specialized on Synthetic Fermentation.
+A collection of tools needed to deal generate HTE compound libraries.
+Specialized on Synthetic Fermentation.
+We used this code to plan, execute, and evaluate experiments in the 50k project (conducting and analyzing 50,000 chemical reactions).
+
+For code used to conduct machine learning experiments, see [this repository](https://github.com/jugoetz/synferm-predictions).
 
 ## Installation
 
 ```bash
 conda env create -f environment.yml
 ```
-Place the ChemInventory export file into `data/inputs/IventoryExport.xlsx`.
 
-### Development in Jupyter notebooks
+### Development
 We use [nbstripout](https://pypi.org/project/nbstripout/) to remove output from notebooks before committing to the repository.
 Install with:
 ```bash
 conda install -c conda-forge nbstripout # or pip install nbstripout
 nbstripout --install  # configures git filters and attributes for this repo
+```
+We use [pre-commit](https://pre-commit.com/) hooks to ensure standardized code formatting.
+Install with:
+```bash
+pre-commit install
 ```
 
 ## Usage
@@ -32,58 +40,58 @@ The configuration file is located in `src/config.yaml`.
 Some modules accept command-line arguments, which, if given, override the configuration file settings.
 
 ### Submodules
+The code is split over multiple submodules, each covering a different aspect of the library generation process.
+Example workflows are given in the [Usage scenarios](#usage-scenarios) section below.
 
-#### analysis
+#### `analysis`
 
-Tools to evaluate experiments.
+This submodule contains tools to evaluate experiments.
+This means processing LC-MS data and instrument logs.
 
-- **calculatelcmsyields**: Conversion from raw LCMS data to ratios against internal standard
-- **extracterrors**: Extracts errors from MoBiAS output, NEXUS logs.
-- **extractmobiasresults**: Extracts raw LCMS data from MoBiAS output.
-- **heatmapfromdb**: Generates yield heatmaps from processed LCMS data.
+- `calculatelcmsyields`: Convert LC-MS results to ratios against internal standard.
+- `extracterrors`: Extract errors from MoBiAS output, NEXUS logs.
+- `extractmobiasresults`: Extract LC-MS results from MoBiAS output.
+- `heatmapfromdb`: Generate yield heatmaps from processed LC-MS data.
 
-#### experiment_planning
+#### `experiment_planning`
 
-Tools to set up individual experiments.
+This submodule contains tools to set up individual experiments.
 
-- **generatelcmssubmission**: Generate the submission file for MoBiAS.
-- **weighincalculator**: Produce a weigh-in sheet for a given experiment
-- **writereactiondb**: Populate the reaction database with a given experiment.
+- `generatelcmssubmission`: Generate the submission file for MoBiAS LC-MS.
+- `weighincalculator`: Produce a weigh-in sheet for a given experiment to prepare the stock solutions.
+- `writereactiondb`: Populate the reaction database with a given experiment (reactants, location on the plate, ...).
 
-#### legacy_code
+#### `library_design`
 
-as the name suggests...
+This submodule contains tools to set up the library synthesis agenda.
+This entails collecting building block data saved in an external inventory system,
+cleaning and pruning the building block list,
+enumerating the virtual library,
+creating the overarching synthesis plan,
+and individual plate layouts.
 
-#### library_design
+- `cheminventorycleanup`: Prune the building blocks stored in [ChemInventory](https://www.cheminventory.net/)
+    to remove duplicates, scarce, and impure material.
+    This requires the ChemInventory export file in `data/inputs/IventoryExport.xlsx`.
+- `enumeratelibrary`: Take the pickled DataFrame from `inventorytosdf.py` and enumerate the corresponding virtual
+  library. Save to SDF.
+- `generate_source_transfer_files`: Generate transfer files for OT-2 to prepare source plates that can be used with an Echo.
+- `generatelibraryplan`: Take the building block list received from `cheminventorycleanup.py` and
+draw random combinations for every experiment to give a synthesis plan.
+- `generateplatelayout`: Take the synthesis plan given by `generatelibraryplan.py` and generate the
+  reaction plate layouts for every experiment.
+- `inventorytosdf`: Take the building block list received from `cheminventorycleanup.py` and amend it with
+  additional information (e.g. MW, weigh-in). Gives and SDF of building blocks and pickled DataFrame with the building block Mols.
+- `layoutsourceplate`: From the synthesis plan generated in  `generatelibraryplan.py`, generate the source plate layouts for the 50k experiments.
+- `layoutsourceplate_validation`: (this is a specialized script only for the 1D validation plates)
+  From the synthesis plan for 1D validation plates, generate the source plate layouts.
+- `reaction_generator`: Implements a class `SFReactionGenerator` that can be used to generate Synthetic Fermentation
+    reactants from products, products from reactants, and atom-mapped reactionSMILES.
+- `sdftoproperties`: Take the VL (as .sdf.gz files) and extract / calculate identifiers, molecular weights and
+  formulae of the library constituents.
 
-Tools for going from building blocks save in an external inventory system to an experiment library
-
-- **cheminventorycleanup**: Prune the building blocks stored in cheminventory to remove duplicates, scarce, and
-  impure material.
-
-- **enumeratelibrary**: Enumerate the virtual library from a set of building blocks.
-
-- **generateexperiment**: This is an experimental script for experiment design that is not used in production.
-
-- **inventorytosdf**: Take the building block list received from cheminventory_cleanup.py and amend it with
-  additional information (e.g. MW, weigh-in). Gives sdf of building blocks and serializes DataFrame of mols to pickle
-
-- **enumeratelibrary**: Take the pickled DataFrame from inventorytosdf.py and enumerate the corresponding virtual
-  library. Save to sdf.
-
-- **generatelibraryplan**: Take the building block list received from cheminventory_cleanup.py and
-draw random combinations for every experiment to give a synthesis plan
-
-- **generateplatelayout**: Take the synthesis plan given by generatelibraryplan.py and generate the
-  target plates for every experiment.
-
-- **sdftoproperties**: Take the VL (as sdf.gz files) and extract / calculate names, molecular masses, and
-  formulae of the library molecules.
-
-#### utils
-- **db_utils**: Contains DB connection class which defines many popular queries.
-- **number_of_synthesized_compounds**: Calculates the number of synthesized compounds from the reaction database.
-- **show_product**: Show the product(s) in a given well as SMILES or image
+#### `utils`
+Contains a range of utilities that we don't describe in detail here.
 
 ### Usage scenarios
 #### When additional building blocks are added to the library
@@ -117,19 +125,18 @@ This will determine combinations missing from the virtual library and add them.
 At this point you should have received the MoBiAS output files and the NEXUS log files.
 1. Place MoBiAS output files in the plate directory (e.g. `plates/JG404`).
 2. Place NEXUS log files in the experiment directory (e.g. `plates/exp29`). Use the structure of `data/util/transfer_files_folder_template` as a guide.
-3. Run `src.analysis.extractmobiasresults` to extract the raw LCMS data from the MoBiAS output files
+3. Run `src.analysis.extractmobiasresults` to extract the raw LC-MS data from the MoBiAS output files
 4. Run `src.analysis.extracterrors` to extract the errors from the MoBiAS output files and the NEXUS log files
-5. Run `src.analysis.calculatelcmsyields` to calculate the yields from the raw LCMS data
-6. Run `src.analysis.heatmapfromdb` to generate the yield heatmaps from the processed LCMS data.
+5. Run `src.analysis.calculatelcmsyields` to calculate the yields from the raw LC-MS data
+6. Run `src.analysis.heatmapfromdb` to generate the yield heatmaps from the processed LC-MS data.
 
 
 #### When new products are added in the enumeration (legacy scenario, superseded by enumeration through `SFReactionGenerator` and `add_new_products_to_vl.ipynb`)
+Change `enumerate_reaction.py` and rerun:
 
-Change enumerate_reaction.py and rerun:
-
-- enumerate_reaction.py
-- sdftoproperties.py
-- generatelcmssubmission.py
+- `enumerate_reaction.py`
+- `sdftoproperties.py`
+- `generatelcmssubmission.py`
 
 #### When the synthesis plan has to be changed (e.g. compound cannot be located)
 

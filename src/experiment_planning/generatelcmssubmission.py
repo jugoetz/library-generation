@@ -84,7 +84,7 @@ def get_long_name(row, exp_nr):
         else:
             if row[col][1:].isdigit():  # if we have short names, get the long name
                 # if the column contains a long name already, just append it
-                con.get_long_name(short=row[col], exp_nr=exp_nr)
+                long.append(con.get_long_name(short=row[col], exp_nr=exp_nr))
             else:  # if we have long names, we use that unchanged
                 long.append(row[col])
     return " + ".join(long)

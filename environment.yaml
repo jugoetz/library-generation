@@ -19,6 +19,7 @@ dependencies:
   - scipy=1.10.*
   - seaborn=0.12.*
   - sqlite=3.41.*
+  - svgwrite=1.4.*
   - xlsxwriter=3.1.*
   - xlrd=2.0.*
   - xlwt=1.3.*

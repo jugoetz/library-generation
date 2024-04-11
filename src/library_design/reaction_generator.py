@@ -6,7 +6,6 @@ from rdkit.Chem import rdmolops
 from rdkit.Chem.rdChemReactions import (
     ChemicalReaction,
     ReactionFromSmarts,
-    SanitizeRxn,
     ReactionToSmiles,
 )
 

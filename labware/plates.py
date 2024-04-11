@@ -443,17 +443,6 @@ class Plate:
                 parsed[1][2],
             )
 
-        # rows are alphabetic values from 0 (A) to 8*n-1
-        valid_rows = [
-            [string.ascii_uppercase[i] for i in range(0, 8)],
-            [string.ascii_uppercase[i] for i in range(0, 16)],
-        ]
-        # cols are int from 1 to 12*n
-        valid_cols = [
-            [str(i + 1) for i in range(0, 12)],
-            [str(i + 1) for i in range(0, 24)],
-        ]
-
         if tuple(row_str) != self.rows():
             raise ValueError("Invalid row")
         if tuple(col_str) != self.columns():

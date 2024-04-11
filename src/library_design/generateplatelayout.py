@@ -71,7 +71,7 @@ for exp_nr, exp in enumerate(synthesis_plan):
     if n_prod != 1920:
         print(f"WARNING: {n_prod} product_generator in plate. Expected 1920.")
     if len(set(products)) != len(products):
-        print(f"WARNING: Duplicate product_generator detected")
+        print("WARNING: Duplicate product_generator detected")
 
     exp_dir = (
         PLATES_DIR / "new" / f"exp{exp_nr + 1}"

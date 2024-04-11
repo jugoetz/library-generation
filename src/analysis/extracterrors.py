@@ -227,18 +227,16 @@ def read_mobias_analysis_errors(path: Path, plate_number: int) -> List[str]:
     results.loc[
         (results["SumF1 Cmp"] > 1) & (results["SumF1 Cmp"] <= 4), ["error_1"]
     ] = (
-        f"WARNING: multiple peaks for product A ("
+        "WARNING: multiple peaks for product A ("
         + results["SumF1 Cmp"].astype("str")
         + ")"
     )
     results.loc[(results["SumF1 Cmp"] > 4), ["error_1"]] = (
-        f"ERROR: multiple peaks for product A ("
-        + results["SumF1 Cmp"].astype(str)
-        + ")"
+        "ERROR: multiple peaks for product A (" + results["SumF1 Cmp"].astype(str) + ")"
     )
     # identify where IS gives multiple peaks
     results.loc[(results[f"{internal_standard_number} Cmp"] > 1), ["error_2"]] = (
-        f"ERROR: multiple peaks for IS ("
+        "ERROR: multiple peaks for IS ("
         + results[f"{internal_standard_number} Cmp"].astype("str")
         + ")"
     )

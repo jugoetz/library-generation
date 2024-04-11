@@ -11,9 +11,7 @@ Outputs:
     - (In folders exp{nr.}): source plate layout files source_plate_layout_echo.csv: 1 file per folder,
     the number of folders equals len(input list)
 """
-import json
-
-from src.definitions import LIB_INFO_DIR, PLATES_DIR
+from src.definitions import PLATES_DIR
 from labware.plates import Plate384
 
 
@@ -78,7 +76,7 @@ for exp_nr, exp in enumerate(synthesis_plan):
 
     print(source_plate)
 
-    exp_dir = PLATES_DIR / "new" / f"exp101"
+    exp_dir = PLATES_DIR / "new" / "exp101"
     exp_dir.mkdir(parents=True, exist_ok=True)
     # print plates to csv files
-    source_plate.to_csv(exp_dir / f"source_plate_layout.csv", save_volumes=True)
+    source_plate.to_csv(exp_dir / "source_plate_layout.csv", save_volumes=True)

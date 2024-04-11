@@ -253,7 +253,7 @@ class SynFermDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                        f"SELECT DISTINCT initiator FROM experiments WHERE exp_nr = ?;",
+                        "SELECT DISTINCT initiator FROM experiments WHERE exp_nr = ?;",
                         (kwargs["exp_nr"],),
                     ).fetchall()
                 ],
@@ -263,7 +263,7 @@ class SynFermDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                        f"SELECT DISTINCT monomer FROM experiments WHERE exp_nr = ?;",
+                        "SELECT DISTINCT monomer FROM experiments WHERE exp_nr = ?;",
                         (kwargs["exp_nr"],),
                     ).fetchall()
                 ],
@@ -273,7 +273,7 @@ class SynFermDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                        f"SELECT DISTINCT terminator FROM experiments WHERE exp_nr = ?;",
+                        "SELECT DISTINCT terminator FROM experiments WHERE exp_nr = ?;",
                         (kwargs["exp_nr"],),
                     ).fetchall()
                 ],
@@ -284,7 +284,7 @@ class SynFermDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                        f"SELECT DISTINCT initiator FROM experiments WHERE lab_journal_number = ?;",
+                        "SELECT DISTINCT initiator FROM experiments WHERE lab_journal_number = ?;",
                         (kwargs["lab_journal_number"],),
                     ).fetchall()
                 ],
@@ -294,7 +294,7 @@ class SynFermDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                        f"SELECT DISTINCT monomer FROM experiments WHERE lab_journal_number = ?;",
+                        "SELECT DISTINCT monomer FROM experiments WHERE lab_journal_number = ?;",
                         (kwargs["lab_journal_number"],),
                     ).fetchall()
                 ],
@@ -304,7 +304,7 @@ class SynFermDatabaseConnection:
                 [
                     i[0]
                     for i in self.cur.execute(
-                        f"SELECT DISTINCT terminator FROM experiments WHERE lab_journal_number = ?;",
+                        "SELECT DISTINCT terminator FROM experiments WHERE lab_journal_number = ?;",
                         (kwargs["lab_journal_number"],),
                     ).fetchall()
                 ],

@@ -3,14 +3,14 @@ import random
 
 from rdkit import Chem, RDLogger
 
-RDLogger.DisableLog(
-    "rdApp.warning"
-)  # suppress warnings about unmapped atoms in reactionSMILES
-
 from src.library_design.reaction_generator import SFReactionGenerator
 from src.util.db_utils import SynFermDatabaseConnection
 from src.util.rdkit_util import desalt_building_block, remove_monomer_pg_chirality
 from src.definitions import DB_PATH
+
+RDLogger.DisableLog(
+    "rdApp.warning"
+)  # suppress warnings about unmapped atoms in reactionSMILES
 
 DB_EXISTS = DB_PATH.exists()
 

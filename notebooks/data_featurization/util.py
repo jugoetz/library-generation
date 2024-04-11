@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 from src.definitions import DATA_DIR
 

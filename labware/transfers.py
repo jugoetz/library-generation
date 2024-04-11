@@ -36,7 +36,7 @@ class Transfer:
         self.step_count = len(transfer_steps)
 
     def __repr__(self):
-        s = f"Transfer:\n"
+        s = "Transfer:\n"
         for i in self.transfer_steps:
             s += f"{i}\n"
         s += f"Total of {self.step_count} steps"

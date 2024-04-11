@@ -1,33 +1,46 @@
 import unittest
 import random
 
-from rdkit import Chem
+from rdkit import Chem, RDLogger
+
+RDLogger.DisableLog(
+    "rdApp.warning"
+)  # suppress warnings about unmapped atoms in reactionSMILES
 
 from src.library_design.reaction_generator import SFReactionGenerator
 from src.util.db_utils import SynFermDatabaseConnection
 from src.util.rdkit_util import desalt_building_block, remove_monomer_pg_chirality
+from src.definitions import DB_PATH
+
+DB_EXISTS = DB_PATH.exists()
 
 
 class TestSFReactionGenerator(unittest.TestCase):
+    """
+    Note that most of these tests rely on the database being present and populated. They will be skipped if the database is not present.
+    """
+
     def setUp(self) -> None:
         self.rxn_generator = SFReactionGenerator()
         self.con = SynFermDatabaseConnection()
         self.spiro_c_pattern = Chem.MolFromSmarts(
             "[$([CR2](O1)(ONC2)(C2)C(=O)OC1)]"
         )  # hits a spiro carbon atom between an isoxazolidine and a 5-membered lactone-ether ring
-        self.building_blocks = {
-            long: Chem.MolToSmiles(
-                remove_monomer_pg_chirality(desalt_building_block(smiles))
-            )
-            if (
-                long.startswith("Mon")
-                or long.startswith("Fused")
-                or long.startswith("Spiro")
-            )
-            else Chem.MolToSmiles(desalt_building_block(smiles))
-            for long, smiles in self.con.building_blocks()
-        }
+        if DB_EXISTS:
+            self.building_blocks = {
+                long: Chem.MolToSmiles(
+                    remove_monomer_pg_chirality(desalt_building_block(smiles))
+                )
+                if (
+                    long.startswith("Mon")
+                    or long.startswith("Fused")
+                    or long.startswith("Spiro")
+                )
+                else Chem.MolToSmiles(desalt_building_block(smiles))
+                for long, smiles in self.con.building_blocks()
+            }
 
+    @unittest.skipIf(not DB_EXISTS, "Missing database")
     def test_gives_correct_starting_materials(self):
         """
         Test that the reaction generator gives the correct starting materials for a given product
@@ -60,6 +73,7 @@ class TestSFReactionGenerator(unittest.TestCase):
                     Chem.MolToSmiles(generated_reactants[2]),
                 )
 
+    @unittest.skipIf(not DB_EXISTS, "Missing database")
     def test_gives_correct_product_A(self):
         """
         Test that the reaction generator gives the correct product for a given set of starting materials
@@ -89,6 +103,7 @@ class TestSFReactionGenerator(unittest.TestCase):
                     generated_product,
                 )
 
+    @unittest.skipIf(not DB_EXISTS, "Missing database")
     def test_gives_correct_product_B(self):
         """
         Test that the reaction generator gives the correct product for a given set of starting materials
@@ -119,6 +134,7 @@ class TestSFReactionGenerator(unittest.TestCase):
                     generated_product,
                 )
 
+    @unittest.skipIf(not DB_EXISTS, "Missing database")
     def test_gives_correct_product_C(self):
         """
         Test that the reaction generator gives the correct product for a given set of starting materials
@@ -149,6 +165,7 @@ class TestSFReactionGenerator(unittest.TestCase):
                     generated_product,
                 )
 
+    @unittest.skipIf(not DB_EXISTS, "Missing database")
     def test_gives_correct_product_D(self):
         """
         Test that the reaction generator gives the correct product for a given set of starting materials
@@ -179,6 +196,7 @@ class TestSFReactionGenerator(unittest.TestCase):
                     generated_product,
                 )
 
+    @unittest.skipIf(not DB_EXISTS, "Missing database")
     def test_gives_correct_product_E(self):
         """
         Test that the reaction generator gives the correct product for a given set of starting materials
@@ -209,11 +227,13 @@ class TestSFReactionGenerator(unittest.TestCase):
                     generated_product,
                 )
 
+    @unittest.skipIf(not DB_EXISTS, "Missing database")
     def test_gives_correct_product_F(self):
         """
         Test that the reaction generator gives the correct product for a given set of starting materials
         on a large random subset of the VL.
         """
+
         res = self.con.con.execute(
             "SELECT id, initiator_long, monomer_long, terminator_long, SMILES FROM virtuallibrary WHERE type = 'F' AND initiator_long != '4-Pyrazole002';",
         ).fetchall()  # 4-Pyrazole002 is the bullshit initiator with "urea-KAT"
@@ -239,11 +259,13 @@ class TestSFReactionGenerator(unittest.TestCase):
                     generated_product,
                 )
 
+    @unittest.skipIf(not DB_EXISTS, "Missing database")
     def test_gives_correct_product_G(self):
         """
         Test that the reaction generator gives the correct product for a given set of starting materials
         on a large random subset of the VL.
         """
+
         res = self.con.con.execute(
             "SELECT id, initiator_long, monomer_long, terminator_long, SMILES FROM virtuallibrary WHERE type = 'G' AND initiator_long != '4-Pyrazole002';",
         ).fetchall()  # 4-Pyrazole002 is the bullshit initiator with "urea-KAT"
@@ -269,11 +291,13 @@ class TestSFReactionGenerator(unittest.TestCase):
                     generated_product,
                 )
 
+    @unittest.skipIf(not DB_EXISTS, "Missing database")
     def test_gives_correct_product_H(self):
         """
         Test that the reaction generator gives the correct product for a given set of starting materials
         on a large random subset of the VL.
         """
+
         res = self.con.con.execute(
             "SELECT id, initiator_long, monomer_long, terminator_long, SMILES FROM virtuallibrary WHERE type = 'H' AND initiator_long != '4-Pyrazole002';",
         ).fetchall()  # 4-Pyrazole002 is the bullshit initiator with "urea-KAT"

@@ -1,7 +1,13 @@
 """
-Evaluate yields of a plate from MoBiAS output. Save the yields to the DB.
+Evaluate yields of a plate from MoBiAS output. Save the yields to the `lcms` table of the DB.
 
-This script will overwrite existing records in the lcms table (with the same synthesis_id).
+Requires the MoBiAS output file (`BMII00????_Skript-Results.csv`),
+optionally output files from reprocessing (`BMII00????_Skript-Results_reprocess*.csv`) to overwrite selected records,
+and the submission file (`BMIIyyyyyy-SampleTable_<lab journal number>.xls`) in the directory for the plate.
+
+Give one or more lab journal numbers as an argument to the script (or in the config file). Only these will be processed.
+
+This script will OVERWRITE existing records in the `lcms` table (with the same `synthesis_id`).
 """
 import argparse
 import re
@@ -22,16 +28,28 @@ def import_lcms_results(path):
     """
     MoBiAS results come in a CSV file. Import the MoBiAS output into a dataframe, extract the sample ID,
     and ensure whitespaces in column names haven't been tampered with by accident.
+    If we have additional result files from reprocessing (in a file named BMII00????_Skript-Results_reprocess*.csv),
+    these records will overwrite the records from the original results file.
     """
     # read data
     df = pd.read_csv(
         path, header=3, encoding="latin-1", skip_blank_lines=False
-    )  # read results.csv file from MoBiAS
-    # extract the sample ID (the JG2xx-001 part). It is part after the last whitespace in that field
+    ).set_index(
+        "Vial Pos"
+    )  # read results.csv file from MoBiAS. Note that we use the Vial Pos index to match with reprocessed files if they exist
+    # check if there are any reprocessed results files
+    reprocessed_files = path.parent.glob(f"BMII00????_Skript-Results_reprocess*.csv")
+    for reprocessed_file in reprocessed_files:
+        df_reprocessed = pd.read_csv(
+            reprocessed_file, header=3, encoding="latin-1", skip_blank_lines=False
+        ).set_index("Vial Pos")
+        # overwrite the original results with the reprocessed results
+        df.update(df_reprocessed)
+    # clean the sample ID. We only need everything after the last whitespace (the JG???-??? part)
     df["Sample ID"] = df["Sample ID"].str.split(" ").str[-1]
     # remove any accidental whitespaces in column names
     df.columns = df.columns.str.strip()
-    return df
+    return df.reset_index()  # put Vial Pos back as a column
 
 
 def check_mobias_measurements_align_with_input(df, mobias_input, exp_nr):
@@ -100,7 +118,7 @@ def clean_result_df(df):
 
     # For fields where we did not search for a compound, '-' appears. Replace with np.nan.
     df.replace(to_replace="-", value=np.nan, inplace=True)
-    # Since '-' would have induced object dtype, we change to float64. We do this for all Area columns, to be save.
+    # Since '-' would have induced object dtype, we change to float64. We do this for all Area columns, to be safe.
     area_columns = [c for c in df.columns if c.endswith("Area")]
     df[area_columns] = df[area_columns].astype("float64")
     # split "Vial Pos" into separate columns for plate, row, column. Discard "Vial Pos"

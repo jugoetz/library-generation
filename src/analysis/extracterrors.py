@@ -8,6 +8,7 @@ Verbose descriptions contain at least one of the keywords WARNING or ERROR depen
 
 The following are considered ERRORS:
 - A manually curated list of errors, e.g. to record pipetting errors / mix-ups / precipitation etc.
+- Errors recorded per building block in the `invalid_building_blocks.csv` file
 - Transfer errors at NEXUS extracted from the provided transfer files
 - Wells with low volume (< 2.2 uL) in last NEXUS survey after overnight incubation
 - More than 4 peaks for the main product in MoBiAS analysis
@@ -21,15 +22,15 @@ The following are considered WARNINGS::
 Note that the script will overwrite the contents of the "valid" column in the DB table.
 """
 import argparse
-import sqlite3
 import warnings
 from pathlib import Path
 from typing import List
 
 import pandas as pd
 
-from src.definitions import PLATES_DIR, PLATE_LIST_PATH, DB_PATH
+from src.definitions import PLATES_DIR, PLATE_LIST_PATH, BUILDING_BLOCKS_DIR
 from src.util.utils import get_internal_standard_number, get_conf
+from src.util.db_utils import SynFermDatabaseConnection
 
 # configuration
 # edit config.yaml to change
@@ -336,6 +337,76 @@ def get_mobias_errors(exp_nr: int) -> List[str]:
     return error_list
 
 
+def get_building_block_errors(exp_nr: int) -> List[str]:
+    """
+    Collect building blocks errors from a file `invalid_building_blocks.csv`.
+    We expect the file to have three columns: long, exp_nrs, and comment.
+    The long column should contain the long name of the building block.
+    The exp_nrs column should contain a list of experiments where the building block was invalid.
+    If this column is empty, the building block is invalid for all experiments.
+    The comment column is ignored here.
+
+    :param exp_nr: number of the experiment under consideration
+    :return: List of transfer errors, format: [plate, row, column, error_string]
+    """
+    error_list = []
+    invalid_building_blocks = pd.read_csv(
+        BUILDING_BLOCKS_DIR / "invalid_building_blocks.csv"
+    )
+    # get all wells / building blocks for this experiment
+    wells = pd.DataFrame(
+        con.con.execute(
+            "SELECT plate_nr, well, initiator_long, monomer_long, terminator_long FROM experiments WHERE exp_nr = ?;",
+            (exp_nr,),
+        ).fetchall(),
+        columns=[
+            "plate_nr",
+            "well",
+            "initiator_long",
+            "monomer_long",
+            "terminator_long",
+        ],
+    )
+    wells["row"] = wells["well"].apply(lambda x: x[0])
+    wells["column"] = wells["well"].apply(lambda x: x[1:])
+
+    for _, row in wells.iterrows():
+        for bb_long in ["initiator_long", "monomer_long", "terminator_long"]:
+            if row[bb_long] in invalid_building_blocks["long"].values:
+                if pd.isnull(
+                    invalid_building_blocks.loc[
+                        invalid_building_blocks["long"] == row[bb_long], "exp_nrs"
+                    ].item()
+                ):
+                    # invalid for all experiments
+                    error_list.append(
+                        [
+                            str(row["plate_nr"]),
+                            row["row"],
+                            row["column"],
+                            f"ERROR: Invalid building block {row[bb_long]}",
+                        ]
+                    )
+                else:
+                    invalid_exp_list = eval(
+                        invalid_building_blocks.loc[
+                            invalid_building_blocks["long"] == row[bb_long], "exp_nrs"
+                        ].item()
+                    )
+                    if exp_nr in invalid_exp_list:
+                        # invalid for specific experiments
+                        error_list.append(
+                            [
+                                str(row["plate_nr"]),
+                                row["row"],
+                                row["column"],
+                                f"ERROR: Invalid building block {row[bb_long]}",
+                            ]
+                        )
+
+    return error_list
+
+
 def aggregate_error_list(error_list: list) -> pd.DataFrame:
     """
     Aggregate the error list into a DateFrame that has at most one row per well
@@ -368,8 +439,7 @@ def save_errors_to_db(error_df: pd.DataFrame, exp_nr: int):
     :param exp_nr: Number of the experiment under consideration
     :return: None
     """
-    con = sqlite3.connect(DB_PATH)
-    cur = con.cursor()
+    cur = con.con.cursor()
     # Reset the valid column to NULL
     cur.execute(
         "UPDATE experiments SET valid = NULL WHERE exp_nr = ?",
@@ -385,8 +455,7 @@ def save_errors_to_db(error_df: pd.DataFrame, exp_nr: int):
         "UPDATE experiments SET valid = ? WHERE exp_nr = ? AND plate_nr = ? AND well = ?;",
         data,
     )
-    con.commit()
-    con.close()
+    con.con.commit()
     return
 
 
@@ -404,6 +473,7 @@ def main(exp_dir: Path, exp_nr: int, skip_nexus=False, skip_confirmation=False):
     if skip_nexus is False:
         error_list += get_nexus_errors(exp_dir / "transfer_files")
     error_list += get_mobias_errors(exp_nr)
+    error_list += get_building_block_errors(exp_nr)
     error_df = aggregate_error_list(error_list)
     error_df.to_csv(exp_dir / "extracted_errors.csv", index=False)
     n_errors = len(error_df.loc[error_df["errors"].str.contains("ERROR")])
@@ -434,6 +504,9 @@ def main(exp_dir: Path, exp_nr: int, skip_nexus=False, skip_confirmation=False):
 if __name__ == "__main__":
     # load config
     exp_dir = PLATES_DIR / conf["exp_dir"]
+
+    # connect to DB
+    con = SynFermDatabaseConnection()
 
     # parse command line arguments
     parser = argparse.ArgumentParser(

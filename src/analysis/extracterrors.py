@@ -111,7 +111,7 @@ def read_nexus_transfer_errors(path: Path, error_string: str) -> List[str]:
             exceptions["plate"].astype(int) - 1
         ) % 6 + 1  # convert to 1-6 (necessary because of inconsistent naming of analysis plates at NEXUS)
         # handle special case: in exp101, plates where numbered 2-4 on the NEXUS side and 1-3 on our side.
-        if conf["exp_nr"] == 101:
+        if path.parents[2].name == 101:
             exceptions["plate"] = exceptions["plate"] - 1
         return exceptions.to_numpy(dtype="str").tolist()
     else:

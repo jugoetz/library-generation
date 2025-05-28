@@ -1,5 +1,6 @@
 # Library Generation Tools for Synthetic Fermentation
 
+[![DOI:10.1126/sciadv.adw6047](https://zenodo.org/badge/DOI/10.1126/sciadv.adw6047.svg)](https://doi.org/10.1126/sciadv.adw6047)
 <a href="https://github.com/jugoetz/library-generation/blob/master/LICENSE"><img alt="License: MIT" src="https://black.readthedocs.io/en/stable/_static/license.svg"></a>
 <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
 [![Build and test](https://github.com/jugoetz/library-generation/actions/workflows/conda-build-flake-unittest.yml/badge.svg?branch=master&event=push)](https://github.com/jugoetz/library-generation/actions/workflows/conda-build-flake-unittest.yml)
@@ -7,6 +8,8 @@
 A collection of tools needed to deal with HTE compound libraries.
 Specialized on Synthetic Fermentation.
 We used this code to plan, execute, and evaluate experiments in the 50k project (conducting and analyzing 50,000 chemical reactions).
+
+Paper: [Predicting three-component reaction outcomes from ~40,000 miniaturized reactant combinations](https://doi.org/10.1126/sciadv.adw6047)
 
 Preprint: [Predicting Three-Component Reaction Outcomes from 40k Miniaturized Reactant Combinations ](https://chemrxiv.org/engage/chemrxiv/article-details/663a0efa418a5379b0a94ebf)
 
